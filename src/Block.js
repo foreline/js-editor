@@ -3,7 +3,7 @@
 import {BlockType} from "@/BlockType";
 
 /**
- *
+ * Editor block
  */
 export class Block
 {

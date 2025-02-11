@@ -1,7 +1,10 @@
 'use strict';
 
-import {log} from "@/utils/log";
+import {log} from "@/utils/log.js";
 
+/**
+ *
+ */
 export class Utils
 {
     /**
@@ -85,6 +88,11 @@ export class Utils
         return str;
     }
     
+    /**
+     *
+     * @param str
+     * @returns {*}
+     */
     static escapeHTML = str => str.replace(/[&<>'"]/g,
         tag => ({
             '&': '&amp;',

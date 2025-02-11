@@ -8,11 +8,11 @@
 import {Toolbar} from "./Toolbar.js";
 import {log, logWarning} from "./utils/log.js";
 import showdown from "showdown";
-import {eventEmitter} from "@/utils/eventEmitter";
+import {eventEmitter} from "@/utils/eventEmitter.js";
 import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
-import {BlockType} from "@/BlockType";
-import {Utils} from "@/Utils";
+import {BlockType} from "@/BlockType.js";
+import {Utils} from "@/Utils.js";
 
 /**
  *
