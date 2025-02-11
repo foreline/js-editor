@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WYSIWYG Editor</title>
+    <style>
+        .editor-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .note-text {
+            min-height: 300px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="editor-container">
+    <div class="editor-toolbar">
+
+        <div class="editor-toolbar-group">
+            <div class="d-sm-none">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuUndo" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-undo"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuUndo">
+                        <li><button class="editor-toolbar-undo" title="отменить действие"><i class="fa fa-undo"></i></button></li>
+                        <li><button class="editor-toolbar-redo" title="применить действие"><i class="fa fa-redo"></i></button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="d-none d-sm-inline-block">
+                <button class="editor-toolbar-undo" title="отменить действие"><i class="fa fa-undo"></i></button>
+                <button class="editor-toolbar-redo" title="применить действие"><i class="fa fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div class="editor-toolbar-group">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuHeader" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa fa-heading"></i>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuHeader">
+                    <li><button class="editor-toolbar-header1">Заголовок 1</button></li>
+                    <li><button class="editor-toolbar-header2">Заголовок 2</button></li>
+                    <li><button class="editor-toolbar-header3">Заголовок 3</button></li>
+                    <li><button class="editor-toolbar-header4">Заголовок 4</button></li>
+                    <li><button class="editor-toolbar-header5">Заголовок 5</button></li>
+                    <li><button class="editor-toolbar-header6">Заголовок 6</button></li>
+                    <li><button class="editor-toolbar-paragraph">Обычный текст</button></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="editor-toolbar-group">
+            <div class="d-sm-none">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuEmphasis" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-bold"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuEmphasis">
+                        <li><button class="editor-toolbar-bold" title="жирный текст"><i class="fa fa-bold"></i></button></li>
+                        <li><button class="editor-toolbar-italic" title="курсив"><i class="fa fa-italic"></i></button></li>
+                        <li><button class="editor-toolbar-underline" title="подчеркнутый"><i class="fa fa-underline"></i></button></li>
+                        <li><button class="editor-toolbar-strikethrough" title="перечеркнутый"><i class="fa fa-strikethrough"></i></button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="d-none d-sm-inline-block">
+                <button class="editor-toolbar-bold" title="жирный текст"><i class="fa fa-bold"></i></button>
+                <button class="editor-toolbar-italic" title="курсив"><i class="fa fa-italic"></i></button>
+                <button class="editor-toolbar-underline" title="подчеркнутый"><i class="fa fa-underline"></i></button>
+                <button class="editor-toolbar-strikethrough" title="перечеркнутый"><i class="fa fa-strikethrough"></i></button>
+            </div>
+        </div>
+
+        <div class="editor-toolbar-group">
+            <div class="d-sm-none">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuList" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-list"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuList">
+                        <li><button class="editor-toolbar-ul" title="вставить список"><i class="fa fa-list"></i></button></li>
+                        <li><button class="editor-toolbar-ol" title="вставить нумерованный список"><i class="fa fa-list-ol"></i></button></li>
+                        <li><button class="editor-toolbar-sq" title="вставить список с чекбоксами"><i class="fa fa-list-check"></i></button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="d-none d-sm-inline-block">
+                <button class="editor-toolbar-ul" title="вставить список"><i class="fa fa-list"></i></button>
+                <button class="editor-toolbar-ol" title="вставить нумерованный список"><i class="fa fa-list-ol"></i></button>
+                <button class="editor-toolbar-sq" title="вставить список с чекбоксами"><i class="fa fa-list-check"></i></button>
+            </div>
+        </div>
+
+        <div class="editor-toolbar-group">
+            <button class="editor-toolbar-code" title="форматировать как исходный код"><i class="fa fa-code"></i></button>
+        </div>
+
+        <div class="editor-toolbar-group">
+            <div class="d-sm-none">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuSource" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-brands fa-markdown"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuSource">
+                        <li><button class="editor-toolbar-text" disabled="disabled" title=""><i class="fa fa-paragraph"></i></button></li>
+                        <li><button class="editor-toolbar-markdown" title="просмотр markdown"><i class="fa-brands fa-markdown"></i></button></li>
+                        <li><button class="editor-toolbar-html" title="просмотр html"><i class="fa-brands fa-html5"></i></button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="d-none d-sm-inline-block">
+                <button class="editor-toolbar-text" disabled="disabled" title=""><i class="fa fa-paragraph"></i></button>
+                <button class="editor-toolbar-markdown" title="просмотр markdown"><i class="fa-brands fa-markdown"></i></button>
+                <button class="editor-toolbar-html" title="просмотр html"><i class="fa-brands fa-html5"></i></button>
+            </div>
+        </div>
+    </div>
+    <div id="editor" class="editor">
+    </div>
+</div>
+<script type="module">
+    import './src/css/editor.css';
+    import '@popperjs/core';
+    import 'bootstrap';
+    import 'bootstrap/dist/css/bootstrap.min.css';
+    import '@fortawesome/fontawesome-free/css/all.min.css';
+    import { Editor } from './src/Editor.js';
+    const editor = new Editor({id: 'editor'});
+</script>
+</body>
+</html>

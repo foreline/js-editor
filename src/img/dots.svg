@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <!-- Top-left dot -->
+    <circle cx="6" cy="6" r="2"/>
+    <!-- Top-right dot -->
+    <circle cx="18" cy="6" r="2"/>
+    <!-- Bottom-left dot -->
+    <circle cx="6" cy="18" r="2"/>
+    <!-- Bottom-right dot -->
+    <circle cx="18" cy="18" r="2"/>
+</svg>

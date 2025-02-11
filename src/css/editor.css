@@ -1,0 +1,56 @@
+.editor {
+    outline: none;
+}
+
+.editor .block {
+    border: 1px dashed #b6b0ff;
+    margin-bottom: 0.2em;
+}
+
+.editor .block:empty::before {
+    content: attr(data-placeholder);
+    color: #666;
+}
+
+.editor-toolbar {
+    display: flex;
+    color: #999 !important;
+
+    border-bottom: 1px solid #ebebeb;
+
+    padding-bottom: 0.8em;
+    margin-bottom: 1em;
+
+    /*overflow-x: scroll;*/
+}
+
+.editor-toolbar i {
+    color: #999;
+}
+
+.editor-toolbar button {
+    color: #777;
+    border: 0;
+    background: none;
+    outline: none;
+    padding: 2px 6px;
+}
+
+.editor-toolbar button:disabled {
+    color: #aaa;
+}
+
+.editor-toolbar button:hover {
+    background-color: #f1f1f1;
+}
+
+.editor-toolbar-group {
+    border-right: 1px solid #ddd;
+
+    padding: 2px 8px;
+}
+
+.editor-toolbar .dropdown li {
+    min-width: auto !important;
+    padding: 0.5rem 0.5rem !important;
+}
