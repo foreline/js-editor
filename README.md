@@ -22,6 +22,30 @@ Build for production:
 npm run build
 ```
 
+## Testing
+
+This project uses Jest for unit testing and integration tests.
+
+Run tests:
+
+```shell
+npm test
+```
+
+Run tests in watch mode:
+
+```shell
+npm run test:watch
+```
+
+Generate test coverage report:
+
+```shell
+npm run test:coverage
+```
+
+After running the coverage command, you can find the detailed coverage report in the `coverage` directory.
+
 ## Dependencies
 * Showdown (for markdown support)
 
