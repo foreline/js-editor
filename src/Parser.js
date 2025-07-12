@@ -3,6 +3,7 @@
 import {log} from "@/utils/log.js";
 import {Block} from "@/Block.js";
 import {BlockType} from "@/BlockType";
+import showdown from "showdown";
 
 /**
  *
@@ -16,8 +17,8 @@ export class Parser
      */
     static parseHtml(htmlString)
     {
-        log('parse()', 'Parser.'); console.log({htmlString});
-    
+        log('parseHtml()', 'Parser.'); console.log({htmlString});
+        if (!htmlString || htmlString.trim() === '') return [];
         // Helper function to extract text content
         function getTextContent(html) {
             return html.replace(/<[^>]+>/g, '').trim();
@@ -33,7 +34,7 @@ export class Parser
             const innerHtml = match[2];
         
             // Check for nested blocks
-            const nestedBlocks = this.parse(innerHtml);
+            const nestedBlocks = this.parseHtml(innerHtml);
         
             return {
                 type: fullMatch.match(/<(\w+)/)[1].toLowerCase(),
@@ -52,24 +53,14 @@ export class Parser
     static parse(markdownString)
     {
         log('parse()', 'Parser.'); console.log({markdownString});
-        
-        // Split by new lines and filter out empty lines
-        const lines = markdownString.split('\n').filter(line => line.trim() !== '');
-        
-        return lines.map(line => {
-            let type = BlockType.PARAGRAPH;
-            let content = line.trim();
-            
-            // Check for heading syntax
-            if (line.startsWith('# ')) {
-                type = BlockType.H1;
-                content = content.slice(2).trim();
-            }
-            
-            return new Block(type, content);
-        });
+        if (!markdownString || markdownString.trim() === '') return [];
+        // Use showdown to convert markdown to HTML
+        const converter = new showdown.Converter();
+        const html = converter.makeHtml(markdownString);
+        // Now parse the HTML into blocks
+        return Parser.parseHtml(html);
     }
-    
+
     /**
      * Turns Block object into html code.
      * @param {Block} block

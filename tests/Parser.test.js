@@ -2,23 +2,25 @@ import { Parser } from '@/Parser.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 
-// Mock DOM elements for testing
-global.document = {
-  createElement: jest.fn(() => ({
+// Remove previous global.document mock
+
+beforeAll(() => {
+  // Mock document.createElement for all tests
+  global.document.createElement = jest.fn(() => ({
     classList: {
       add: jest.fn()
     },
     setAttribute: jest.fn(),
     innerHTML: ''
-  }))
-};
+  }));
+});
+
+beforeEach(() => {
+  // Reset the mock implementation for each test
+  global.document.createElement.mockClear();
+});
 
 describe('Parser', () => {
-  beforeEach(() => {
-    // Reset the mock implementation for each test
-    document.createElement.mockClear();
-  });
-
   describe('parse method', () => {
     test('should parse simple markdown paragraph', () => {
       const markdownString = 'Hello World';
@@ -72,6 +74,67 @@ describe('Parser', () => {
         expect(result[0].content).toBe('Heading');
         expect(result[1].type).toBe(BlockType.PARAGRAPH);
         expect(result[1].content).toBe('Paragraph text with **bold** and *italic*');
+    });
+
+    test('should parse complex translated markdown sample', () => {
+      const markdownString = `# Heading 1
+
+## Heading 2
+
+**Bold text** and *italic* and ~~strikethrough~~.
+
+- First list item
+- Second list item
+- Third list item
+
+1. First numbered item
+2. Second item
+3. Third item
+
+[] checkbox
+- [x] First checkbox
+- [ ] Second checkbox
+
+> This is a quote.
+
+\`Inline code\`
+
+\`\`\`javascript
+console.log('Hello, world!');
+\`\`\`
+
+[Link to Google](https://www.google.com)`;
+      const result = Parser.parse(markdownString);
+      // Basic checks: block count and types
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].type).toBe(BlockType.H1);
+      expect(result[0].content).toBe('Heading 1');
+      expect(result[1].type).toBe(BlockType.H2);
+      expect(result[1].content).toBe('Heading 2');
+      // Check for bold/italic/strikethrough paragraph
+      expect(result.some(b => b.content.includes('Bold text'))).toBe(true);
+      expect(result.some(b => b.content.includes('italic'))).toBe(true);
+      expect(result.some(b => b.content.includes('strikethrough'))).toBe(true);
+      // Check for list items
+      expect(result.some(b => b.content.includes('First list item'))).toBe(true);
+      expect(result.some(b => b.content.includes('Second list item'))).toBe(true);
+      expect(result.some(b => b.content.includes('Third list item'))).toBe(true);
+      // Check for numbered list
+      expect(result.some(b => b.content.includes('First numbered item'))).toBe(true);
+      expect(result.some(b => b.content.includes('Second item'))).toBe(true);
+      expect(result.some(b => b.content.includes('Third item'))).toBe(true);
+      // Check for checkboxes
+      expect(result.some(b => b.content.includes('checkbox'))).toBe(true);
+      expect(result.some(b => b.content.includes('First checkbox'))).toBe(true);
+      expect(result.some(b => b.content.includes('Second checkbox'))).toBe(true);
+      // Check for quote
+      expect(result.some(b => b.content.includes('This is a quote.'))).toBe(true);
+      // Check for inline code
+      expect(result.some(b => b.content.includes('Inline code'))).toBe(true);
+      // Check for code block
+      expect(result.some(b => b.content.includes("console.log('Hello, world!');"))).toBe(true);
+      // Check for link
+      expect(result.some(b => b.content.includes('Link to Google'))).toBe(true);
     });
   });
 

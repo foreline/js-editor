@@ -14,12 +14,14 @@ export class Block
     
     /**
      * @param {string} type
+     * @param {string} content
      */
-    constructor(type= '') {
+    constructor(type= '', content= '') {
         if ( 0 === type.length ) {
-            type = BlockType.PARAGRAPH
+            type = BlockType.PARAGRAPH;
         }
         this._type = type;
+        this._content = content;
     }
     
     get type() {
