@@ -51,7 +51,13 @@ export class Editor
         }
         
         Editor.init(options);
-        Toolbar.init();
+
+        const toolbarOptions = {
+            id: options.toolbarId ?? null,
+            container: document.querySelector('.editor-container'),
+            config: options.toolbar
+        };
+        Toolbar.init(toolbarOptions);
     }
     
     /**
