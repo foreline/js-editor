@@ -142,6 +142,9 @@ export class Editor
         if ( 0 ) {
             Editor.focus();
         }
+
+        this.initMarkdownContainer();
+        this.initHtmlContainer();
     }
     
     /**
@@ -454,5 +457,42 @@ export class Editor
         
         return htmlBlock;
     }
-    
+
+    /**
+     * Creates and initializes the markdown container
+     */
+    static initMarkdownContainer()
+    {
+        const markdownContainer = document.createElement('textarea');
+        markdownContainer.id = 'editor-markdown';
+        markdownContainer.className = 'editor-text-md visually-hidden';
+        markdownContainer.style.width = '100%';
+        markdownContainer.style.minHeight = '300px';
+
+        const container = document.querySelector('.editor-container');
+        if (container) {
+            container.appendChild(markdownContainer);
+        } else {
+            logWarning('Editor container not found for Markdown container initialization.', 'Editor.initMarkdownContainer()');
+        }
+    }
+
+    /**
+     * Creates and initializes the HTML container
+     */
+    static initHtmlContainer()
+    {
+        const htmlContainer = document.createElement('div');
+        htmlContainer.id = 'editor-html';
+        htmlContainer.className = 'editor-text-html visually-hidden';
+        htmlContainer.style.width = '100%';
+        htmlContainer.style.minHeight = '300px';
+
+        const container = document.querySelector('.editor-container');
+        if (container) {
+            container.appendChild(htmlContainer);
+        } else {
+            logWarning('Editor container not found for HTML container initialization.', 'Editor.initHtmlContainer()');
+        }
+    }
 }
