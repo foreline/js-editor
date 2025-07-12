@@ -126,16 +126,13 @@ export class Editor
         this.currentBlock = this.instance.querySelectorAll('.block')[0];
         
         // Ensure at least one block exists
-        if ( 0 === content.length ) {
+        if ( 1 || 0 === content.length ) {
             const block = document.createElement('div');
             block.classList.add('block')
             block.innerHTML = '<br />';
             this.instance.appendChild(block);
         }
-        
-        //$(element).html(Editor.md2html(text));
-        //$('textarea.editor-text-html').val($(element).html());
-        
+    
         this.addListeners();
         
         // @fixme focus only if empty content
@@ -420,7 +417,7 @@ export class Editor
         }
         
         if ( 0 === ticksCounter ) {
-            this.addBlock();
+            this.addEmptyBlock();
             this.focus();
             e.preventDefault();
         }
@@ -429,7 +426,7 @@ export class Editor
     /**
      * @return HTMLElement
      */
-    static addBlock()
+    static addEmptyBlock()
     {
         log('addEmptyBlock()', 'Editor.');
         
