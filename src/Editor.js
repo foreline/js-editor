@@ -15,7 +15,13 @@ import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
 
 /**
- *
+ * Editor class
+ * @class Editor
+ * @property {HTMLElement} instance - The editor instance
+ * @property {Array.<Block>} blocks - Array of Block objects
+ * @property {HTMLElement} currentBlock - The currently focused block
+ * @property {Array.<string>} keybuffer - Buffer for tracking key presses
+ * @property {Array.<Object>} rules - Custom rules for the editor
  */
 export class Editor
 {
@@ -171,33 +177,32 @@ export class Editor
         
         // mask focused block as currentBlock
         document.addEventListener('click', function(e) {
-            console.log('click', e.target);
-            // @fixme check if target is inside editor
+            // Ignore clicks outside the editor
             if ( !e.target.closest('.editor') ) {
                 return;
             }
 
             let block = e.target.closest('.block');
-            if ( block ) {
-                Editor.setCurrentBlock(block);
+            if ( !block ) {
+                return;
             }
+            Editor.setCurrentBlock(block);
         });
 
         // Add focus event for keyboard navigation
+        // @fixme not working
         this.instance.addEventListener('focusin', function(e) {
-            if (e.target.classList.contains('block')) {
-                Editor.setCurrentBlock(e.target);
+            //console.log('focusin', e.target);
+            // Ignore clicks outside the editor
+            if ( !e.target.closest('.editor') ) {
+                return;
             }
-        });
 
-        // Add focus event for keyboard navigation
-        this.instance.addEventListener('focusin', function(e) {
-            if (e.target.classList.contains('block')) {
-                if (Editor.currentBlock) {
-                    Editor.currentBlock.classList.remove('active-block');
-                }
-                Editor.setCurrentBlock(e.target);
+            let block = e.target.closest('.block');
+            if ( !block ) {
+                return;
             }
+            Editor.setCurrentBlock(block);
         });
     }
 
