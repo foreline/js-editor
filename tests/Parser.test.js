@@ -20,13 +20,69 @@ describe('Parser', () => {
   });
 
   describe('parse method', () => {
+    test('should parse simple markdown paragraph', () => {
+      const markdownString = 'Hello World';
+      const result = Parser.parse(markdownString);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].type).toBe(BlockType.PARAGRAPH);
+      expect(result[0].content).toBe('Hello World');
+    });
+
+    test('should parse heading markdown', () => {
+      const markdownString = '# Heading';
+      const result = Parser.parse(markdownString);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].type).toBe(BlockType.H1);
+      expect(result[0].content).toBe('Heading');
+    });
+
+    test('should parse multiple lines of markdown', () => {
+      const markdownString = '# Heading\nParagraph text';
+      const result = Parser.parse(markdownString);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].type).toBe(BlockType.H1);
+      expect(result[0].content).toBe('Heading');
+      expect(result[1].type).toBe(BlockType.PARAGRAPH);
+      expect(result[1].content).toBe('Paragraph text');
+    });
+
+    test('should handle empty markdown', () => {
+      const markdownString = '';
+      const result = Parser.parse(markdownString);
+
+      expect(result).toHaveLength(0);
+    });
+
+    test('should handle whitespace in markdown', () => {
+      const markdownString = '   ';
+      const result = Parser.parse(markdownString);
+
+      expect(result).toHaveLength(0);
+    });
+
+    test('should parse markdown with mixed content', () => {
+        const markdownString = '# Heading\n\nParagraph text with **bold** and *italic*';
+        const result = Parser.parse(markdownString);
+    
+        expect(result).toHaveLength(2);
+        expect(result[0].type).toBe(BlockType.H1);
+        expect(result[0].content).toBe('Heading');
+        expect(result[1].type).toBe(BlockType.PARAGRAPH);
+        expect(result[1].content).toBe('Paragraph text with **bold** and *italic*');
+    });
+  });
+
+  describe('parseHtml method', () => {
     test('should parse simple paragraph HTML', () => {
       // Mock log function to prevent console outputs during tests
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const htmlString = '<p>Hello World</p>';
-      const result = Parser.parse(htmlString);
-      
+      const result = Parser.parseHtml(htmlString);
+
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe('p');
       expect(result[0].content).toBe('Hello World');
@@ -41,7 +97,7 @@ describe('Parser', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const htmlString = '<h1>Title</h1>';
-      const result = Parser.parse(htmlString);
+      const result = Parser.parseHtml(htmlString);
       
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe('h1');
@@ -54,7 +110,7 @@ describe('Parser', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const htmlString = '<h1>Title</h1><p>Paragraph</p>';
-      const result = Parser.parse(htmlString);
+      const result = Parser.parseHtml(htmlString);
       
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe('h1');
@@ -67,7 +123,7 @@ describe('Parser', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const htmlString = '';
-      const result = Parser.parse(htmlString);
+      const result = Parser.parseHtml(htmlString);
       
       expect(result).toHaveLength(0);
       

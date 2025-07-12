@@ -86,9 +86,7 @@ export class Editor
 
         this.instance.setAttribute('contenteditable', 'true');
 
-        let content = this.instance.innerHTML;
-        
-        this.instance.innerHTML = '';
+        let content = options.text || this.instance.innerHTML || '';
         
         let blocks = Parser.parse(content);
         

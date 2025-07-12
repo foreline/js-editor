@@ -14,7 +14,7 @@ export class Parser
      * @param {string} htmlString
      * @returns {array<Block>} blocks
      */
-    static parse(htmlString)
+    static parseHtml(htmlString)
     {
         log('parse()', 'Parser.'); console.log({htmlString});
     
@@ -41,6 +41,32 @@ export class Parser
                 html: fullMatch,
                 nested: nestedBlocks.length > 0 ? nestedBlocks : null
             };
+        });
+    }
+
+    /**
+     * Parse the markdown string and return array of Block objects.
+     * @param {string} markdownString
+     * @return {array<Block>} blocks
+     */
+    static parse(markdownString)
+    {
+        log('parse()', 'Parser.'); console.log({markdownString});
+        
+        // Split by new lines and filter out empty lines
+        const lines = markdownString.split('\n').filter(line => line.trim() !== '');
+        
+        return lines.map(line => {
+            let type = BlockType.PARAGRAPH;
+            let content = line.trim();
+            
+            // Check for heading syntax
+            if (line.startsWith('# ')) {
+                type = BlockType.H1;
+                content = content.slice(2).trim();
+            }
+            
+            return new Block(type, content);
         });
     }
     
