@@ -280,18 +280,21 @@ document.execCommand('defaultParagraphSeparator', false, 'p');
  */
 
 document
-    .querySelector('.editor-toolbar-undo')
-    .addEventListener('click', (e) => {
-
-        e.preventDefault();
-        Toolbar.undo();
+    .querySelectorAll('.editor-toolbar-undo')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.undo();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-redo')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.redo();
+    .querySelectorAll('.editor-toolbar-redo')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.redo();
+        });
     });
 
 /*
@@ -299,85 +302,106 @@ document
  */
 
 document
-    .querySelector('.editor-toolbar-header1')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h1();
+    .querySelectorAll('.editor-toolbar-header1')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h1();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-header2')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h2();
+    .querySelectorAll('.editor-toolbar-header2')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h2();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-header3')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h3();
+    .querySelectorAll('.editor-toolbar-header3')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h3();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-header4')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h4();
+    .querySelectorAll('.editor-toolbar-header4')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h4();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-header5')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h5();
+    .querySelectorAll('.editor-toolbar-header5')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h5();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-header6')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.h6();
+    .querySelectorAll('.editor-toolbar-header6')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.h6();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-paragraph')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.paragraph();
-    })
-;
+    .querySelectorAll('.editor-toolbar-paragraph')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.paragraph();
+        });
+    });
 
 /*
  * BOLD | ITALIC | UNDERLINE | STRIKETHROUGH
  */
 
 document
-    .querySelector('.editor-toolbar-bold')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.bold();
+    .querySelectorAll('.editor-toolbar-bold')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.bold();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-italic')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.italic();
+    .querySelectorAll('.editor-toolbar-italic')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.italic();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-underline')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.underline();
+    .querySelectorAll('.editor-toolbar-underline')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.underline();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-strikethrough')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.strikethrough();
+    .querySelectorAll('.editor-toolbar-strikethrough')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.strikethrough();
+        });
     });
 
 /*
@@ -385,24 +409,30 @@ document
  */
 
 document
-    .querySelector('.editor-toolbar-ul')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.ul();
+    .querySelectorAll('.editor-toolbar-ul')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.ul();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-ol')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.ol();
+    .querySelectorAll('.editor-toolbar-ol')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.ol();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-sq')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.sq();
+    .querySelectorAll('.editor-toolbar-sq')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.sq();
+        });
     });
 
 /*
@@ -410,10 +440,12 @@ document
  */
 
 document
-    .querySelector('.editor-toolbar-code')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.code();
+    .querySelectorAll('.editor-toolbar-code')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.code();
+        });
     });
 
 /*
@@ -421,22 +453,28 @@ document
  */
 
 document
-    .querySelector('.editor-toolbar-text')
-    addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.text();
+    .querySelectorAll('.editor-toolbar-text')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.text();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-markdown')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.markdown();
+    .querySelectorAll('.editor-toolbar-markdown')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.markdown();
+        });
     });
 
 document
-    .querySelector('.editor-toolbar-html')
-    .addEventListener('click', (e) => {
-        e.preventDefault();
-        Toolbar.html();
+    .querySelectorAll('.editor-toolbar-html')
+    .forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            Toolbar.html();
+        });
     });
