@@ -6,13 +6,15 @@ import { BlockType } from '@/BlockType.js';
 
 beforeAll(() => {
   // Mock document.createElement for all tests
-  global.document.createElement = jest.fn(() => ({
+  const mockElement = {
     classList: {
       add: jest.fn()
     },
     setAttribute: jest.fn(),
     innerHTML: ''
-  }));
+  };
+  
+  global.document.createElement = jest.fn(() => mockElement);
 });
 
 beforeEach(() => {
@@ -171,16 +173,14 @@ console.log('Hello, world!');
 
         expect(result[2].type).toBe(BlockType.PARAGRAPH);
         expect(result[2].content).toBe('Bold text and italic and strikethrough.');
-        expect(result[2].html).toBe('<p><strong>Bold text</strong> and <em>italic</em> and <del>strikethrough</del>.</p>');
-
-        // Check for list items
+        expect(result[2].html).toBe('<p><strong>Bold text</strong> and <em>italic</em> and <del>strikethrough</del>.</p>');        // Check for list items
         expect(result[3].type).toBe(BlockType.UL);
         expect(result[3].content).toBe('First list item\nSecond list item\nThird list item');
-        expect(result[3].html).toBe('<ul><li>First list item</li><li>Second list item</li><li>Third list item</li></ul>');
+        expect(result[3].html).toBe('<ul>\n<li>First list item</li>\n<li>Second list item</li>\n<li>Third list item</li>\n</ul>');
 
         expect(result[4].type).toBe(BlockType.OL);
         expect(result[4].content).toBe('First numbered item\nSecond item\nThird item');
-        expect(result[4].html).toBe('<ol><li>First numbered item</li><li>Second item</li><li>Third item</li></ol>');
+        expect(result[4].html).toBe('<ol>\n<li>First numbered item</li>\n<li>Second item</li>\n<li>Third item</li>\n</ol>');
 
         expect(result[5].type).toBe(BlockType.QUOTE);
         expect(result[5].content).toBe('This is a quote.');
@@ -188,11 +188,9 @@ console.log('Hello, world!');
 
         expect(result[6].type).toBe(BlockType.CODE);
         expect(result[6].content).toBe('Inline code');
-        expect(result[6].html).toBe('<code>Inline code</code>');
-
-        expect(result[7].type).toBe(BlockType.CODE);
+        expect(result[6].html).toBe('<code>Inline code</code>');        expect(result[7].type).toBe(BlockType.CODE);
         expect(result[7].content).toBe("console.log('Hello, world!');");
-        expect(result[7].html).toBe('<pre><code class="language-javascript">console.log(\'Hello, world!\');\n</code></pre>');
+        expect(result[7].html).toBe('<pre><code class="javascript language-javascript">console.log(\'Hello, world!\');\n</code></pre>');
 
         expect(result[8].type).toBe(BlockType.PARAGRAPH);
         expect(result[8].content).toBe('Link to Google');
@@ -262,37 +260,34 @@ console.log('Hello, world!');
     });
   });
 
-  describe('html method', () => {
-    test('should convert a paragraph block to HTML element', () => {
+  describe('html method', () => {    test('should convert a paragraph block to HTML element', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const block = new Block(BlockType.PARAGRAPH);
       block.html = 'Test paragraph';
       
-      Parser.html(block);
+      const result = Parser.html(block);
       
       expect(document.createElement).toHaveBeenCalledWith('div');
-      expect(document.createElement().classList.add).toHaveBeenCalledWith('block');
-      expect(document.createElement().classList.add).toHaveBeenCalledWith('block-p');
-      expect(document.createElement().setAttribute).toHaveBeenCalledWith(
+      expect(result.classList.add).toHaveBeenCalledWith('block');
+      expect(result.classList.add).toHaveBeenCalledWith('block-p');
+      expect(result.setAttribute).toHaveBeenCalledWith(
         'data-placeholder', 
         'Type "/" to insert block'
       );
       
       console.log.mockRestore();
-    });
-
-    test('should convert a heading block to HTML element', () => {
+    });    test('should convert a heading block to HTML element', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const block = new Block(BlockType.H1);
       block.html = 'Test heading';
       
-      Parser.html(block);
+      const result = Parser.html(block);
       
       expect(document.createElement).toHaveBeenCalledWith('div');
-      expect(document.createElement().classList.add).toHaveBeenCalledWith('block');
-      expect(document.createElement().classList.add).toHaveBeenCalledWith('block-h1');
+      expect(result.classList.add).toHaveBeenCalledWith('block');
+      expect(result.classList.add).toHaveBeenCalledWith('block-h1');
       
       console.log.mockRestore();
     });

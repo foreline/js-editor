@@ -19,27 +19,45 @@ export class Parser
     {
         log('parseHtml()', 'Parser.'); console.log({htmlString});
 
-        if (!htmlString || htmlString.trim() === '') return [];
-        // Helper function to extract text content
+        if (!htmlString || htmlString.trim() === '') return [];        // Helper function to extract text content
         function getTextContent(html) {
-            return html.replace(/<[^>]+>/g, '').trim();
-        }
-    
-        // First pass: Get top-level blocks
+            // For lists, preserve line breaks between list items
+            if (html.includes('<li>')) {
+                const listItems = html.match(/<li>(.*?)<\/li>/g);
+                if (listItems) {
+                    return listItems
+                        .map(item => item.replace(/<li>(.*?)<\/li>/, '$1'))
+                        .join('\n');
+                }
+            }
+            // For pre/code blocks, extract the inner code content
+            if (html.includes('<pre>') || html.includes('<code>')) {
+                // Handle <pre><code>content</code></pre> pattern
+                const preCodeMatch = html.match(/<pre><code[^>]*>(.*?)<\/code><\/pre>/s);
+                if (preCodeMatch) {
+                    return preCodeMatch[1].trim();
+                }
+                // Handle standalone <code>content</code> pattern
+                const codeMatch = html.match(/<code[^>]*>(.*?)<\/code>/s);
+                if (codeMatch) {
+                    return codeMatch[1].trim();
+                }
+            }
+            return html.replace(/<[^>]+>/g, '').trim();        }        // First pass: Get top-level blocks
         const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code)[^>]*>([\s\S]*?)<\/\1>/gi;
+          const matches = [...htmlString.matchAll(blockRegex)];
         
-        const matches = [...htmlString.matchAll(blockRegex)];
-    
         return matches.map(match => {
             const fullMatch = match[0];
             const innerHtml = match[2];
+            const tagName = fullMatch.match(/<(\w+)/)[1].toLowerCase();
 
             // Check for nested blocks
             const nestedBlocks = Parser.parseHtml(innerHtml);
 
             // Create Block instance
             return new Block(
-                fullMatch.match(/<(\w+)/)[1].toLowerCase(),
+                tagName,
                 getTextContent(fullMatch),
                 fullMatch,
                 nestedBlocks.length > 0 ? nestedBlocks : null
@@ -57,15 +75,18 @@ export class Parser
 
         if (!markdownString || markdownString.trim() === '') {
             return [];
-        }
-        // Use showdown to convert markdown to HTML
+        }        // Use showdown to convert markdown to HTML
         const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
         const html = converter.makeHtml(markdownString);
-        // Fix: Ensure strikethrough and list formatting are properly parsed
+        // Fix: Ensure strikethrough and blockquote formatting are properly parsed
         const htmlClean = html
             .replace(/~~(.*?)~~/g, '<del>$1</del>')
-            .replace(/<ul>(.*?)<\/ul>/gs, match => match.replace(/\n/g, '\n'))
-            .replace(/<ol>(.*?)<\/ol>/gs, match => match.replace(/\n/g, '\n'));
+            // Fix blockquote formatting - remove inner <p> tags for simple quotes
+            .replace(/<blockquote>\s*<p>(.*?)<\/p>\s*<\/blockquote>/gs, '<blockquote>$1</blockquote>')
+            // Extract inline code from paragraphs and make them standalone code blocks
+            .replace(/<p><code>(.*?)<\/code><\/p>/g, '<code>$1</code>')
+            // Ensure blocks are properly separated with line breaks to help parsing
+            .replace(/(<\/(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code)>)(<(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code))/g, '$1\n$2');
         // Remove id attributes from heading tags
         const htmlFinal = htmlClean.replace(/<h[1-6]\s+id="[^"]+"/g, match => match.replace(/\s+id="[^"]+"/, ''));
         // Now parse the HTML into blocks

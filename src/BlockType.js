@@ -26,8 +26,7 @@ export class BlockType
      * @returns {string}
      */
     static getBlockTypeFromHtmlTag(tag)
-    {
-        switch (tag.toLowerCase()) {
+    {        switch (tag.toLowerCase()) {
             case 'h1':
                 return BlockType.H1;
             case 'h2':
@@ -43,6 +42,8 @@ export class BlockType
             case 'p':
                 return BlockType.PARAGRAPH;
             case 'code':
+                return BlockType.CODE;
+            case 'pre':
                 return BlockType.CODE;
             case 'blockquote':
                 return BlockType.QUOTE;
