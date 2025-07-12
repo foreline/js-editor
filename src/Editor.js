@@ -50,14 +50,14 @@ export class Editor
             return console.warn('Element id is not set.');
         }
         
-        Editor.init(options);
-
         const toolbarOptions = {
             id: options.toolbarId ?? null,
             container: document.querySelector('.editor-container'),
             config: options.toolbar
         };
         Toolbar.init(toolbarOptions);
+
+        Editor.init(options);
     }
     
     /**
@@ -67,11 +67,19 @@ export class Editor
     static init(options)
     {
         log('init()', 'Editor.'); console.log({options});
-        
+
+        const editorContainer = document.createElement('div');
+        editorContainer.id = 'editor';
+        editorContainer.className = 'editor';
+
+        document.querySelectorAll('.editor-container').forEach(container => {
+            container.appendChild(editorContainer);
+        });
+
         this.instance = document.getElementById(options.id);
-        
+
         this.instance.setAttribute('contenteditable', 'true');
-        
+
         let content = this.instance.innerHTML;
         
         this.instance.innerHTML = '';
