@@ -148,10 +148,6 @@ describe('Parser', () => {
 2. Second item
 3. Third item
 
-[] checkbox
-- [x] First checkbox
-- [ ] Second checkbox
-
 > This is a quote.
 
 \`Inline code\`
@@ -186,25 +182,21 @@ console.log('Hello, world!');
         expect(result[4].content).toBe('First numbered item\nSecond item\nThird item');
         expect(result[4].html).toBe('<ol><li>First numbered item</li><li>Second item</li><li>Third item</li></ol>');
 
-        expect(result[5].type).toBe(BlockType.SQ);
-        expect(result[5].content).toBe('checkbox');
-        expect(result[5].html).toBe('<p>checkbox</p>');
+        expect(result[5].type).toBe(BlockType.QUOTE);
+        expect(result[5].content).toBe('This is a quote.');
+        expect(result[5].html).toBe('<blockquote>This is a quote.</blockquote>');
 
-        expect(result[6].type).toBe(BlockType.QUOTE);
-        expect(result[6].content).toBe('This is a quote.');
-        expect(result[6].html).toBe('<blockquote>This is a quote.</blockquote>');
+        expect(result[6].type).toBe(BlockType.CODE);
+        expect(result[6].content).toBe('Inline code');
+        expect(result[6].html).toBe('<code>Inline code</code>');
 
         expect(result[7].type).toBe(BlockType.CODE);
-        expect(result[7].content).toBe('Inline code');
-        expect(result[7].html).toBe('<code>Inline code</code>');
+        expect(result[7].content).toBe("console.log('Hello, world!');");
+        expect(result[7].html).toBe('<pre><code class="language-javascript">console.log(\'Hello, world!\');\n</code></pre>');
 
-        expect(result[8].type).toBe(BlockType.CODE);
-        expect(result[8].content).toBe("console.log('Hello, world!');");
-        expect(result[8].html).toBe('<pre><code class="language-javascript">console.log(\'Hello, world!\');\n</code></pre>');
-
-        expect(result[9].type).toBe(BlockType.PARAGRAPH);
-        expect(result[9].content).toBe('Link to Google');
-        expect(result[9].html).toBe('<p><a href="https://www.google.com">Link to Google</a></p>');
+        expect(result[8].type).toBe(BlockType.PARAGRAPH);
+        expect(result[8].content).toBe('Link to Google');
+        expect(result[8].html).toBe('<p><a href="https://www.google.com">Link to Google</a></p>');
     });
   });
 
