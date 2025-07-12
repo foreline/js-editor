@@ -52,8 +52,7 @@ export class Parser
      * @param {string} markdownString
      * @return {array<Block>} blocks
      */
-    static parse(markdownString)
-    {
+    static parse(markdownString) {
         log('parse()', 'Parser.'); console.log({markdownString});
 
         if (!markdownString || markdownString.trim() === '') {
@@ -62,10 +61,15 @@ export class Parser
         // Use showdown to convert markdown to HTML
         const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
         const html = converter.makeHtml(markdownString);
-        // @fixme temporary fix: Remove id attributes from heading tags
-        const htmlClean = html.replace(/<h[1-6]\s+id="[^"]+"/g, match => match.replace(/\s+id="[^"]+"/, ''));
+        // Fix: Ensure strikethrough and list formatting are properly parsed
+        const htmlClean = html
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/<ul>(.*?)<\/ul>/gs, match => match.replace(/\n/g, '\n'))
+            .replace(/<ol>(.*?)<\/ol>/gs, match => match.replace(/\n/g, '\n'));
+        // Remove id attributes from heading tags
+        const htmlFinal = htmlClean.replace(/<h[1-6]\s+id="[^"]+"/g, match => match.replace(/\s+id="[^"]+"/, ''));
         // Now parse the HTML into blocks
-        return Parser.parseHtml(htmlClean);
+        return Parser.parseHtml(htmlFinal);
     }
 
     /**
@@ -73,18 +77,16 @@ export class Parser
      * @param {Block} block
      * @return {HTMLElement} htmlElement
      */
-    static html(block)
-    {
+    static html(block) {
         log('html()', 'Parser.'); console.log({block});
-        
+
         let element = document.createElement('div');
-        
-        //element.tabIndex = -1;
+
         element.classList.add('block');
-        
+
         element.setAttribute('data-placeholder', 'Type "/" to insert block');
-        
-        switch ( block.type ) {
+
+        switch (block.type) {
             case BlockType.H1:
                 element.classList.add('block-h1');
                 break;
