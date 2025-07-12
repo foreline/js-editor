@@ -1,0 +1,46 @@
+stages:
+  - install
+  - test
+  - build
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - coverage/
+
+before_script:
+  - 'echo Using Node version: $(node -v)'
+  - 'npm ci'
+
+install_dependencies:
+  stage: install
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1h
+
+test:
+  stage: test
+  script:
+    - npm test
+    - npm run test:coverage
+  artifacts:
+    paths:
+      - coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/clover.xml
+    expire_in: 1 week
+
+build:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
