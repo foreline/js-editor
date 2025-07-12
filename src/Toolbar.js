@@ -3,18 +3,26 @@
 'use strict';
 
 import {Editor} from "./Editor.js";
+import { ToolbarHandlers } from "./ToolbarHandlers.js";
 import {log} from "./utils/log.js";
 
 /**
- *
+ * Toolbar module for text formatting and block management
  */
 export const Toolbar = {
     
-    init: () =>
+    /**
+     * 
+     * @param {*} options 
+     */
+    init: (options) =>
     {
-        log('init()', 'Toolbar.');
+        log('init()', 'Toolbar.'); console.log({options});
+        const { container, config } = options;
+        Toolbar.createToolbar(container, config);
+        ToolbarHandlers.init();
     },
-    
+
     /*
      * UNDO | REDO
      */
@@ -252,7 +260,7 @@ export const Toolbar = {
         const noteText = document.querySelector('.note-text');
         const textMd = document.querySelector('.editor-text-md');
         const textHtml = document.querySelector('.editor-text-html');
-        
+
         const btnText = document.querySelector('.editor-toolbar-text');
         const btnMarkdown = document.querySelector('.editor-toolbar-markdown');
         const btnHtml = document.querySelector('.editor-toolbar-html');
@@ -310,211 +318,61 @@ export const Toolbar = {
         //eventEmitter.emit('EDITOR.UPDATED_EVENT');
         Editor.update();
     },
+
+    /**
+     * Create a toolbar
+     * @param {*} container 
+     * @param {*} config 
+     */
+    createToolbar: (container, config) =>
+    {
+        log('createToolbar()', 'Toolbar.'); console.log({container, config});
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'editor-toolbar';
+
+        config.config.forEach((section) => {
+            const group = document.createElement('div');
+            group.className = 'editor-toolbar-group';
+            if (section.dropdown) {
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown';
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-secondary dropdown-toggle';
+                btn.type = 'button';
+                btn.id = section.id;
+                btn.setAttribute('data-bs-toggle', 'dropdown');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.innerHTML = `<i class="fa ${section.icon}"></i>`;
+                dropdown.appendChild(btn);
+                const ul = document.createElement('ul');
+                ul.className = 'dropdown-menu';
+                ul.setAttribute('aria-labelledby', section.id);
+                section.group.forEach(item => {
+                    const li = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.className = item.class;
+                    button.textContent = item.label || '';
+                    if (item.icon) button.innerHTML = `<i class="fa ${item.icon}"></i> ` + button.textContent;
+                    if (item.title) button.title = item.title;
+                    if (item.disabled) button.disabled = true;
+                    li.appendChild(button);
+                    ul.appendChild(li);
+                });
+                dropdown.appendChild(ul);
+                group.appendChild(dropdown);
+            } else {
+                section.group.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = item.class;
+                    if (item.icon) button.innerHTML = `<i class="fa ${item.icon}"></i>`;
+                    if (item.title) button.title = item.title;
+                    if (item.disabled) button.disabled = true;
+                    group.appendChild(button);
+                });
+            }
+            toolbar.appendChild(group);
+        });
+        container.insertBefore(toolbar, container.firstChild);
+    },
 };
-
-// Place <p> instead of <div>
-document.execCommand('defaultParagraphSeparator', false, 'p');
-
-/*
- * UNDO | REDO
- */
-
-document
-    .querySelectorAll('.editor-toolbar-undo')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.undo();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-redo')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.redo();
-        });
-    });
-
-/*
- * HEADERs | PARAGRAPH
- */
-
-document
-    .querySelectorAll('.editor-toolbar-header1')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h1();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-header2')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h2();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-header3')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h3();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-header4')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h4();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-header5')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h5();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-header6')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.h6();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-paragraph')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.paragraph();
-        });
-    });
-
-/*
- * BOLD | ITALIC | UNDERLINE | STRIKETHROUGH
- */
-
-document
-    .querySelectorAll('.editor-toolbar-bold')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.bold();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-italic')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.italic();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-underline')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.underline();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-strikethrough')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.strikethrough();
-        });
-    });
-
-/*
- * UL | OL |
- */
-
-document
-    .querySelectorAll('.editor-toolbar-ul')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.ul();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-ol')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.ol();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-sq')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.sq();
-        });
-    });
-
-/*
- * CODE
- */
-
-document
-    .querySelectorAll('.editor-toolbar-code')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.code();
-        });
-    });
-
-/*
- * TEXT | MARKDOWN | HTML
- */
-
-document
-    .querySelectorAll('.editor-toolbar-text')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.text();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-markdown')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.markdown();
-        });
-    });
-
-document
-    .querySelectorAll('.editor-toolbar-html')
-    .forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            Toolbar.html();
-        });
-    });
