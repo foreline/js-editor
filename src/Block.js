@@ -7,7 +7,7 @@ import {BlockType} from "@/BlockType";
  */
 export class Block
 {
-    _type = 'div';
+    _type = BlockType.PARAGRAPH;
     _content = '';
     _html = '';
     _nested = false;
@@ -15,11 +15,14 @@ export class Block
     /**
      * @param {string} type
      * @param {string} content
+     * @param {string} html
+     * @param {boolean} nested
      */
-    constructor(type= '', content= '', html= '', nested= false) {
+    constructor(type = '', content = '', html = '', nested = false) {
         if ( 0 === type.length ) {
             type = BlockType.PARAGRAPH;
         }
+        type = BlockType.getBlockTypeFromHtmlTag(type);
         this._type = type;
         this._content = content;
         this._html = html;

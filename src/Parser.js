@@ -83,27 +83,21 @@ export class Parser
         switch ( block.type ) {
             case BlockType.H1:
                 element.classList.add('block-h1');
-                //element.innerHTML = '<h1>' + (block.html || block.content || '') + '</h1>';
                 break;
             case BlockType.H2:
                 element.classList.add('block-h2');
-                //element.innerHTML = '<h2>' + (block.html || block.content || '') + '</h2>';
                 break;
             case BlockType.H3:
                 element.classList.add('block-h3');
-                //element.innerHTML = '<h3>' + (block.html || block.content || '') + '</h3>';
                 break;
             case BlockType.PARAGRAPH:
                 element.classList.add('block-p');
-                //element.innerHTML = '<p>' + (block.html || block.content || '') + '</p>';
                 break;
             case BlockType.QUOTE:
                 element.classList.add('block-quote');
-                //element.innerHTML = '<blockquote>' + (block.html || block.content || '') + '</blockquote>';
                 break;
             default:
                 element.classList.add('block-p');
-                //element.innerHTML = '<p>' + (block.html || block.content || '') + '</p>';
         }
 
         element.innerHTML = block.html || block.content || '';
