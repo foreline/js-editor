@@ -22,6 +22,7 @@ beforeEach(() => {
 
 describe('Parser', () => {
   describe('parse method', () => {
+
     test('should parse simple markdown paragraph', () => {
         const markdownString = 'Hello World';
         const result = Parser.parse(markdownString);
@@ -30,6 +31,34 @@ describe('Parser', () => {
         expect(result[0].type).toBe(BlockType.PARAGRAPH);
         expect(result[0].content).toBe('Hello World');
         expect(result[0].html).toBe('<p>Hello World</p>');
+    });
+
+    test('should parse bold markdown', () => {
+        const markdownString = '**Bold text**';
+        const result = Parser.parse(markdownString);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.PARAGRAPH);
+        expect(result[0].content).toBe('Bold text');
+        expect(result[0].html).toBe('<p><strong>Bold text</strong></p>');
+    });
+
+    test('should parse italic markdown', () => {
+        const markdownString = '*Italic text*';
+        const result = Parser.parse(markdownString);
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.PARAGRAPH);
+        expect(result[0].content).toBe('Italic text');
+        expect(result[0].html).toBe('<p><em>Italic text</em></p>');
+    });
+
+    test('should parse strikethrough markdown', () => {
+        const markdownString = '~~Strikethrough~~';
+        const result = Parser.parse(markdownString);
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.PARAGRAPH);
+        expect(result[0].content).toBe('Strikethrough');
+        expect(result[0].html).toBe('<p><del>Strikethrough</del></p>');
     });
 
     test('should parse heading markdown', () => {
@@ -49,9 +78,9 @@ describe('Parser', () => {
         expect(result).toHaveLength(1);
         expect(result[0].type).toBe(BlockType.OL);
         expect(result[0].content).toBe('First item\nSecond item');
-        expect(result[0].html).toBe('<ol><li>First item</li><li>Second item</li></ol>');
+        expect(result[0].html).toBe("<ol>\n<li>First item</li>\n<li>Second item</li>\n</ol>");
     });
-    
+
     test('should parse unordered list markdown', () => {
       const markdownString = '- First item\n- Second item';
       const result = Parser.parse(markdownString);
@@ -59,7 +88,7 @@ describe('Parser', () => {
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(BlockType.UL);
       expect(result[0].content).toBe('First item\nSecond item');
-      expect(result[0].html).toBe('<ul><li>First item</li><li>Second item</li></ul>');
+      expect(result[0].html).toBe('<ul>\n<li>First item</li>\n<li>Second item</li>\n</ul>');
     });
 
     test('should parse multiple lines of markdown', () => {

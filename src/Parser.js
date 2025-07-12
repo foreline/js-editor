@@ -26,7 +26,7 @@ export class Parser
         }
     
         // First pass: Get top-level blocks
-        const blockRegex = /<(h[1-6]|div|p)[^>]*>([\s\S]*?)<\/\1>/gi;
+        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code)[^>]*>([\s\S]*?)<\/\1>/gi;
         
         const matches = [...htmlString.matchAll(blockRegex)];
     
