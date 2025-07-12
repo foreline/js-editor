@@ -7,6 +7,10 @@
     margin-bottom: 0.2em;
 }
 
+.editor .active-block {
+    border: 1px dashed #900;
+}
+
 .editor .block:empty::before {
     content: attr(data-placeholder);
     color: #666;

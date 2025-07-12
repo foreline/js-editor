@@ -94,8 +94,6 @@ export class Editor
             blocks = [new Block()];
         }
 
-        console.warn({blocks});
-        
         // @fixme use timestamp(content) for tracking changes
         
         /*$(element).on('focus', (e) => {
@@ -119,14 +117,13 @@ export class Editor
         
         for ( let block of blocks ) {
             let html = Parser.html(block);
-            console.warn({html});
             this.instance.append(html);
         }
         
-        this.currentBlock = this.instance.querySelectorAll('.block')[0];
+        this.setCurrentBlock(this.instance.querySelectorAll('.block')[0]);
         
         // Ensure at least one block exists
-        if ( 1 || 0 === content.length ) {
+        if ( 0 === content.length ) {
             const block = document.createElement('div');
             block.classList.add('block')
             block.innerHTML = '<br />';
@@ -174,12 +171,36 @@ export class Editor
         
         // mask focused block as currentBlock
         document.addEventListener('click', function(e) {
-            if ( e.target.matches('.block') ) {
-                Editor.currentBlock = e.target;
+            console.log('click', e.target);
+            // @fixme check if target is inside editor
+            if ( !e.target.closest('.editor') ) {
+                return;
+            }
+
+            let block = e.target.closest('.block');
+            if ( block ) {
+                Editor.setCurrentBlock(block);
+            }
+        });
+
+        // Add focus event for keyboard navigation
+        this.instance.addEventListener('focusin', function(e) {
+            if (e.target.classList.contains('block')) {
+                Editor.setCurrentBlock(e.target);
+            }
+        });
+
+        // Add focus event for keyboard navigation
+        this.instance.addEventListener('focusin', function(e) {
+            if (e.target.classList.contains('block')) {
+                if (Editor.currentBlock) {
+                    Editor.currentBlock.classList.remove('active-block');
+                }
+                Editor.setCurrentBlock(e.target);
             }
         });
     }
-    
+
     /**
      * Sets focus on given or current editor block.
      * @param {?HTMLElement} element
@@ -264,7 +285,7 @@ export class Editor
         
         if ( 0 === this.instance.querySelectorAll('.block').length ) {
             this.instance.innerHTML = '';
-            Editor.addBlock();
+            Editor.addEmptyBlock();
         }
     
         eventEmitter.emit('EDITOR.UPDATED_EVENT');
@@ -443,7 +464,7 @@ export class Editor
         }
     
         // Update currentBlock reference
-        Editor.currentBlock = htmlBlock;
+        this.setCurrentBlock(htmlBlock);
     
         // Ensure the block is attached before focusing
         /*requestAnimationFrame(() => {
@@ -453,6 +474,19 @@ export class Editor
         htmlBlock.focus();
         
         return htmlBlock;
+    }
+
+    /**
+     * Sets the current block
+     * @param {HTMLElement} block 
+     */
+    static setCurrentBlock(block)
+    {
+        if (Editor.currentBlock) {
+            Editor.currentBlock.classList.remove('active-block');
+        }
+        Editor.currentBlock = block;
+        Editor.currentBlock.classList.add('active-block');
     }
 
     /**
