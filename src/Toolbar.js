@@ -219,48 +219,88 @@ export const Toolbar = {
     text: () =>
     {
         log('text()', 'Toolbar.');
-    
-        document.querySelector('.note-text')?.classList.remove('visually-hidden');
-        document.querySelector('.editor-text-md')?.classList.add('visually-hidden');
-        document.querySelector('.editor-text-html')?.classList.add('visually-hidden');
-    
-        document.querySelector('.editor-toolbar-text').disabled = true;
-        document.querySelector('.editor-toolbar-markdown').disabled = false;
-        document.querySelector('.editor-toolbar-html').disabled = false;
+
+        const noteText = document.querySelector('.note-text');
+        const textMd = document.querySelector('.editor-text-md');
+        const textHtml = document.querySelector('.editor-text-html');
+        const btnText = document.querySelector('.editor-toolbar-text');
+        const btnMarkdown = document.querySelector('.editor-toolbar-markdown');
+        const btnHtml = document.querySelector('.editor-toolbar-html');
+
+        noteText?.classList.remove('visually-hidden');
+        textMd?.classList.add('visually-hidden');
+        textHtml?.classList.add('visually-hidden');
+
+        if (btnText) {
+            btnText.disabled = true;
+        }
+        if (btnMarkdown) {
+            btnMarkdown.disabled = false;
+        }
+        if (btnHtml) {
+            btnHtml.disabled = false;
+        }
     },
-    
+
     /**
      * Switch to markdown view
      */
     markdown: () =>
     {
         log('markdown()', 'Toolbar.');
-    
-        document.querySelector('.note-text').classList.add('visually-hidden');
-        document.querySelector('.editor-text-md').classList.remove('visually-hidden');
-        document.querySelector('.editor-text-html').classList.add('visually-hidden');
-    
-        document.querySelector('.editor-toolbar-text').disabled = false;
-        document.querySelector('.editor-toolbar-markdown').disabled = true;
-        document.querySelector('.editor-toolbar-html').disabled = false;
+
+        const noteText = document.querySelector('.note-text');
+        const textMd = document.querySelector('.editor-text-md');
+        const textHtml = document.querySelector('.editor-text-html');
+        
+        const btnText = document.querySelector('.editor-toolbar-text');
+        const btnMarkdown = document.querySelector('.editor-toolbar-markdown');
+        const btnHtml = document.querySelector('.editor-toolbar-html');
+
+        noteText?.classList.add('visually-hidden');
+        textMd?.classList.remove('visually-hidden');
+        textHtml?.classList.add('visually-hidden');
+
+        if (btnText) {
+            btnText.disabled = false;
+        }
+        if (btnMarkdown) {
+            btnMarkdown.disabled = true;
+        }
+        if (btnHtml) {
+            btnHtml.disabled = false;
+        }
     },
-    
+
     /**
      * Switch to html view
      */
     html: () =>
     {
         log('html()', 'Toolbar.');
-    
-        document.querySelector('.note-text').classList.add('visually-hidden');
-        document.querySelector('.editor-text-md').classList.add('visually-hidden');
-        document.querySelector('.editor-text-html').classList.remove('visually-hidden');
-    
-        document.querySelector('.editor-toolbar-text').disabled = false;
-        document.querySelector('.editor-toolbar-markdown').disabled = false;
-        document.querySelector('.editor-toolbar-html').disabled = true;
+
+        const noteText = document.querySelector('.note-text');
+        const textMd = document.querySelector('.editor-text-md');
+        const textHtml = document.querySelector('.editor-text-html');
+        const btnText = document.querySelector('.editor-toolbar-text');
+        const btnMarkdown = document.querySelector('.editor-toolbar-markdown');
+        const btnHtml = document.querySelector('.editor-toolbar-html');
+
+        noteText?.classList.add('visually-hidden');
+        textMd?.classList.add('visually-hidden');
+        textHtml?.classList.remove('visually-hidden');
+
+        if (btnText) {
+            btnText.disabled = false;
+        }
+        if (btnMarkdown) {
+            btnMarkdown.disabled = false;
+        }
+        if (btnHtml) {
+            btnHtml.disabled = true;
+        }
     },
-    
+
     /**
      * @fixme refactor name
      */
