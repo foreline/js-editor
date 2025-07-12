@@ -2,6 +2,15 @@
 
 WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and block-based content management system.
 
+## Features
+
+- Block-based content management system.
+- Comprehensive toolbar for text formatting, lists, blockquotes, and code blocks.
+- Markdown support using Showdown.
+- Fenced code block parsing.
+- Inline code block extraction.
+- Preprocessing for HTML block separation.
+
 ## Setup
 
 Install dependencies:
@@ -47,7 +56,8 @@ npm run test:coverage
 After running the coverage command, you can find the detailed coverage report in the `coverage` directory.
 
 ## Dependencies
-* Showdown (for markdown support)
+
+- Showdown (for markdown support)
 
 ## Usage
 
@@ -61,3 +71,16 @@ Initialize the editor in your HTML:
     const editor = new Editor({ id: 'editor' });
 </script>
 ```
+
+## Contribution Guidelines
+
+We welcome contributions to improve the JS Editor. To contribute:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Write clear and concise commit messages.
+4. Submit a pull request with a detailed description of your changes.
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
