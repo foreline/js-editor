@@ -78,6 +78,19 @@ describe('Editor', () => {
       
       expect(console.warn).toHaveBeenCalledWith('Element id is not set.');
     });
+
+    test('should initialize editor with valid element ID and toolbar config', () => {
+      const mockConfig = { config: [{ dropdown: true }] };
+      jest.spyOn(Toolbar, 'init').mockImplementation(() => {});
+
+      const editor = new Editor({ id: 'editor', toolbar: mockConfig });
+
+      expect(Toolbar.init).toHaveBeenCalledWith({
+        id: expect.any(String),
+        container: expect.any(HTMLElement),
+        config: mockConfig
+      });
+    });
   });
 
   describe('init method', () => {
@@ -95,6 +108,49 @@ describe('Editor', () => {
       // Check that a default block was created
       expect(Block).toHaveBeenCalled();
     });
+
+    test('should set up the editor instance with valid toolbar config', () => {
+      const mockConfig = { config: [{ dropdown: true }] };
+      Editor.init({ id: 'editor', toolbar: mockConfig });
+
+      expect(Editor.instance).toBe(editorElement);
+      expect(editorElement.getAttribute('contenteditable')).toBe('true');
+      expect(Parser.parse).toHaveBeenCalled();
+    });
+  });
+
+  describe('init method edge cases', () => {
+    test('should handle empty container array', () => {
+      const options = { id: 'editor', container: [] };
+      Editor.init(options);
+
+      expect(Editor.instance).toBe(editorElement);
+      expect(editorElement.getAttribute('contenteditable')).toBe('true');
+    });
+
+    test('should handle empty text content', () => {
+      const options = { id: 'editor', text: '' };
+      Editor.init(options);
+
+      expect(Editor.instance).toBe(editorElement);
+      expect(editorElement.querySelectorAll('.block').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Markdown and HTML container initialization', () => {
+    test('should initialize markdown container', () => {
+      jest.spyOn(Editor, 'initMarkdownContainer').mockImplementation(() => {});
+      Editor.initMarkdownContainer();
+
+      expect(Editor.initMarkdownContainer).toHaveBeenCalled();
+    });
+
+    test('should initialize HTML container', () => {
+      jest.spyOn(Editor, 'initHtmlContainer').mockImplementation(() => {});
+      Editor.initHtmlContainer();
+
+      expect(Editor.initHtmlContainer).toHaveBeenCalled();
+    });
   });
 
   describe('addListeners method', () => {
@@ -110,6 +166,17 @@ describe('Editor', () => {
       
       expect(addEventListenerSpy).toHaveBeenCalledTimes(4); // keydown, keyup, keydown, paste
       expect(documentAddEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
+    });
+  });
+
+  describe('Event listeners', () => {
+    test('should add all expected event listeners', () => {
+      const addEventListenerSpy = jest.spyOn(editorElement, 'addEventListener');
+      Editor.addListeners();
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('keyup', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('paste', expect.any(Function));
     });
   });
 
@@ -135,6 +202,16 @@ describe('Editor', () => {
         expect.objectContaining({ element: null })
       );
     });
+
+    test('should focus on editor when empty', () => {
+      Editor.instance = editorElement;
+      Editor.instance.innerHTML = '';
+
+      Editor.focus();
+
+      expect(window.getSelection().removeAllRanges).toHaveBeenCalled();
+      expect(window.getSelection().addRange).toHaveBeenCalled();
+    });
   });
 
   describe('paste method', () => {
@@ -152,6 +229,23 @@ describe('Editor', () => {
       
       Editor.paste(clipboardEvent);
       
+      expect(clipboardEvent.preventDefault).toHaveBeenCalled();
+      expect(Editor.md2html).toHaveBeenCalledWith('test text');
+    });
+
+    test('should handle text paste with valid DOM methods', () => {
+      const clipboardEvent = {
+        clipboardData: {
+          getData: jest.fn().mockReturnValue('test text')
+        },
+        preventDefault: jest.fn()
+      };
+
+      jest.spyOn(Editor, 'md2html').mockReturnValue('<p>test text</p>');
+      jest.spyOn(document.createRange(), 'createContextualFragment').mockReturnValue(document.createElement('div'));
+
+      Editor.paste(clipboardEvent);
+
       expect(clipboardEvent.preventDefault).toHaveBeenCalled();
       expect(Editor.md2html).toHaveBeenCalledWith('test text');
     });

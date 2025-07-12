@@ -26,7 +26,8 @@ export class BlockType
      * @returns {string}
      */
     static getBlockTypeFromHtmlTag(tag)
-    {        switch (tag.toLowerCase()) {
+    {        
+        switch (tag.toLowerCase()) {
             case 'h1':
                 return BlockType.H1;
             case 'h2':
