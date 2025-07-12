@@ -18,6 +18,7 @@ export class Parser
     static parseHtml(htmlString)
     {
         log('parseHtml()', 'Parser.'); console.log({htmlString});
+
         if (!htmlString || htmlString.trim() === '') return [];
         // Helper function to extract text content
         function getTextContent(html) {
@@ -32,16 +33,17 @@ export class Parser
         return matches.map(match => {
             const fullMatch = match[0];
             const innerHtml = match[2];
-        
+
             // Check for nested blocks
-            const nestedBlocks = this.parseHtml(innerHtml);
-        
-            return {
-                type: fullMatch.match(/<(\w+)/)[1].toLowerCase(),
-                content: getTextContent(fullMatch),
-                html: fullMatch,
-                nested: nestedBlocks.length > 0 ? nestedBlocks : null
-            };
+            const nestedBlocks = Parser.parseHtml(innerHtml);
+
+            // Create Block instance
+            return new Block(
+                fullMatch.match(/<(\w+)/)[1].toLowerCase(),
+                getTextContent(fullMatch),
+                fullMatch,
+                nestedBlocks.length > 0 ? nestedBlocks : null
+            );
         });
     }
 
@@ -53,6 +55,7 @@ export class Parser
     static parse(markdownString)
     {
         log('parse()', 'Parser.'); console.log({markdownString});
+
         if (!markdownString || markdownString.trim() === '') return [];
         // Use showdown to convert markdown to HTML
         const converter = new showdown.Converter();
@@ -80,13 +83,31 @@ export class Parser
         switch ( block.type ) {
             case BlockType.H1:
                 element.classList.add('block-h1');
+                //element.innerHTML = '<h1>' + (block.html || block.content || '') + '</h1>';
+                break;
+            case BlockType.H2:
+                element.classList.add('block-h2');
+                //element.innerHTML = '<h2>' + (block.html || block.content || '') + '</h2>';
+                break;
+            case BlockType.H3:
+                element.classList.add('block-h3');
+                //element.innerHTML = '<h3>' + (block.html || block.content || '') + '</h3>';
+                break;
+            case BlockType.PARAGRAPH:
+                element.classList.add('block-p');
+                //element.innerHTML = '<p>' + (block.html || block.content || '') + '</p>';
+                break;
+            case BlockType.QUOTE:
+                element.classList.add('block-quote');
+                //element.innerHTML = '<blockquote>' + (block.html || block.content || '') + '</blockquote>';
                 break;
             default:
                 element.classList.add('block-p');
+                //element.innerHTML = '<p>' + (block.html || block.content || '') + '</p>';
         }
-    
-        element.innerHTML = block.html;
-        
+
+        element.innerHTML = block.html || block.content || '';
+
         return element;
     }
 }

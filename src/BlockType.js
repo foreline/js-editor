@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- *
+ * Block types enumeration.
+ * @readonly
  */
 export class BlockType
 {

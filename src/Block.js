@@ -16,14 +16,16 @@ export class Block
      * @param {string} type
      * @param {string} content
      */
-    constructor(type= '', content= '') {
+    constructor(type= '', content= '', html= '', nested= false) {
         if ( 0 === type.length ) {
             type = BlockType.PARAGRAPH;
         }
         this._type = type;
         this._content = content;
+        this._html = html;
+        this._nested = nested;
     }
-    
+
     get type() {
         return this._type;
     }

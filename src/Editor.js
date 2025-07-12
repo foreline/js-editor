@@ -93,6 +93,8 @@ export class Editor
         if ( 0 === blocks.length ) {
             blocks = [new Block()];
         }
+
+        console.warn({blocks});
         
         // @fixme use timestamp(content) for tracking changes
         
@@ -116,18 +118,18 @@ export class Editor
         //Editor.update();
         
         for ( let block of blocks ) {
-            this.instance.append(Parser.html(block));
+            let html = Parser.html(block);
+            console.warn({html});
+            this.instance.append(html);
         }
         
         this.currentBlock = this.instance.querySelectorAll('.block')[0];
         
+        // Ensure at least one block exists
         if ( 0 === content.length ) {
             const block = document.createElement('div');
             block.classList.add('block')
             block.innerHTML = '<br />';
-            
-            console.log({block});
-    
             this.instance.appendChild(block);
         }
         
