@@ -72,9 +72,15 @@ export class Editor
         editorContainer.id = 'editor';
         editorContainer.className = 'editor';
 
-        document.querySelectorAll('.editor-container').forEach(container => {
-            container.appendChild(editorContainer);
-        });
+        if ( options.container ) {
+            if ( Array.isArray(options.container) ) {
+                options.container.forEach(container => {
+                    container.appendChild(editorContainer);
+                });
+            } else {
+                options.container.appendChild(editorContainer);
+            }
+        }
 
         this.instance = document.getElementById(options.id);
 

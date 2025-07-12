@@ -19,9 +19,9 @@
     </style>
 </head>
 <body>
-    
+
 <div class="editor-container">
-    <div id="editor" class="editor"></div>
+    
 </div>
 
 <script type="module">
@@ -87,6 +87,7 @@
     const editor = new Editor(
         {
             id: 'editor',
+            container: document.querySelector('.editor-container'),
             toolbar: {
                 container: document.querySelector('.editor-container'),
                 config: toolbarConfig
