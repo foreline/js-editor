@@ -23,21 +23,43 @@ beforeEach(() => {
 describe('Parser', () => {
   describe('parse method', () => {
     test('should parse simple markdown paragraph', () => {
-      const markdownString = 'Hello World';
-      const result = Parser.parse(markdownString);
+        const markdownString = 'Hello World';
+        const result = Parser.parse(markdownString);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].type).toBe(BlockType.PARAGRAPH);
-      expect(result[0].content).toBe('Hello World');
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.PARAGRAPH);
+        expect(result[0].content).toBe('Hello World');
+        expect(result[0].html).toBe('<p>Hello World</p>');
     });
 
     test('should parse heading markdown', () => {
-      const markdownString = '# Heading';
+        const markdownString = '# Heading';
+        const result = Parser.parse(markdownString);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.H1);
+        expect(result[0].content).toBe('Heading');
+        expect(result[0].html).toBe('<h1>Heading</h1>');
+    });
+
+    test('should parse ordered list markdown', () => {
+        const markdownString = '1. First item\n2. Second item';
+        const result = Parser.parse(markdownString);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.OL);
+        expect(result[0].content).toBe('First item\nSecond item');
+        expect(result[0].html).toBe('<ol><li>First item</li><li>Second item</li></ol>');
+    });
+    
+    test('should parse unordered list markdown', () => {
+      const markdownString = '- First item\n- Second item';
       const result = Parser.parse(markdownString);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe(BlockType.H1);
-      expect(result[0].content).toBe('Heading');
+      expect(result[0].type).toBe(BlockType.UL);
+      expect(result[0].content).toBe('First item\nSecond item');
+      expect(result[0].html).toBe('<ul><li>First item</li><li>Second item</li></ul>');
     });
 
     test('should parse multiple lines of markdown', () => {
@@ -47,8 +69,11 @@ describe('Parser', () => {
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe(BlockType.H1);
       expect(result[0].content).toBe('Heading');
+      expect(result[0].html).toBe('<h1>Heading</h1>');
+
       expect(result[1].type).toBe(BlockType.PARAGRAPH);
       expect(result[1].content).toBe('Paragraph text');
+      expect(result[1].html).toBe('<p>Paragraph text</p>');
     });
 
     test('should handle empty markdown', () => {
@@ -72,12 +97,15 @@ describe('Parser', () => {
         expect(result).toHaveLength(2);
         expect(result[0].type).toBe(BlockType.H1);
         expect(result[0].content).toBe('Heading');
+        expect(result[0].html).toBe('<h1>Heading</h1>');
+
         expect(result[1].type).toBe(BlockType.PARAGRAPH);
-        expect(result[1].content).toBe('Paragraph text with **bold** and *italic*');
+        expect(result[1].content).toBe('Paragraph text with bold and italic');
+        expect(result[1].html).toBe('<p>Paragraph text with <strong>bold</strong> and <em>italic</em></p>');
     });
 
     test('should parse complex translated markdown sample', () => {
-      const markdownString = `# Heading 1
+        const markdownString = `# Heading 1
 
 ## Heading 2
 
@@ -104,37 +132,50 @@ console.log('Hello, world!');
 \`\`\`
 
 [Link to Google](https://www.google.com)`;
-      const result = Parser.parse(markdownString);
-      // Basic checks: block count and types
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0].type).toBe(BlockType.H1);
-      expect(result[0].content).toBe('Heading 1');
-      expect(result[1].type).toBe(BlockType.H2);
-      expect(result[1].content).toBe('Heading 2');
-      // Check for bold/italic/strikethrough paragraph
-      expect(result.some(b => b.content.includes('Bold text'))).toBe(true);
-      expect(result.some(b => b.content.includes('italic'))).toBe(true);
-      expect(result.some(b => b.content.includes('strikethrough'))).toBe(true);
-      // Check for list items
-      expect(result.some(b => b.content.includes('First list item'))).toBe(true);
-      expect(result.some(b => b.content.includes('Second list item'))).toBe(true);
-      expect(result.some(b => b.content.includes('Third list item'))).toBe(true);
-      // Check for numbered list
-      expect(result.some(b => b.content.includes('First numbered item'))).toBe(true);
-      expect(result.some(b => b.content.includes('Second item'))).toBe(true);
-      expect(result.some(b => b.content.includes('Third item'))).toBe(true);
-      // Check for checkboxes
-      expect(result.some(b => b.content.includes('checkbox'))).toBe(true);
-      expect(result.some(b => b.content.includes('First checkbox'))).toBe(true);
-      expect(result.some(b => b.content.includes('Second checkbox'))).toBe(true);
-      // Check for quote
-      expect(result.some(b => b.content.includes('This is a quote.'))).toBe(true);
-      // Check for inline code
-      expect(result.some(b => b.content.includes('Inline code'))).toBe(true);
-      // Check for code block
-      expect(result.some(b => b.content.includes("console.log('Hello, world!');"))).toBe(true);
-      // Check for link
-      expect(result.some(b => b.content.includes('Link to Google'))).toBe(true);
+
+        const result = Parser.parse(markdownString);
+        // Basic checks: block count and types
+        expect(result.length).toBeGreaterThan(0);
+        expect(result[0].type).toBe(BlockType.H1);
+        expect(result[0].content).toBe('Heading 1');
+        expect(result[0].html).toBe('<h1>Heading 1</h1>');
+
+        expect(result[1].type).toBe(BlockType.H2);
+        expect(result[1].content).toBe('Heading 2');
+        expect(result[1].html).toBe('<h2>Heading 2</h2>');
+
+        expect(result[2].type).toBe(BlockType.PARAGRAPH);
+        expect(result[2].content).toBe('Bold text and italic and strikethrough.');
+        expect(result[2].html).toBe('<p><strong>Bold text</strong> and <em>italic</em> and <del>strikethrough</del>.</p>');
+
+        // Check for list items
+        expect(result[3].type).toBe(BlockType.UL);
+        expect(result[3].content).toBe('First list item\nSecond list item\nThird list item');
+        expect(result[3].html).toBe('<ul><li>First list item</li><li>Second list item</li><li>Third list item</li></ul>');
+
+        expect(result[4].type).toBe(BlockType.OL);
+        expect(result[4].content).toBe('First numbered item\nSecond item\nThird item');
+        expect(result[4].html).toBe('<ol><li>First numbered item</li><li>Second item</li><li>Third item</li></ol>');
+
+        expect(result[5].type).toBe(BlockType.SQ);
+        expect(result[5].content).toBe('checkbox');
+        expect(result[5].html).toBe('<p>checkbox</p>');
+
+        expect(result[6].type).toBe(BlockType.QUOTE);
+        expect(result[6].content).toBe('This is a quote.');
+        expect(result[6].html).toBe('<blockquote>This is a quote.</blockquote>');
+
+        expect(result[7].type).toBe(BlockType.CODE);
+        expect(result[7].content).toBe('Inline code');
+        expect(result[7].html).toBe('<code>Inline code</code>');
+
+        expect(result[8].type).toBe(BlockType.CODE);
+        expect(result[8].content).toBe("console.log('Hello, world!');");
+        expect(result[8].html).toBe('<pre><code class="language-javascript">console.log(\'Hello, world!\');\n</code></pre>');
+
+        expect(result[9].type).toBe(BlockType.PARAGRAPH);
+        expect(result[9].content).toBe('Link to Google');
+        expect(result[9].html).toBe('<p><a href="https://www.google.com">Link to Google</a></p>');
     });
   });
 
@@ -147,7 +188,7 @@ console.log('Hello, world!');
       const result = Parser.parseHtml(htmlString);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe('p');
+      expect(result[0].type).toBe(BlockType.PARAGRAPH);
       expect(result[0].content).toBe('Hello World');
       expect(result[0].html).toBe('<p>Hello World</p>');
       expect(result[0].nested).toBe(null);
@@ -163,21 +204,27 @@ console.log('Hello, world!');
       const result = Parser.parseHtml(htmlString);
       
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe('h1');
+      expect(result[0].type).toBe(BlockType.H1);
       expect(result[0].content).toBe('Title');
-      
+      expect(result[0].html).toBe('<h1>Title</h1>');
+
       console.log.mockRestore();
     });
 
     test('should parse multiple blocks', () => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        
+        const htmlString = '<h1>Title</h1><p>Paragraph</p>';
+        const result = Parser.parseHtml(htmlString);
       
-      const htmlString = '<h1>Title</h1><p>Paragraph</p>';
-      const result = Parser.parseHtml(htmlString);
-      
-      expect(result).toHaveLength(2);
-      expect(result[0].type).toBe('h1');
-      expect(result[1].type).toBe('p');
+        expect(result).toHaveLength(2);
+        expect(result[0].type).toBe(BlockType.H1);
+        expect(result[0].content).toBe('Title');
+        expect(result[0].html).toBe('<h1>Title</h1>');
+
+        expect(result[1].type).toBe(BlockType.PARAGRAPH);
+        expect(result[1].content).toBe('Paragraph');
+        expect(result[1].html).toBe('<p>Paragraph</p>');
       
       console.log.mockRestore();
     });

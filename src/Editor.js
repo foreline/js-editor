@@ -305,7 +305,7 @@ export class Editor
     {
         log('html2md()', 'Editor.'); //console.log({html});
         
-        let converter = new showdown.Converter();
+        let converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
         
         return converter.makeMd(html);
     }
@@ -319,7 +319,7 @@ export class Editor
     {
         log('md2html()', 'Editor.');
     
-        const converter = new showdown.Converter();
+        const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
         
         let html = converter.makeHtml(md);
         

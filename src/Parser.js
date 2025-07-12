@@ -56,12 +56,16 @@ export class Parser
     {
         log('parse()', 'Parser.'); console.log({markdownString});
 
-        if (!markdownString || markdownString.trim() === '') return [];
+        if (!markdownString || markdownString.trim() === '') {
+            return [];
+        }
         // Use showdown to convert markdown to HTML
-        const converter = new showdown.Converter();
+        const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
         const html = converter.makeHtml(markdownString);
+        // @fixme temporary fix: Remove id attributes from heading tags
+        const htmlClean = html.replace(/<h[1-6]\s+id="[^"]+"/g, match => match.replace(/\s+id="[^"]+"/, ''));
         // Now parse the HTML into blocks
-        return Parser.parseHtml(html);
+        return Parser.parseHtml(htmlClean);
     }
 
     /**
