@@ -67,7 +67,6 @@ export class TaskListBlock extends ListBlock
         // Create checkbox input
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.style.marginRight = '8px';
         checkbox.addEventListener('change', (e) => {
             this.toggleCheckbox(newListItem);
         });
@@ -100,10 +99,18 @@ export class TaskListBlock extends ListBlock
         return true;
     }
 
+    /**
+     * Get markdown triggers for task list blocks
+     * @returns {Array<string>} - Array of markdown triggers
+     */
     static getMarkdownTriggers() {
-        return ['- [ ]', '- [x]', '- []'];
+        return ['- [ ] ', '- [x] ', '- [] ', '[] ', '[x] ', '[ ] '];
     }
 
+    /**
+     * Apply transformation to the current block
+     * @returns {string} - markdown representation
+     */
     applyTransformation() {
         // Get current block and convert to task list
         const currentBlock = Editor.currentBlock;
@@ -119,7 +126,6 @@ export class TaskListBlock extends ListBlock
         // Create checkbox
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.style.marginRight = '8px';
         checkbox.addEventListener('change', (e) => {
             this.toggleCheckbox(currentBlock);
         });
