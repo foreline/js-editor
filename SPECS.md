@@ -85,21 +85,38 @@ The project is organized into the following key directories:
    - Allow nesting of blocks for hierarchical content structures.
    - Provide methods for splitting, merging, and rearranging blocks.
    - Ensure blocks are editable and maintain their state during updates.
+   - **List Block Behavior**: For unordered (ul) and ordered (ol) list blocks, Enter key creates new list items of the same type. Empty list items can be removed with Backspace or converted to regular paragraphs by pressing Enter.
 
 3. **Event Handling**:
    - Implement custom events for editor updates, block changes, and toolbar interactions.
    - Provide listeners for key events (`keydown`, `keyup`, `paste`, `click`) and ensure proper propagation.
    - Handle edge cases like empty keybuffer or invalid event targets.
+   - **Enter Key Handling**: Create new blocks when Enter is pressed at the end of a block. For list blocks (ul, ol), create new list items or end the list if the current item is empty.
+   - **Backspace Key Handling**: Remove empty blocks when Backspace is pressed and focus on the previous block. Maintain at least one block in the editor.
 
 4. **Focus Management**:
    - Automatically focus on the first block when the editor is initialized.
    - Provide methods to programmatically set focus on specific blocks.
    - Handle focus transitions when blocks are added, removed, or updated.
+   - **Intelligent Block Removal**: When empty blocks are removed via Backspace, automatically focus on the nearest available block (previous block preferred, fallback to next block).
 
 5. **Clipboard Support**:
    - Parse pasted content and sanitize it to prevent XSS attacks.
    - Convert markdown to HTML and vice versa during paste operations.
    - Support rich text paste with formatting retention.
+
+6. **Content Export**:
+   - Provide `Editor.getMarkdown()` method to export all editor content as markdown format.
+   - Provide `Editor.getHtml()` method to export all editor content as HTML format.
+   - Export methods return clean content without metadata or editor-specific markup.
+   - Handle edge cases like empty content and malformed blocks gracefully.
+
+7. **Block Architecture**:
+   - Implement BlockInterface contract for consistent block behavior.
+   - All blocks implement required methods: `handleKeyPress()`, `handleEnterKey()`, `toMarkdown()`, `toHtml()`, `applyTransformation()`.
+   - All blocks provide static methods: `getMarkdownTriggers()`, `getToolbarConfig()`, `getDisabledButtons()`.
+   - Blocks maintain consistent properties: `type`, `content`, `html`, `nested`.
+   - Interface validation available for ensuring blocks meet contract requirements.
 
 ### Toolbar
 1. **Toolbar Buttons**:

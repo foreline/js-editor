@@ -48,4 +48,32 @@ export class ParagraphBlock extends BaseBlock
     applyTransformation() {
         Toolbar.paragraph();
     }
+
+    /**
+     * Get toolbar configuration for paragraph blocks
+     * @returns {Object|null} - toolbar button configuration
+     */
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-paragraph',
+            label: 'Paragraph',
+            group: 'headers'
+        };
+    }
+
+    /**
+     * Convert this paragraph block to markdown
+     * @returns {string} - markdown representation
+     */
+    toMarkdown() {
+        return this._content;
+    }
+
+    /**
+     * Convert this paragraph block to HTML
+     * @returns {string} - HTML representation
+     */
+    toHtml() {
+        return `<p>${this._content}</p>`;
+    }
 }

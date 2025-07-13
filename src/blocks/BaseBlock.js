@@ -1,9 +1,11 @@
 'use strict';
 
 import {BlockType} from "@/BlockType";
+import {BlockInterfaceContract} from "@/interfaces/BlockInterface";
 
 /**
  * Base class for all block types
+ * Implements the BlockInterface contract to ensure consistent behavior
  */
 export class BaseBlock
 {
@@ -106,5 +108,37 @@ export class BaseBlock
      */
     applyTransformation() {
         // Override in subclasses
+    }
+
+    /**
+     * Get toolbar configuration for this block type
+     * @returns {Object|null} - toolbar button configuration or null if no toolbar integration
+     */
+    static getToolbarConfig() {
+        return null; // Override in subclasses for toolbar integration
+    }
+
+    /**
+     * Get buttons that should be disabled when this block is active
+     * @returns {string[]} - array of button class names that should be disabled
+     */
+    static getDisabledButtons() {
+        return []; // Override in subclasses
+    }
+
+    /**
+     * Convert this block to markdown
+     * @returns {string} - markdown representation
+     */
+    toMarkdown() {
+        return this._content;
+    }
+
+    /**
+     * Convert this block to HTML
+     * @returns {string} - HTML representation
+     */
+    toHtml() {
+        return this._html;
     }
 }

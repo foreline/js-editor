@@ -634,4 +634,60 @@ export class Editor
             return false;
         }
     }
+
+    /**
+     * Get all editor content as markdown
+     * @returns {string} - markdown representation of all content
+     */
+    static getMarkdown()
+    {
+        log('getMarkdown()', 'Editor.');
+        
+        try {
+            if (!this.blocks || this.blocks.length === 0) {
+                return '';
+            }
+
+            const markdownBlocks = this.blocks.map(block => {
+                if (typeof block.toMarkdown === 'function') {
+                    return block.toMarkdown();
+                }
+                // Fallback for blocks that don't implement toMarkdown
+                return this.html2md(block.html || block.content || '');
+            });
+
+            return markdownBlocks.join('\n\n').trim();
+        } catch (error) {
+            logWarning('Error getting markdown content: ' + error.message, 'Editor.getMarkdown()');
+            return '';
+        }
+    }
+
+    /**
+     * Get all editor content as HTML
+     * @returns {string} - HTML representation of all content
+     */
+    static getHtml()
+    {
+        log('getHtml()', 'Editor.');
+        
+        try {
+            if (!this.blocks || this.blocks.length === 0) {
+                return '';
+            }
+
+            const htmlBlocks = this.blocks.map(block => {
+                if (typeof block.toHtml === 'function') {
+                    return block.toHtml();
+                }
+                // Fallback for blocks that don't implement toHtml
+                return block.html || this.md2html(block.content || '');
+            });
+
+            return htmlBlocks.join('\n').trim();
+        } catch (error) {
+            logWarning('Error getting HTML content: ' + error.message, 'Editor.getHtml()');
+            return '';
+        }
+    }
 }

@@ -49,6 +49,46 @@ export class HeadingBlock extends BaseBlock
             case 6: Toolbar.h6(); break;
         }
     }
+
+    /**
+     * Get toolbar configuration for heading blocks
+     * @returns {Object|null} - toolbar button configuration
+     */
+    static getToolbarConfig() {
+        return null; // Individual heading classes will provide their own config
+    }
+
+    /**
+     * Get buttons that should be disabled when heading is active
+     * Headers can't be bold, italic, or contain lists
+     * @returns {string[]} - array of button class names that should be disabled
+     */
+    static getDisabledButtons() {
+        return [
+            'editor-toolbar-bold',
+            'editor-toolbar-italic', 
+            'editor-toolbar-ul',
+            'editor-toolbar-ol',
+            'editor-toolbar-sq'
+        ];
+    }
+
+    /**
+     * Convert this heading block to markdown
+     * @returns {string} - markdown representation
+     */
+    toMarkdown() {
+        const hashes = '#'.repeat(this.level);
+        return `${hashes} ${this._content}`;
+    }
+
+    /**
+     * Convert this heading block to HTML
+     * @returns {string} - HTML representation
+     */
+    toHtml() {
+        return `<h${this.level}>${this._content}</h${this.level}>`;
+    }
 }
 
 /**
@@ -62,6 +102,14 @@ export class H1Block extends HeadingBlock
 
     static getMarkdownTriggers() {
         return ['# '];
+    }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header1',
+            label: 'Heading 1',
+            group: 'headers'
+        };
     }
 }
 
@@ -77,6 +125,14 @@ export class H2Block extends HeadingBlock
     static getMarkdownTriggers() {
         return ['## '];
     }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header2',
+            label: 'Heading 2',
+            group: 'headers'
+        };
+    }
 }
 
 /**
@@ -90,6 +146,14 @@ export class H3Block extends HeadingBlock
 
     static getMarkdownTriggers() {
         return ['### '];
+    }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header3',
+            label: 'Heading 3',
+            group: 'headers'
+        };
     }
 }
 
@@ -105,6 +169,14 @@ export class H4Block extends HeadingBlock
     static getMarkdownTriggers() {
         return ['#### '];
     }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header4',
+            label: 'Heading 4',
+            group: 'headers'
+        };
+    }
 }
 
 /**
@@ -119,6 +191,14 @@ export class H5Block extends HeadingBlock
     static getMarkdownTriggers() {
         return ['##### '];
     }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header5',
+            label: 'Heading 5',
+            group: 'headers'
+        };
+    }
 }
 
 /**
@@ -132,5 +212,13 @@ export class H6Block extends HeadingBlock
 
     static getMarkdownTriggers() {
         return ['###### '];
+    }
+
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-header6',
+            label: 'Heading 6',
+            group: 'headers'
+        };
     }
 }

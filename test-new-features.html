@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test New Features</title>
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .test-description {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .editor {
+            min-height: 200px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="test-container">
+    <h1>Testing New Key Handling Features</h1>
+    
+    <div class="test-section">
+        <div class="test-description">
+            <h3>Test 1: Backspace on Empty Block</h3>
+            <p>Instructions:</p>
+            <ol>
+                <li>Place cursor in an empty block (second or third paragraph)</li>
+                <li>Press Backspace</li>
+                <li>Expected: Empty block should be removed and focus should move to previous block</li>
+            </ol>
+        </div>
+        <div id="editor1" class="editor"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-description">
+            <h3>Test 2: Enter Key at End of Block</h3>
+            <p>Instructions:</p>
+            <ol>
+                <li>Place cursor at the end of a paragraph</li>
+                <li>Press Enter</li>
+                <li>Expected: New empty paragraph block should be created</li>
+            </ol>
+        </div>
+        <div id="editor2" class="editor"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-description">
+            <h3>Test 3: Enter Key in Middle of Block</h3>
+            <p>Instructions:</p>
+            <ol>
+                <li>Place cursor in the middle of a paragraph</li>
+                <li>Press Enter</li>
+                <li>Expected: Should create line break within the block (not a new block)</li>
+            </ol>
+        </div>
+        <div id="editor3" class="editor"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-description">
+            <h3>Test 4: List Behavior</h3>
+            <p>Instructions:</p>
+            <ol>
+                <li>Create a list using "* " or "- " markdown</li>
+                <li>Press Enter at the end of a list item - should create new list item</li>
+                <li>Press Enter on empty list item - should end list and create paragraph</li>
+            </ol>
+        </div>
+        <div id="editor4" class="editor"></div>
+    </div>
+</div>
+
+<script type="module">
+    import './src/css/editor.css';
+    import { Editor } from './src/Editor.js';
+
+    const basicToolbarConfig = [
+        {
+            group: [
+                { class: 'editor-toolbar-bold', icon: 'fa-bold', title: 'Bold' },
+                { class: 'editor-toolbar-italic', icon: 'fa-italic', title: 'Italic' }
+            ]
+        },
+        {
+            group: [
+                { class: 'editor-toolbar-ul', icon: 'fa-list', title: 'Bullet List' },
+                { class: 'editor-toolbar-ol', icon: 'fa-list-ol', title: 'Numbered List' }
+            ]
+        }
+    ];
+
+    // Test 1: Backspace on empty block
+    new Editor({
+        id: 'editor1',
+        container: document.querySelector('.test-container'),
+        toolbar: {
+            container: document.querySelector('.test-container'),
+            config: basicToolbarConfig
+        },
+        text: `First paragraph with some text.
+
+Second paragraph - empty this and press backspace.
+
+Third paragraph.`
+    });
+
+    // Test 2: Enter at end
+    new Editor({
+        id: 'editor2',
+        container: document.querySelector('.test-container'),
+        toolbar: {
+            container: document.querySelector('.test-container'),
+            config: basicToolbarConfig
+        },
+        text: `Place cursor at the end of this paragraph and press Enter.`
+    });
+
+    // Test 3: Enter in middle
+    new Editor({
+        id: 'editor3',
+        container: document.querySelector('.test-container'),
+        toolbar: {
+            container: document.querySelector('.test-container'),
+            config: basicToolbarConfig
+        },
+        text: `Place cursor in the middle of this long paragraph and press Enter to see what happens.`
+    });
+
+    // Test 4: List behavior
+    new Editor({
+        id: 'editor4',
+        container: document.querySelector('.test-container'),
+        toolbar: {
+            container: document.querySelector('.test-container'),
+            config: basicToolbarConfig
+        },
+        text: `Type "* " or "- " to create a list and test Enter key behavior.`
+    });
+</script>
+</body>
+</html>

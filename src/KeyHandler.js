@@ -65,6 +65,10 @@ export class KeyHandler
             return this.handleEnterKey(e);
         }
         
+        if ('Backspace' === e.key) {
+            return this.handleBackspaceKey(e);
+        }
+        
         if ('Tab' === e.key) {
             // Let individual block types handle tab
             const currentBlock = Editor.currentBlock;
@@ -119,7 +123,7 @@ export class KeyHandler
             }
         }
 
-        // Let the current block type handle the Enter key
+        // Let the current block type handle the Enter key first
         if (currentBlock.dataset && currentBlock.dataset.blockType) {
             const blockType = currentBlock.dataset.blockType;
             const block = BlockFactory.createBlock(blockType);
@@ -130,8 +134,108 @@ export class KeyHandler
             }
         }
 
-        // Default behavior - add new empty block
-        Editor.addEmptyBlock();
+        // Check if cursor is at the end of the block for default behavior
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+        
+        if (isAtEnd) {
+            // Default behavior - add new empty block when cursor is at the end
+            e.preventDefault();
+            Editor.addEmptyBlock();
+        }
+        // If cursor is not at the end, let the browser handle default behavior (line break)
+    }
+
+    /**
+     * Check if cursor is at the end of the current block
+     * @param {HTMLElement} block
+     * @param {Range} range
+     * @returns {boolean}
+     */
+    static isCursorAtEndOfBlock(block, range) {
+        if (!range || !block) {
+            return false;
+        }
+
+        // Check if the range is collapsed (cursor position, not selection)
+        if (!range.collapsed) {
+            return false;
+        }
+
+        // Get the text content length of the block
+        const textContent = block.textContent || '';
+        const textLength = textContent.length;
+        
+        // Calculate the current cursor position within the block
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(block);
+        preRange.setEnd(range.endContainer, range.endOffset);
+        const cursorPosition = preRange.toString().length;
+        
+        // Consider cursor at end if it's within 2 characters of the end
+        // (accounts for trailing spaces or formatting)
+        return cursorPosition >= textLength - 2;
+    }
+
+    /**
+     * Handle Backspace key press
+     * @param {KeyboardEvent} e
+     */
+    static handleBackspaceKey(e) {
+        log('handleBackspaceKey()', 'KeyHandler.');
+
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) {
+            return;
+        }
+
+        // Check if current block is empty (only whitespace or no content)
+        const text = Utils.stripTags(currentBlock.innerHTML).trim();
+        
+        // Only handle backspace for empty blocks
+        if (text === '') {
+            // Find the previous block
+            const previousBlock = currentBlock.previousElementSibling;
+            
+            // Don't remove the last remaining block
+            const allBlocks = Editor.instance.querySelectorAll('.block');
+            if (allBlocks.length <= 1) {
+                return;
+            }
+            
+            // Remove the empty block and focus on previous block
+            if (previousBlock && previousBlock.classList.contains('block')) {
+                Editor.setCurrentBlock(previousBlock);
+                currentBlock.remove();
+                previousBlock.focus();
+                Editor.update();
+                e.preventDefault();
+                return;
+            } else {
+                // If no previous block, focus on next block (if exists)
+                const nextBlock = currentBlock.nextElementSibling;
+                if (nextBlock && nextBlock.classList.contains('block')) {
+                    Editor.setCurrentBlock(nextBlock);
+                    currentBlock.remove();
+                    nextBlock.focus();
+                    Editor.update();
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+
+        // Let the current block type handle the backspace key if not handled above
+        if (currentBlock.dataset && currentBlock.dataset.blockType) {
+            const blockType = currentBlock.dataset.blockType;
+            const block = BlockFactory.createBlock(blockType);
+            
+            if (block.handleBackspaceKey && block.handleBackspaceKey(e)) {
+                Editor.update();
+                return;
+            }
+        }
     }
 
     /**

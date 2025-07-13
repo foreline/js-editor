@@ -4,12 +4,14 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 
 ## Features
 
-- Block-based content management system.
-- Comprehensive toolbar for text formatting, lists, blockquotes, and code blocks.
-- Markdown support using Showdown.
-- Fenced code block parsing.
-- Inline code block extraction.
-- Preprocessing for HTML block separation.
+- **Block-based architecture**: Modular content management with individual block types.
+- **Content export**: Export editor content as markdown (`Editor.getMarkdown()`) or HTML (`Editor.getHtml()`).
+- **BlockInterface contract**: Consistent behavior across all block types with standardized methods.
+- **Comprehensive toolbar**: Text formatting, lists, blockquotes, and code blocks.
+- **Markdown support**: Full markdown parsing and conversion using Showdown.
+- **Advanced key handling**: Smart Enter/Backspace behavior for different block types.
+- **Clipboard integration**: Paste support with markdown conversion and XSS protection.
+- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), and special blocks.
 
 ## Setup
 
@@ -70,6 +72,40 @@ Initialize the editor in your HTML:
     import { Editor } from './src/Editor.js';
     const editor = new Editor({ id: 'editor' });
 </script>
+```
+
+### Content Export
+
+Export editor content as markdown or HTML:
+
+```javascript
+// Get all content as markdown
+const markdownContent = Editor.getMarkdown();
+console.log(markdownContent);
+
+// Get all content as HTML  
+const htmlContent = Editor.getHtml();
+console.log(htmlContent);
+```
+
+### Block System
+
+The editor uses a modular block system where each block type implements the BlockInterface:
+
+```javascript
+import { ParagraphBlock, H1Block } from './src/blocks/';
+
+// Create blocks programmatically
+const paragraph = new ParagraphBlock('Hello world');
+const heading = new H1Block('My Title');
+
+// Get markdown representation
+console.log(paragraph.toMarkdown()); // "Hello world"
+console.log(heading.toMarkdown());   // "# My Title"
+
+// Get HTML representation  
+console.log(paragraph.toHtml()); // "<p>Hello world</p>"
+console.log(heading.toHtml());   // "<h1>My Title</h1>"
 ```
 
 ## Contribution Guidelines
