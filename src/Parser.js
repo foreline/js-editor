@@ -86,6 +86,41 @@ export class Parser
                 );
             }
 
+            // Special handling for pre blocks (fenced code blocks)
+            if (tagName === 'pre') {
+                // Check if this is a fenced code block (<pre><code>)
+                const codeMatch = innerHtml.match(/<code[^>]*>([\s\S]*?)<\/code>/);
+                if (codeMatch) {
+                    // This is a fenced code block
+                    const codeContent = codeMatch[1].trim();
+                    return new Block(
+                        BlockType.CODE,
+                        codeContent,
+                        fullMatch,
+                        null
+                    );
+                } else {
+                    // This is a regular pre block
+                    return new Block(
+                        BlockType.CODE,
+                        getTextContent(fullMatch),
+                        fullMatch,
+                        null
+                    );
+                }
+            }
+
+            // Special handling for standalone code blocks (not inside pre)
+            if (tagName === 'code') {
+                // This is standalone inline code that was extracted by the cleanup regex
+                return new Block(
+                    BlockType.CODE,
+                    getTextContent(fullMatch),
+                    fullMatch,
+                    null
+                );
+            }
+
             // Special handling for tables
             if (tagName === 'table') {
                 // Extract table content and convert to markdown format

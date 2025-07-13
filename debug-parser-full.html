@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Parser Full</title>
+</head>
+<body>
+    <h1>Parser Debug Full</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import showdown from 'https://cdn.skypack.dev/showdown';
+        
+        const markdownString = `> This is a quote.
+
+\`Inline code\`
+
+\`\`\`javascript
+console.log('Hello, world!');
+\`\`\``;
+
+        console.log('=== DEBUGGING SPECIFIC PARTS ===');
+        console.log('Original markdown:');
+        console.log(markdownString);
+        
+        const converter = new showdown.Converter({ 
+            ghCompatibleHeaderId: false, 
+            headerIds: false,
+            tasklists: true,
+            tables: true
+        });
+        const html = converter.makeHtml(markdownString);
+        
+        console.log('Showdown HTML output:');
+        console.log(html);
+        
+        // Apply the same cleanup as Parser.js
+        const htmlClean = html
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/<blockquote>\\s*<p>(.*?)<\/p>\\s*<\/blockquote>/gs, '<blockquote>$1</blockquote>')
+            .replace(/<p><code>(.*?)<\/code><\/p>/g, '<code>$1</code>')
+            .replace(/(<\/(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code)>)(<(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code))/g, '$1\n$2');
+        
+        console.log('After cleanup:');
+        console.log(htmlClean);
+        
+        // Test the regex
+        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li|table|img)[^>]*>([\s\S]*?)<\/\1>|<(img)[^>]*\/?>/gi;
+        const matches = [...htmlClean.matchAll(blockRegex)];
+        
+        console.log('Regex matches:');
+        matches.forEach((match, index) => {
+            console.log(`Match ${index}:`, match[0]);
+            console.log(`  Tag:`, match[1]);
+            console.log(`  Inner:`, match[2]);
+        });
+        
+        document.getElementById('output').innerHTML = `
+            <h2>Original Markdown:</h2>
+            <pre>${markdownString}</pre>
+            <h2>Showdown HTML Output:</h2>
+            <pre>${html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            <h2>After Cleanup:</h2>
+            <pre>${htmlClean.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            <h2>Rendered HTML:</h2>
+            <div style="border: 1px solid #ccc; padding: 10px;">${htmlClean}</div>
+        `;
+    </script>
+</body>
+</html>

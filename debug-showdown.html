@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Parser</title>
+</head>
+<body>
+    <h1>Parser Debug</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import showdown from 'https://cdn.skypack.dev/showdown';
+        
+        const markdownString = `# Heading 1
+
+## Heading 2
+
+> This is a quote.
+
+\`Inline code\`
+
+\`\`\`javascript
+console.log('Hello, world!');
+\`\`\`
+
+[Link](https://www.google.com)`;
+
+        console.log('Original markdown:');
+        console.log(markdownString);
+        
+        const converter = new showdown.Converter({ 
+            ghCompatibleHeaderId: false, 
+            headerIds: false,
+            tasklists: true,
+            tables: true
+        });
+        const html = converter.makeHtml(markdownString);
+        
+        console.log('Showdown HTML output:');
+        console.log(html);
+        
+        document.getElementById('output').innerHTML = `
+            <h2>Original Markdown:</h2>
+            <pre>${markdownString}</pre>
+            <h2>Showdown HTML Output:</h2>
+            <pre>${html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            <h2>Rendered HTML:</h2>
+            <div style="border: 1px solid #ccc; padding: 10px;">${html}</div>
+        `;
+    </script>
+</body>
+</html>

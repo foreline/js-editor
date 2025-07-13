@@ -15,7 +15,7 @@
     - [x] Ensure that when the new default block is created it becomes focused.
 - [x] **TableBlock is not editable**: The text inside a table is not editable.
 - [x] **Lists blocks margin and padding**: The padding or margin of list blocks (`ul`, `ol`, `sq`) is different from other blocks. All blocks must be aligned evenly.
-- [ ] **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
+- [x] **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
 
 ## Features
 
