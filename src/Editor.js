@@ -190,19 +190,22 @@ export class Editor
         });
 
         // Add focus event for keyboard navigation
-        // @fixme not working
         this.instance.addEventListener('focusin', function(e) {
-            //console.log('focusin', e.target);
-            // Ignore clicks outside the editor
+            // Ignore focus events outside the editor
             if ( !e.target.closest('.editor') ) {
                 return;
             }
 
             let block = e.target.closest('.block');
-            if ( !block ) {
-                return;
+            if ( block ) {
+                Editor.setCurrentBlock(block);
+            } else {
+                // If no block is found but we're in the editor, try to focus on first block
+                const firstBlock = Editor.instance.querySelector('.block');
+                if ( firstBlock ) {
+                    Editor.setCurrentBlock(firstBlock);
+                }
             }
-            Editor.setCurrentBlock(block);
         });
     }
 
@@ -223,6 +226,21 @@ export class Editor
         // Verify element exists and is attached to DOM
         if ( !element || !element.isConnected ) {
             logWarning('Cannot focus on non-existent or detached element', 'Editor.focus()');
+            
+            // Fallback mechanism: focus on editor instance or first available block
+            if ( Editor.instance ) {
+                const firstBlock = Editor.instance.querySelector('.block');
+                if ( firstBlock ) {
+                    // Focus on the first available block
+                    Editor.setCurrentBlock(firstBlock);
+                    Editor.focus(firstBlock);
+                    return;
+                } else {
+                    // No blocks available, focus on editor instance itself
+                    Editor.instance.focus();
+                    return;
+                }
+            }
             return;
         }
         
@@ -252,9 +270,10 @@ export class Editor
     {
         log('paste()', 'Editor.'); console.log({e});
         
-        // @fixme refactor with Parser.parse();
+        e.preventDefault(); // Prevent default paste behavior
         
         let text = (e.clipboardData || window.clipboardData).getData('text');
+        let htmlData = (e.clipboardData || window.clipboardData).getData('text/html');
         
         const selection = window.getSelection();
         
@@ -262,18 +281,59 @@ export class Editor
             return false;
         }
         
+        // Sanitize the input text to prevent XSS attacks
         text = Utils.escapeHTML(text);
         
-        let html = Editor.md2html(text);
+        // If HTML data is available, sanitize it as well
+        let finalHtml = '';
+        if ( htmlData && htmlData.trim() !== '' ) {
+            // Basic HTML sanitization - remove script tags and event handlers
+            htmlData = htmlData
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/on\w+="[^"]*"/gi, '')
+                .replace(/on\w+='[^']*'/gi, '')
+                .replace(/javascript:/gi, '');
+            
+            // Use Parser to properly parse HTML into blocks
+            try {
+                const blocks = Parser.parseHtml(htmlData);
+                if ( blocks.length > 0 ) {
+                    // Convert blocks back to HTML
+                    finalHtml = blocks.map(block => block.html || block.content).join('');
+                } else {
+                    // Fallback to markdown conversion
+                    finalHtml = Editor.md2html(text);
+                }
+            } catch (error) {
+                logWarning('Error parsing HTML data, falling back to markdown conversion', 'Editor.paste()');
+                finalHtml = Editor.md2html(text);
+            }
+        } else {
+            // Convert markdown to HTML
+            finalHtml = Editor.md2html(text);
+        }
     
         if ( selection.rangeCount ) {
             const range = selection.getRangeAt(0);
             
-            const node = document.createRange().createContextualFragment(html);
-            range.insertNode(node);
-        } else {
-            document.execCommand('insertHTML', false, html);
+            try {
+                const node = document.createRange().createContextualFragment(finalHtml);
+                range.deleteContents(); // Clear selected content first
+                range.insertNode(node);
+                
+                // Move cursor to end of inserted content
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } catch (error) {
+                logWarning('Error inserting pasted content', 'Editor.paste()');
+                // Fallback to execCommand if modern approach fails
+                document.execCommand('insertHTML', false, finalHtml);
+            }
         }
+        
+        // Update editor after paste
+        Editor.update();
     }
     
     /**
@@ -295,8 +355,7 @@ export class Editor
     
         eventEmitter.emit('EDITOR.UPDATED_EVENT');
     }
-    
-    /**
+      /**
      *
      * @param {string} html
      * @returns {string} md
@@ -305,11 +364,22 @@ export class Editor
     {
         log('html2md()', 'Editor.'); //console.log({html});
         
-        let converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
-        
-        return converter.makeMd(html);
+        try {
+            // Validate input
+            if ( !html || typeof html !== 'string' ) {
+                logWarning('Invalid HTML input for conversion', 'Editor.html2md()');
+                return '';
+            }
+            
+            let converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
+            
+            return converter.makeMd(html);
+        } catch (error) {
+            logWarning('Error converting HTML to markdown: ' + error.message, 'Editor.html2md()');
+            return html; // Return original HTML as fallback
+        }
     }
-    
+
     /**
      *
      * @param {string} md
@@ -318,15 +388,26 @@ export class Editor
     static md2html(md)
     {
         log('md2html()', 'Editor.');
+        
+        try {
+            // Validate input
+            if ( !md || typeof md !== 'string' ) {
+                logWarning('Invalid markdown input for conversion', 'Editor.md2html()');
+                return '';
+            }
     
-        const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
-        
-        let html = converter.makeHtml(md);
-        
-        //html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<p><br></p>');
-        html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<br>');
-        
-        return html;
+            const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
+            
+            let html = converter.makeHtml(md);
+            
+            //html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<p><br></p>');
+            html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<br>');
+            
+            return html;
+        } catch (error) {
+            logWarning('Error converting markdown to HTML: ' + error.message, 'Editor.md2html()');
+            return Utils.escapeHTML(md); // Return escaped markdown as fallback
+        }
     }
     
     /**
@@ -496,39 +577,67 @@ export class Editor
 
     /**
      * Creates and initializes the markdown container
+     * @returns {boolean} True if successful, false otherwise
      */
     static initMarkdownContainer()
     {
-        const markdownContainer = document.createElement('textarea');
-        markdownContainer.id = 'editor-markdown';
-        markdownContainer.className = 'editor-text-md visually-hidden';
-        markdownContainer.style.width = '100%';
-        markdownContainer.style.minHeight = '300px';
+        try {
+            const markdownContainer = document.createElement('textarea');
+            markdownContainer.id = 'editor-markdown';
+            markdownContainer.className = 'editor-text-md visually-hidden';
+            markdownContainer.style.width = '100%';
+            markdownContainer.style.minHeight = '300px';
 
-        const container = document.querySelector('.editor-container');
-        if (container) {
-            container.appendChild(markdownContainer);
-        } else {
-            logWarning('Editor container not found for Markdown container initialization.', 'Editor.initMarkdownContainer()');
+            const container = document.querySelector('.editor-container');
+            if (container) {
+                // Check if container already exists to avoid duplicates
+                const existing = container.querySelector('#editor-markdown');
+                if (existing) {
+                    logWarning('Markdown container already exists, skipping initialization.', 'Editor.initMarkdownContainer()');
+                    return true;
+                }
+                container.appendChild(markdownContainer);
+                return true;
+            } else {
+                logWarning('Editor container not found for Markdown container initialization.', 'Editor.initMarkdownContainer()');
+                return false;
+            }
+        } catch (error) {
+            logWarning('Error initializing markdown container: ' + error.message, 'Editor.initMarkdownContainer()');
+            return false;
         }
     }
 
     /**
      * Creates and initializes the HTML container
+     * @returns {boolean} True if successful, false otherwise
      */
     static initHtmlContainer()
     {
-        const htmlContainer = document.createElement('div');
-        htmlContainer.id = 'editor-html';
-        htmlContainer.className = 'editor-text-html visually-hidden';
-        htmlContainer.style.width = '100%';
-        htmlContainer.style.minHeight = '300px';
+        try {
+            const htmlContainer = document.createElement('div');
+            htmlContainer.id = 'editor-html';
+            htmlContainer.className = 'editor-text-html visually-hidden';
+            htmlContainer.style.width = '100%';
+            htmlContainer.style.minHeight = '300px';
 
-        const container = document.querySelector('.editor-container');
-        if (container) {
-            container.appendChild(htmlContainer);
-        } else {
-            logWarning('Editor container not found for HTML container initialization.', 'Editor.initHtmlContainer()');
+            const container = document.querySelector('.editor-container');
+            if (container) {
+                // Check if container already exists to avoid duplicates
+                const existing = container.querySelector('#editor-html');
+                if (existing) {
+                    logWarning('HTML container already exists, skipping initialization.', 'Editor.initHtmlContainer()');
+                    return true;
+                }
+                container.appendChild(htmlContainer);
+                return true;
+            } else {
+                logWarning('Editor container not found for HTML container initialization.', 'Editor.initHtmlContainer()');
+                return false;
+            }
+        } catch (error) {
+            logWarning('Error initializing HTML container: ' + error.message, 'Editor.initHtmlContainer()');
+            return false;
         }
     }
 }

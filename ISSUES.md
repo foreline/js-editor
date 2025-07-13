@@ -2,12 +2,12 @@
 
 ## Bug Fixes
 
-- [ ] **Focus Management**: Ensure `Editor.focus()` handles cases where the `currentBlock` is null or detached from the DOM. Add a fallback mechanism to focus on the editor instance itself.
-- [ ] **Clipboard Handling**: Refactor `Editor.paste()` to sanitize pasted content properly and prevent XSS attacks. Use a dedicated parser for HTML sanitization.
-- [ ] **Event Listeners**: Fix the `focusin` event listener in `Editor.addListeners()` to ensure it works correctly for keyboard navigation.
-- [ ] **Markdown Conversion**: Address edge cases in `Editor.md2html()` and `Editor.html2md()` where malformed markdown or HTML might cause errors.
-- [ ] **Toolbar Integration**: Ensure all toolbar buttons are dynamically initialized and their event listeners are removed during reinitialization to prevent memory leaks.
-- [ ] **Error Handling**: Improve error handling in methods like `Editor.initMarkdownContainer()` and `Editor.initHtmlContainer()` to log warnings when containers are not found.
+- [x] **Focus Management**: Ensure `Editor.focus()` handles cases where the `currentBlock` is null or detached from the DOM. Add a fallback mechanism to focus on the editor instance itself.
+- [x] **Clipboard Handling**: Refactor `Editor.paste()` to sanitize pasted content properly and prevent XSS attacks. Use a dedicated parser for HTML sanitization.
+- [x] **Event Listeners**: Fix the `focusin` event listener in `Editor.addListeners()` to ensure it works correctly for keyboard navigation.
+- [x] **Markdown Conversion**: Address edge cases in `Editor.md2html()` and `Editor.html2md()` where malformed markdown or HTML might cause errors.
+- [x] **Toolbar Integration**: Ensure all toolbar buttons are dynamically initialized and their event listeners are removed during reinitialization to prevent memory leaks.
+- [x] **Error Handling**: Improve error handling in methods like `Editor.initMarkdownContainer()` and `Editor.initHtmlContainer()` to log warnings when containers are not found.
 
 ## Improvements
 

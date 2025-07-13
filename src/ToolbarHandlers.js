@@ -4,6 +4,11 @@ import { Toolbar } from './Toolbar.js';
 
 export const ToolbarHandlers = {
   /**
+   * Store event listeners for cleanup
+   */
+  eventListeners: new Map(),
+
+  /**
    * Handles the click event for the toolbar button.
    * @param {Event} event - The click event.
    * @param {Object} context - The context object containing necessary data.
@@ -11,6 +16,8 @@ export const ToolbarHandlers = {
    * @throws {Error} Throws an error if the context is not provided.
    * */
   init: () => {
+    // Clear existing event listeners before adding new ones
+    ToolbarHandlers.cleanup();
     
     // Place <p> instead of <div>
     document.execCommand('defaultParagraphSeparator', false, 'p');
@@ -22,19 +29,23 @@ export const ToolbarHandlers = {
     document
         .querySelectorAll('.editor-toolbar-undo')
         .forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.preventDefault();
                 Toolbar.undo();
-            });
+            };
+            btn.addEventListener('click', handler);
+            ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });
 
     document
         .querySelectorAll('.editor-toolbar-redo')
         .forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.preventDefault();
                 Toolbar.redo();
-            });
+            };
+            btn.addEventListener('click', handler);
+            ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });
 
     /*
@@ -213,10 +224,37 @@ export const ToolbarHandlers = {
     document
         .querySelectorAll('.editor-toolbar-html')
         .forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.preventDefault();
                 Toolbar.html();
-            });
+            };
+            btn.addEventListener('click', handler);
+            ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });
   },
+
+  /**
+   * Add event listener and track it for cleanup
+   * @param {Element} element 
+   * @param {string} event 
+   * @param {Function} handler 
+   */
+  addEventListenerWithTracking: (element, event, handler) => {
+    element.addEventListener(event, handler);
+    ToolbarHandlers.eventListeners.set(element, { event, handler });
+  },
+
+  /**
+   * Clean up all event listeners to prevent memory leaks
+   */
+  cleanup: () => {
+    ToolbarHandlers.eventListeners.forEach((listenerInfo, element) => {
+      try {
+        element.removeEventListener(listenerInfo.event, listenerInfo.handler);
+      } catch (error) {
+        console.warn('Failed to remove event listener:', error);
+      }
+    });
+    ToolbarHandlers.eventListeners.clear();
+  }
 };
