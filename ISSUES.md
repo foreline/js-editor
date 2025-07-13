@@ -19,7 +19,7 @@
 - [x] **Get Editor content as markdown**: The `Editor` must provide a static method `getMarkdown` for getting all its content in markdown format. Just a content without metadata must be provided.
 - [x] **Get Editor content as html**: The `Editor` must provide a static method `getHtml` for getting all its content in html format. Just a content without metadata must be provided.
 - [x] **BlockInterface**. Each block must implement a `BlockInterface`.
-- [ ] **Toolbar buttons groups**. Toolbar buttons must be placed inside a group. A block can create its own group or put its control buttons to other groups.
+- [x] **Toolbar buttons groups**. Toolbar buttons must be placed inside a group. A block can create its own group or put its control buttons to other groups.
 - [ ] **Block integration with Toolbar**: Blocks must provide control buttons to Toolbar. I.e. a `TableBlock` should put a button to toolbar for creating tables. Each block must provide a static method returning toolbar configuration. Block must have control on its own toolbar buttons and buttons of other blocks. Headers blocks must disable buttons such as bold, italic, list controls and so on, because you cannot make Header bold, italic or put a list inside a header.
 - [ ] **Checklist support**: A BlockType for working with checklists (square brackets, where `- [ ] unchecked item` means unchecked item and `- [x] checked item` means checked item). Checklists must be represented as `<input type="checkbox">` html tag.
 - [ ] **Tables support**: A BlockType for working with basic markdown tables.
