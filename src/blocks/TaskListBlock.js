@@ -104,7 +104,7 @@ export class TaskListBlock extends ListBlock
      * @returns {Array<string>} - Array of markdown triggers
      */
     static getMarkdownTriggers() {
-        return ['- [ ] ', '- [x] ', '- [] ', '[] ', '[x] ', '[ ] '];
+        return ['- [ ]', '- [x]', '- []', '[]', '[x]', '[ ]'];
     }
 
     /**

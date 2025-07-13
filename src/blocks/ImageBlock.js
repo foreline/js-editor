@@ -434,6 +434,70 @@ export class ImageBlock extends BaseBlock
     }
 
     /**
+     * Get image source URL
+     * @returns {string} - Image source URL
+     */
+    get src() {
+        return this._src;
+    }
+
+    /**
+     * Set image source URL
+     * @param {string} value - Image source URL
+     */
+    set src(value) {
+        this._src = value;
+    }
+
+    /**
+     * Get image alt text
+     * @returns {string} - Image alt text
+     */
+    get alt() {
+        return this._alt;
+    }
+
+    /**
+     * Set image alt text
+     * @param {string} value - Image alt text
+     */
+    set alt(value) {
+        this._alt = value;
+    }
+
+    /**
+     * Get image width
+     * @returns {number|null} - Image width in pixels
+     */
+    get width() {
+        return this._width;
+    }
+
+    /**
+     * Set image width
+     * @param {number} value - Image width in pixels
+     */
+    set width(value) {
+        this._width = value;
+    }
+
+    /**
+     * Get image height
+     * @returns {number|null} - Image height in pixels
+     */
+    get height() {
+        return this._height;
+    }
+
+    /**
+     * Set image height
+     * @param {number} value - Image height in pixels
+     */
+    set height(value) {
+        this._height = value;
+    }
+
+    /**
      * Check if this block type can parse the given markdown
      * @param {string} markdownString - Markdown to check
      * @returns {boolean} - true if can parse, false otherwise

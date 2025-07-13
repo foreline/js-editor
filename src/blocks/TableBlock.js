@@ -41,6 +41,38 @@ export class TableBlock extends BaseBlock
     }
 
     /**
+     * Get table headers
+     * @returns {Array<string>} - Array of header names
+     */
+    get headers() {
+        return this._headers;
+    }
+
+    /**
+     * Set table headers
+     * @param {Array<string>} value - Array of header names
+     */
+    set headers(value) {
+        this._headers = value;
+    }
+
+    /**
+     * Get table rows
+     * @returns {Array<Array<string>>} - Array of row arrays
+     */
+    get rows() {
+        return this._rows;
+    }
+
+    /**
+     * Set table rows
+     * @param {Array<Array<string>>} value - Array of row arrays
+     */
+    set rows(value) {
+        this._rows = value;
+    }
+
+    /**
      * Handle key press for table blocks
      * @param {KeyboardEvent} event
      * @param {string} text - current text content of the block
