@@ -23,7 +23,7 @@
 - [x] **Block integration with Toolbar**: Blocks must provide control buttons to Toolbar. I.e. a `TableBlock` should put a button to toolbar for creating tables. Each block must provide a static method returning toolbar configuration. Block must have control on its own toolbar buttons and buttons of other blocks. Headers blocks must disable buttons such as bold, italic, list controls and so on, because you cannot make Header bold, italic or put a list inside a header.
 - [x] **Checklist support**: A BlockType for working with checklists (square brackets, where `- [ ] unchecked item` means unchecked item and `- [x] checked item` means checked item). Checklists must be represented as `<input type="checkbox">` html tag.
 - [x] **Tables support**: A BlockType for working with basic markdown tables.
-- [ ] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
+- [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
 
 ## Improvements
 

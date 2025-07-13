@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Feature Test</title>
+    <link rel="stylesheet" href="./src/css/editor.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-instructions { background: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .editor { border: 1px solid #ccc; padding: 20px; min-height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Image Feature Test</h1>
+    
+    <div class="test-instructions">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Type "![" to trigger image markdown creation</li>
+            <li>Click "Insert Image" button to add an image block</li>
+            <li>Drag & drop image files onto image placeholder</li>
+            <li>Use file picker to select images</li>
+            <li>Resize images by dragging the resize handle (bottom-right corner)</li>
+            <li>Try markdown image syntax: <code>![Alt text](https://example.com/image.jpg)</code></li>
+        </ol>
+    </div>
+    
+    <div id="editor" class="editor"></div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="insertImage()">Insert Image</button>
+        <button onclick="insertSampleImage()">Insert Sample Image</button>
+        <button onclick="showMarkdown()">Show Markdown</button>
+        <button onclick="showHTML()">Show HTML</button>
+        <div id="output" style="margin-top: 10px; padding: 10px; background: #f8f8f8; border-radius: 3px; font-family: monospace; white-space: pre-wrap;"></div>
+    </div>
+    
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        import { Toolbar } from './src/Toolbar.js';
+        import { BlockFactory } from './src/blocks/BlockFactory.js';
+        
+        // Initialize the editor
+        const editor = new Editor({ id: 'editor' });
+        
+        // Add some test content
+        const editorEl = document.getElementById('editor');
+        editorEl.innerHTML = `
+            <p class="block" data-block-type="paragraph" contenteditable="true">Try typing image markdown below or click "Insert Image":</p>
+        `;
+        
+        // Make functions global for button clicks
+        window.insertImage = function() {
+            Toolbar.image();
+        };
+        
+        window.insertSampleImage = function() {
+            // Create an image block with a sample image
+            const imageBlock = BlockFactory.createBlock('image');
+            imageBlock.setSrc('https://via.placeholder.com/400x300/4CAF50/white?text=Sample+Image');
+            imageBlock.setAlt('Sample Image');
+            
+            const currentBlock = Editor.currentBlock;
+            if (currentBlock) {
+                currentBlock.setAttribute('data-block-type', 'image');
+                currentBlock.innerHTML = imageBlock.generateImageHTML();
+                imageBlock.setupDragAndDrop(currentBlock);
+                
+                const img = currentBlock.querySelector('img');
+                if (img) {
+                    img.onload = () => imageBlock.setupImageResizing(img);
+                }
+                
+                Editor.update();
+            }
+        };
+        
+        window.showMarkdown = function() {
+            const markdown = Editor.getMarkdown();
+            document.getElementById('output').textContent = 'Markdown Output:\n' + markdown;
+        };
+        
+        window.showHTML = function() {
+            const html = Editor.getHtml();
+            document.getElementById('output').textContent = 'HTML Output:\n' + html;
+        };
+        
+        console.log('Image test page loaded. Try the image features!');
+    </script>
+</body>
+</html>

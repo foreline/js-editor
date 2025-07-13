@@ -11,9 +11,10 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 - **Markdown support**: Full markdown parsing and conversion using Showdown.
 - **Advanced key handling**: Smart Enter/Backspace behavior for different block types.
 - **Clipboard integration**: Paste support with markdown conversion and XSS protection.
-- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), checklists, tables, and special blocks.
+- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), checklists, tables, images, and special blocks.
 - **Interactive checklists**: Task lists with clickable checkboxes supporting markdown syntax `- [ ]` and `- [x]`.
 - **Table support**: Markdown tables with Tab navigation, cell editing, and dynamic row creation.
+- **Image support**: Drag & drop image upload, URL insertion, and resizable images with markdown syntax `![alt](src)`.
 
 ## Setup
 
@@ -95,26 +96,43 @@ console.log(htmlContent);
 The editor uses a modular block system where each block type implements the BlockInterface:
 
 ```javascript
-import { ParagraphBlock, H1Block, TaskListBlock, TableBlock } from './src/blocks/';
+import { ParagraphBlock, H1Block, TaskListBlock, TableBlock, ImageBlock } from './src/blocks/';
 
 // Create blocks programmatically
 const paragraph = new ParagraphBlock('Hello world');
 const heading = new H1Block('My Title');
 const checklist = new TaskListBlock('My task item');
 const table = new TableBlock();
+const image = new ImageBlock('![Sample](https://example.com/image.jpg)');
 
 // Get markdown representation
 console.log(paragraph.toMarkdown()); // "Hello world"
 console.log(heading.toMarkdown());   // "# My Title"
 console.log(checklist.toMarkdown()); // "- [ ] My task item"
 console.log(table.toMarkdown());     // "| Header | ... |"
+console.log(image.toMarkdown());     // "![Sample](https://example.com/image.jpg)"
 
 // Get HTML representation  
 console.log(paragraph.toHtml()); // "<p>Hello world</p>"
 console.log(heading.toHtml());   // "<h1>My Title</h1>"
 console.log(checklist.toHtml()); // "<li><input type=\"checkbox\"> My task item</li>"
 console.log(table.toHtml());     // "<table>...</table>"
+console.log(image.toHtml());     // "<img src=\"...\" alt=\"Sample\">"
 ```
+
+### Image Features
+
+Insert images using markdown syntax or drag & drop:
+
+```markdown
+![Alt text](https://example.com/image.jpg)
+```
+
+- Drag & drop image files directly onto image placeholders
+- Click image placeholders to open file picker
+- Resize images by dragging the resize handle (appears on hover)
+- Images support both URLs and uploaded files (converted to base64)
+- Export maintains image references in both markdown and HTML formats
 
 ### Table Features
 

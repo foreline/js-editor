@@ -6,6 +6,7 @@ import {H1Block, H2Block, H3Block, H4Block, H5Block, H6Block} from "@/blocks/Hea
 import {UnorderedListBlock, OrderedListBlock, TaskListBlock} from "@/blocks/ListBlock";
 import {CodeBlock, QuoteBlock, DelimiterBlock} from "@/blocks/SpecialBlock";
 import {TableBlock} from "@/blocks/TableBlock";
+import {ImageBlock} from "@/blocks/ImageBlock";
 import {BlockType} from "@/BlockType";
 
 /**
@@ -53,6 +54,8 @@ export class BlockFactory
                 return new DelimiterBlock(content, html, nested);
             case BlockType.TABLE:
                 return new TableBlock(content, html, nested);
+            case BlockType.IMAGE:
+                return new ImageBlock(content, html, nested);
             default:
                 return new ParagraphBlock(content, html, nested);
         }
@@ -77,7 +80,8 @@ export class BlockFactory
             CodeBlock,
             QuoteBlock,
             DelimiterBlock,
-            TableBlock
+            TableBlock,
+            ImageBlock
         ];
     }
 

@@ -213,6 +213,23 @@ export const Toolbar = {
     },
     
     /**
+     * Inserts image
+     */
+    image: () =>
+    {
+        log('image()', 'Toolbar.');
+        
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Create image block and apply transformation
+        const imageBlock = BlockFactory.createBlock('image');
+        imageBlock.applyTransformation();
+        
+        Toolbar.after();
+    },
+    
+    /**
      * Inserts line break <br />
      */
     br: () =>

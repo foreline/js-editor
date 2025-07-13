@@ -44,14 +44,31 @@ export class Parser
                     return codeMatch[1].trim();
                 }
             }
-            return html.replace(/<[^>]+>/g, '').trim();        }        // First pass: Get top-level blocks including task list items and tables
-        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li|table)[^>]*>([\s\S]*?)<\/\1>/gi;
+            return html.replace(/<[^>]+>/g, '').trim();        }        // First pass: Get top-level blocks including task list items, tables, and images
+        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li|table|img)[^>]*>([\s\S]*?)<\/\1>|<(img)[^>]*\/?>/gi;
         const matches = [...htmlString.matchAll(blockRegex)];
         
         return matches.map(match => {
             const fullMatch = match[0];
             const innerHtml = match[2];
-            const tagName = fullMatch.match(/<(\w+)/)[1].toLowerCase();
+            const tagName = (fullMatch.match(/<(\w+)/)[1] || '').toLowerCase();
+
+            // Special handling for self-closing img tags
+            if (tagName === 'img') {
+                const srcMatch = fullMatch.match(/src="([^"]+)"/);
+                const altMatch = fullMatch.match(/alt="([^"]*)"/);
+                
+                const src = srcMatch ? srcMatch[1] : '';
+                const alt = altMatch ? altMatch[1] : 'Image';
+                const imageContent = `![${alt}](${src})`;
+                
+                return new Block(
+                    BlockType.IMAGE,
+                    imageContent,
+                    fullMatch,
+                    null
+                );
+            }
 
             // Special handling for task list items
             if (tagName === 'li' && fullMatch.includes('data-block-type="sq"')) {
@@ -260,6 +277,32 @@ export class Parser
             } else {
                 // Fallback: create basic table
                 element.innerHTML = '<table style="border-collapse: collapse; width: 100%;"><tr><td style="border: 1px solid #ddd; padding: 8px;">Cell</td></tr></table>';
+            }
+            
+            return element;
+        }
+
+        // For image blocks, create div with image content and drag-drop functionality
+        if (block.type === BlockType.IMAGE) {
+            element.classList.add('block-image');
+            element.setAttribute('data-block-type', 'image');
+            element.setAttribute('data-placeholder', 'Image');
+            element.contentEditable = false; // Images manage their own interaction
+            
+            // Use the HTML from the block or generate from content
+            if (block._blockInstance && block._blockInstance.generateImageHTML) {
+                element.innerHTML = block._blockInstance.generateImageHTML();
+                
+                // Set up drag and drop and resizing
+                block._blockInstance.setupDragAndDrop(element);
+                
+                const img = element.querySelector('img');
+                if (img) {
+                    img.onload = () => block._blockInstance.setupImageResizing(img);
+                }
+            } else {
+                // Fallback: create basic image placeholder
+                element.innerHTML = '<div class="image-placeholder">No image</div>';
             }
             
             return element;

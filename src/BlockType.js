@@ -20,6 +20,7 @@ export class BlockType
     static OL = 'ol';
     static SQ = 'sq';
     static TABLE = 'table';
+    static IMAGE = 'image';
 
     /**
      * Get the block type from an HTML tag.
@@ -57,6 +58,10 @@ export class BlockType
                 return BlockType.SQ;
             case 'table':
                 return BlockType.TABLE;
+            case 'img':
+                return BlockType.IMAGE;
+            case 'image':
+                return BlockType.IMAGE;
             default:
                 return BlockType.PARAGRAPH;
         }
@@ -80,7 +85,8 @@ export class BlockType
             BlockType.UL,
             BlockType.OL,
             BlockType.SQ,
-            BlockType.TABLE
+            BlockType.TABLE,
+            BlockType.IMAGE
         ];
     }
 
