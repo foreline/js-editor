@@ -9,5 +9,6 @@ export {UnorderedListBlock} from './UnorderedListBlock.js';
 export {OrderedListBlock} from './OrderedListBlock.js';
 export {TaskListBlock} from './TaskListBlock.js';
 export {CodeBlock} from './CodeBlock.js';
-export {QuoteBlock, DelimiterBlock} from './SpecialBlock.js';
+export {QuoteBlock} from './QuoteBlock.js';
+export {DelimiterBlock} from './DelimiterBlock.js';
 export {BlockFactory} from './BlockFactory.js';
