@@ -2,7 +2,7 @@ import { BlockFactory } from '@/blocks/BlockFactory.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
 import { H1Block, H2Block, H3Block } from '@/blocks/HeadingBlock.js';
-import { UnorderedListBlock } from '@/blocks/ListBlock.js';
+import { UnorderedListBlock } from '@/blocks/UnorderedListBlock.js';
 import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 import { CodeBlock, QuoteBlock, DelimiterBlock } from '@/blocks/SpecialBlock.js';
