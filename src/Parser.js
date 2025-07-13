@@ -10,7 +10,7 @@ import showdown from "showdown";
  * Improved Parser that delegates parsing responsibilities to individual block types
  * This follows the Single Responsibility Principle and Open/Closed Principle
  */
-export class ParserV2
+export class Parser
 {
     /**
      * Parse HTML string and return array of Block objects
@@ -19,7 +19,7 @@ export class ParserV2
      * @returns {array<Block>} blocks
      */
     static parseHtml(htmlString) {
-        log('parseHtml()', 'ParserV2.'); console.log({htmlString});
+        log('parseHtml()', 'Parser.'); console.log({htmlString});
 
         if (!htmlString || htmlString.trim() === '') return [];
 
@@ -75,7 +75,7 @@ export class ParserV2
      * @returns {array<Block>} blocks
      */
     static parse(markdownString) {
-        log('parse()', 'ParserV2.'); console.log({markdownString});
+        log('parse()', 'Parser.'); console.log({markdownString});
 
         if (!markdownString || markdownString.trim() === '') {
             return [];
@@ -154,7 +154,7 @@ export class ParserV2
      * @returns {HTMLElement|HTMLElement[]} htmlElement(s)
      */
     static html(blocks) {
-        log('html()', 'ParserV2.'); console.log({blocks});
+        log('html()', 'Parser.'); console.log({blocks});
 
         // Handle array of blocks
         if (Array.isArray(blocks)) {

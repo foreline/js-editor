@@ -1,7 +1,7 @@
 import { Editor } from '@/Editor.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
-import { ParserV2 as Parser } from '@/ParserV2.js';
+import { Parser } from '@/Parser.js';
 import { eventEmitter } from '@/utils/eventEmitter.js';
 
 // Mock dependencies

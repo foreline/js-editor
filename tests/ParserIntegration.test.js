@@ -1,4 +1,4 @@
-import { ParserV2 } from '@/ParserV2.js';
+import { Parser } from '@/Parser.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
@@ -10,7 +10,7 @@ import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { DelimiterBlock } from '@/blocks/DelimiterBlock.js';
 import { TableBlock } from '@/blocks/TableBlock.js';
 
-describe('ParserV2 Integration Tests', () => {
+describe('Parser Integration Tests', () => {
 
   describe('All block types parsing', () => {
     test('should parse comprehensive markdown with all block types', () => {
@@ -42,7 +42,7 @@ console.log('Hello World');
 
 ---`;
 
-      const blocks = ParserV2.parse(markdown);
+      const blocks = Parser.parse(markdown);
 
       expect(blocks.length).toBeGreaterThan(5); // We expect at least 6 blocks
       expect(blocks[0]).toBeInstanceOf(HeadingBlock);
@@ -66,7 +66,7 @@ console.log('Hello World');
 <table><tr><th>Header</th></tr><tr><td>Cell</td></tr></table>
 <hr>`;
 
-      const blocks = ParserV2.parseHtml(html);
+      const blocks = Parser.parseHtml(html);
 
       expect(blocks.length).toBeGreaterThan(0);
       
@@ -81,7 +81,7 @@ console.log('Hello World');
 
   describe('Block-specific parsing validation', () => {
     test('HeadingBlock should parse all heading levels', () => {
-      const blocks = ParserV2.parse('# H1\n## H2\n### H3');
+      const blocks = Parser.parse('# H1\n## H2\n### H3');
       
       expect(blocks[0]).toBeInstanceOf(HeadingBlock);
       expect(blocks[0].level).toBe(1); // Use .level instead of ._level
@@ -92,7 +92,7 @@ console.log('Hello World');
     });
 
     test('TaskListBlock should parse both checked and unchecked items', () => {
-      const blocks = ParserV2.parse('- [ ] Todo\n- [x] Done');
+      const blocks = Parser.parse('- [ ] Todo\n- [x] Done');
       
       expect(blocks[0]).toBeInstanceOf(TaskListBlock);
       expect(blocks[0]._content).toContain('Todo');
@@ -100,7 +100,7 @@ console.log('Hello World');
     });
 
     test('CodeBlock should parse fenced code blocks', () => {
-      const blocks = ParserV2.parse('```javascript\nconsole.log("test");\n```');
+      const blocks = Parser.parse('```javascript\nconsole.log("test");\n```');
       
       console.log('CodeBlock test:', blocks[0]);
       expect(blocks[0]).toBeInstanceOf(CodeBlock);
@@ -112,7 +112,7 @@ console.log('Hello World');
 
     test('ImageBlock should parse markdown image syntax', () => {
       // Test direct image markdown (not as part of larger markdown)
-      const blocks = ParserV2.parseHtml('<img src="https://example.com/image.jpg" alt="Alt text">');
+      const blocks = Parser.parseHtml('<img src="https://example.com/image.jpg" alt="Alt text">');
       
       if (blocks.length > 0 && blocks[0] instanceof ImageBlock) {
         expect(blocks[0]).toBeInstanceOf(ImageBlock);
@@ -126,7 +126,7 @@ console.log('Hello World');
     });
 
     test('TableBlock should parse markdown tables', () => {
-      const blocks = ParserV2.parse('| Col1 | Col2 |\n|------|------|\n| A    | B    |');
+      const blocks = Parser.parse('| Col1 | Col2 |\n|------|------|\n| A    | B    |');
       
       expect(blocks[0]).toBeInstanceOf(TableBlock);
       expect(blocks[0]._headers).toEqual(['Col1', 'Col2']);
@@ -136,8 +136,8 @@ console.log('Hello World');
 
   describe('Rendering integration', () => {
     test('should render blocks to HTML elements', () => {
-      const blocks = ParserV2.parse('# Heading\n\nParagraph text');
-      const htmlElements = ParserV2.html(blocks);
+      const blocks = Parser.parse('# Heading\n\nParagraph text');
+      const htmlElements = Parser.html(blocks);
 
       expect(htmlElements).toHaveLength(2);
       // HeadingBlock might render as a div with heading content
@@ -148,8 +148,8 @@ console.log('Hello World');
 
     test('should maintain content fidelity through parse-render cycle', () => {
       const originalMarkdown = '# Test Heading\n\nTest paragraph content.';
-      const blocks = ParserV2.parse(originalMarkdown);
-      const renderedElements = ParserV2.html(blocks);
+      const blocks = Parser.parse(originalMarkdown);
+      const renderedElements = Parser.html(blocks);
 
       expect(renderedElements[0].textContent).toBe('Test Heading');
       expect(renderedElements[1].textContent).toBe('Test paragraph content.');
@@ -158,21 +158,21 @@ console.log('Hello World');
 
   describe('Fallback behavior', () => {
     test('should fallback to ParagraphBlock for unrecognized content', () => {
-      const blocks = ParserV2.parse('Some random text that doesn\'t match any pattern');
+      const blocks = Parser.parse('Some random text that doesn\'t match any pattern');
       
       expect(blocks[0]).toBeInstanceOf(ParagraphBlock);
       expect(blocks[0]._content).toBe('Some random text that doesn\'t match any pattern');
     });
 
     test('should handle empty content gracefully', () => {
-      const blocks = ParserV2.parse('');
+      const blocks = Parser.parse('');
       
       expect(blocks).toHaveLength(0);
     });
 
     test('should handle mixed valid and invalid HTML', () => {
       const html = '<h1>Valid heading</h1><invalid-tag>Invalid content</invalid-tag>';
-      const blocks = ParserV2.parseHtml(html);
+      const blocks = Parser.parseHtml(html);
 
       // Should parse the valid heading and fallback for invalid content
       expect(blocks.length).toBeGreaterThan(0);

@@ -10,7 +10,7 @@ import {log, logWarning} from "./utils/log.js";
 import showdown from "showdown";
 import {eventEmitter} from "@/utils/eventEmitter.js";
 import {Block} from "@/Block.js";
-import {ParserV2 as Parser} from "@/ParserV2.js";
+import {Parser} from "@/Parser.js";
 import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
 import {BlockFactory} from "@/blocks/BlockFactory.js";

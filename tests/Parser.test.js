@@ -1,4 +1,4 @@
-import { ParserV2 } from '@/ParserV2.js';
+import { Parser } from '@/Parser.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
@@ -20,14 +20,14 @@ beforeAll(() => {
   global.document.createElement = jest.fn(() => mockElement);
 });
 
-describe('ParserV2 - Block-based parsing', () => {
+describe('Parser - Block-based parsing', () => {
   describe('Block parsing delegation', () => {
     test('should delegate HTML parsing to block types', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       // Test heading parsing
       const headingHtml = '<h1>Test Heading</h1>';
-      const result = ParserV2.parseHtml(headingHtml);
+      const result = Parser.parseHtml(headingHtml);
       
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(BlockType.H1);
@@ -40,7 +40,7 @@ describe('ParserV2 - Block-based parsing', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const taskHtml = '<li class="task-list-item" data-block-type="sq"><input type="checkbox" checked> Complete task</li>';
-      const result = ParserV2.parseHtml(taskHtml);
+      const result = Parser.parseHtml(taskHtml);
       
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(BlockType.SQ);
@@ -54,7 +54,7 @@ describe('ParserV2 - Block-based parsing', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const paragraphHtml = '<p>This is a paragraph</p>';
-      const result = ParserV2.parseHtml(paragraphHtml);
+      const result = Parser.parseHtml(paragraphHtml);
       
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(BlockType.PARAGRAPH);
@@ -69,7 +69,7 @@ describe('ParserV2 - Block-based parsing', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
       const markdown = '# Heading 1\n\nThis is a paragraph\n\n- [x] Completed task';
-      const result = ParserV2.parse(markdown);
+      const result = Parser.parse(markdown);
       
       expect(result.length).toBeGreaterThan(0);
       // Should have at least heading and paragraph blocks
@@ -85,7 +85,7 @@ describe('ParserV2 - Block-based parsing', () => {
       const blockInstance = new H1Block('Test', '<h1>Test</h1>');
       const block = new Block(BlockType.H1, 'Test', '<h1>Test</h1>', null, false, blockInstance);
       
-      const element = ParserV2.html(block);
+      const element = Parser.html(block);
       
       expect(document.createElement).toHaveBeenCalledWith('div');
       expect(element.classList.add).toHaveBeenCalledWith('block');

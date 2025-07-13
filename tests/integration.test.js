@@ -4,7 +4,7 @@
  */
 import { Editor } from '@/Editor.js';
 import { Toolbar } from '@/Toolbar.js';
-import { ParserV2 as Parser } from '@/ParserV2.js';
+import { Parser } from '@/Parser.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 
