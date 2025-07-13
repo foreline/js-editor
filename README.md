@@ -11,8 +11,9 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 - **Markdown support**: Full markdown parsing and conversion using Showdown.
 - **Advanced key handling**: Smart Enter/Backspace behavior for different block types.
 - **Clipboard integration**: Paste support with markdown conversion and XSS protection.
-- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), checklists, and special blocks.
+- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), checklists, tables, and special blocks.
 - **Interactive checklists**: Task lists with clickable checkboxes supporting markdown syntax `- [ ]` and `- [x]`.
+- **Table support**: Markdown tables with Tab navigation, cell editing, and dynamic row creation.
 
 ## Setup
 
@@ -94,23 +95,43 @@ console.log(htmlContent);
 The editor uses a modular block system where each block type implements the BlockInterface:
 
 ```javascript
-import { ParagraphBlock, H1Block, TaskListBlock } from './src/blocks/';
+import { ParagraphBlock, H1Block, TaskListBlock, TableBlock } from './src/blocks/';
 
 // Create blocks programmatically
 const paragraph = new ParagraphBlock('Hello world');
 const heading = new H1Block('My Title');
 const checklist = new TaskListBlock('My task item');
+const table = new TableBlock();
 
 // Get markdown representation
 console.log(paragraph.toMarkdown()); // "Hello world"
 console.log(heading.toMarkdown());   // "# My Title"
 console.log(checklist.toMarkdown()); // "- [ ] My task item"
+console.log(table.toMarkdown());     // "| Header | ... |"
 
 // Get HTML representation  
 console.log(paragraph.toHtml()); // "<p>Hello world</p>"
 console.log(heading.toHtml());   // "<h1>My Title</h1>"
 console.log(checklist.toHtml()); // "<li><input type=\"checkbox\"> My task item</li>"
+console.log(table.toHtml());     // "<table>...</table>"
 ```
+
+### Table Features
+
+Create tables using markdown syntax:
+
+```markdown
+| Header 1 | Header 2 | Header 3 |
+| -------- | -------- | -------- |
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |
+```
+
+- Use `Tab` to navigate between table cells
+- Use `Shift+Tab` to navigate backwards
+- Press `Enter` within a table to add a new row
+- Click cells to edit content directly
+- Tables export properly to both markdown and HTML formats
 
 ### Checklist Features
 

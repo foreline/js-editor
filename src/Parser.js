@@ -44,8 +44,8 @@ export class Parser
                     return codeMatch[1].trim();
                 }
             }
-            return html.replace(/<[^>]+>/g, '').trim();        }        // First pass: Get top-level blocks including task list items
-        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li)[^>]*>([\s\S]*?)<\/\1>/gi;
+            return html.replace(/<[^>]+>/g, '').trim();        }        // First pass: Get top-level blocks including task list items and tables
+        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li|table)[^>]*>([\s\S]*?)<\/\1>/gi;
         const matches = [...htmlString.matchAll(blockRegex)];
         
         return matches.map(match => {
@@ -69,6 +69,19 @@ export class Parser
                 );
             }
 
+            // Special handling for tables
+            if (tagName === 'table') {
+                // Extract table content and convert to markdown format
+                const textContent = this.extractTableContent(fullMatch);
+                
+                return new Block(
+                    BlockType.TABLE,
+                    textContent,
+                    fullMatch,
+                    null
+                );
+            }
+
             // Check for nested blocks
             const nestedBlocks = Parser.parseHtml(innerHtml);
 
@@ -80,6 +93,57 @@ export class Parser
                 nestedBlocks.length > 0 ? nestedBlocks : null
             );
         });
+    }
+
+    /**
+     * Extract table content from HTML table and convert to markdown format
+     * @param {string} tableHtml - HTML table string
+     * @returns {string} - Table content in markdown format
+     */
+    static extractTableContent(tableHtml) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(tableHtml, 'text/html');
+        const table = doc.querySelector('table');
+        
+        if (!table) return '';
+        
+        let content = '';
+        const headers = [];
+        const rows = [];
+        
+        // Extract headers
+        const headerRow = table.querySelector('thead tr') || table.querySelector('tr');
+        if (headerRow) {
+            const headerCells = headerRow.querySelectorAll('th, td');
+            headerCells.forEach(cell => {
+                headers.push(cell.textContent.trim());
+            });
+        }
+        
+        // Extract data rows
+        const dataRows = table.querySelectorAll('tbody tr') || table.querySelectorAll('tr:not(:first-child)');
+        dataRows.forEach(row => {
+            const cells = row.querySelectorAll('td, th');
+            const rowData = [];
+            cells.forEach(cell => {
+                rowData.push(cell.textContent.trim());
+            });
+            if (rowData.length > 0) {
+                rows.push(rowData);
+            }
+        });
+        
+        // Build markdown table
+        if (headers.length > 0) {
+            content += '| ' + headers.join(' | ') + ' |\n';
+            content += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
+            
+            rows.forEach(row => {
+                content += '| ' + row.join(' | ') + ' |\n';
+            });
+        }
+        
+        return content;
     }
 
     /**
@@ -107,7 +171,8 @@ export class Parser
         const converter = new showdown.Converter({ 
             ghCompatibleHeaderId: false, 
             headerIds: false,
-            tasklists: true  // Enable task list support
+            tasklists: true,  // Enable task list support
+            tables: true      // Enable table support
         });
         const html = converter.makeHtml(processedMarkdown);
         
@@ -180,6 +245,26 @@ export class Parser
             return element;
         }
 
+        // For table blocks, create div with table content
+        if (block.type === BlockType.TABLE) {
+            element.classList.add('block-table');
+            element.setAttribute('data-block-type', 'table');
+            element.setAttribute('data-placeholder', 'Table');
+            element.contentEditable = false; // Tables manage their own editing
+            
+            // Use the HTML from the block or generate from content
+            if (block.html && block.html.includes('<table')) {
+                element.innerHTML = block.html;
+            } else if (block._blockInstance && block._blockInstance.generateTableHTML) {
+                element.innerHTML = block._blockInstance.generateTableHTML();
+            } else {
+                // Fallback: create basic table
+                element.innerHTML = '<table style="border-collapse: collapse; width: 100%;"><tr><td style="border: 1px solid #ddd; padding: 8px;">Cell</td></tr></table>';
+            }
+            
+            return element;
+        }
+
         switch (block.type) {
             case BlockType.H1:
                 element.classList.add('block-h1');
@@ -195,6 +280,9 @@ export class Parser
                 break;
             case BlockType.QUOTE:
                 element.classList.add('block-quote');
+                break;
+            case BlockType.TABLE:
+                element.classList.add('block-table');
                 break;
             default:
                 element.classList.add('block-p');

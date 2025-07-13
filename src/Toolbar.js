@@ -196,6 +196,23 @@ export const Toolbar = {
     },
     
     /**
+     * Inserts table
+     */
+    table: () =>
+    {
+        log('table()', 'Toolbar.');
+        
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Create table block and apply transformation
+        const tableBlock = BlockFactory.createBlock('table');
+        tableBlock.applyTransformation();
+        
+        Toolbar.after();
+    },
+    
+    /**
      * Inserts line break <br />
      */
     br: () =>

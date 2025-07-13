@@ -118,6 +118,7 @@ The project is organized into the following key directories:
    - Blocks maintain consistent properties: `type`, `content`, `html`, `nested`.
    - Interface validation available for ensuring blocks meet contract requirements.
    - **Task List Support**: TaskListBlock supports checkbox lists with markdown syntax `- [ ]` for unchecked and `- [x]` for checked items. Checkboxes are interactive HTML input elements with toggle functionality via click or Ctrl+Space keyboard shortcut.
+   - **Table Support**: TableBlock supports markdown table syntax with header rows and data rows. Tables are rendered as HTML table elements with interactive cell editing, Tab navigation between cells, and Enter key to add new rows.
 
 ### Toolbar
 1. **Toolbar Buttons**:

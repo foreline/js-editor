@@ -5,6 +5,7 @@ import {ParagraphBlock} from "@/blocks/ParagraphBlock";
 import {H1Block, H2Block, H3Block, H4Block, H5Block, H6Block} from "@/blocks/HeadingBlock";
 import {UnorderedListBlock, OrderedListBlock, TaskListBlock} from "@/blocks/ListBlock";
 import {CodeBlock, QuoteBlock, DelimiterBlock} from "@/blocks/SpecialBlock";
+import {TableBlock} from "@/blocks/TableBlock";
 import {BlockType} from "@/BlockType";
 
 /**
@@ -50,6 +51,8 @@ export class BlockFactory
                 return new QuoteBlock(content, html, nested);
             case BlockType.DELIMITER:
                 return new DelimiterBlock(content, html, nested);
+            case BlockType.TABLE:
+                return new TableBlock(content, html, nested);
             default:
                 return new ParagraphBlock(content, html, nested);
         }
@@ -73,7 +76,8 @@ export class BlockFactory
             TaskListBlock,
             CodeBlock,
             QuoteBlock,
-            DelimiterBlock
+            DelimiterBlock,
+            TableBlock
         ];
     }
 

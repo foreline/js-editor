@@ -92,3 +92,40 @@
     list-style-type: decimal;
     margin-left: 20px;
 }
+
+/* Table styles */
+.editor .block[data-block-type="table"] {
+    overflow-x: auto;
+}
+
+.editor .block[data-block-type="table"] table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 5px 0;
+}
+
+.editor .block[data-block-type="table"] th,
+.editor .block[data-block-type="table"] td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    min-width: 100px;
+}
+
+.editor .block[data-block-type="table"] th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.editor .block[data-block-type="table"] td:focus,
+.editor .block[data-block-type="table"] th:focus {
+    outline: 2px solid #007cba;
+    background-color: #f0f8ff;
+}
+
+.editor .block[data-block-type="table"] td:empty::before,
+.editor .block[data-block-type="table"] th:empty::before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-style: italic;
+}
