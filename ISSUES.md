@@ -1,6 +1,10 @@
-# Issues and Improvements Checklist
+# Issues, Features and Improvements Checklist
 
-## Bug Fixes
+Common instruction: Take one task of the checklists at a time. After the task is completed mark it as checked, update `SPECS.md` file. Update `README.md` if needed. Commit your changes. Get the next task. Prioritize tasks by their dependencies of other tasks and by difficulty: take easy tasks first.
+
+## Bugs
+
+Take into consideration: the bugs can be repeated, indicating that the bug may have already been fixed and appeared again.
 
 - [x] **Focus Management**: Ensure `Editor.focus()` handles cases where the `currentBlock` is null or detached from the DOM. Add a fallback mechanism to focus on the editor instance itself.
 - [x] **Clipboard Handling**: Refactor `Editor.paste()` to sanitize pasted content properly and prevent XSS attacks. Use a dedicated parser for HTML sanitization.
@@ -13,9 +17,14 @@
     - [x] Ensure that enter key press inside a block leads to creating a new default block when a cursor is at the end of block. Except cases when user edits ul or ol list, when enter key press should lead to creating a new ul or ol item.
     - [x] In lists (`ol` and `ul`) when the cursor is at the end of the its last item the `Enter` keypress must lead to creating a new list item. Now it is creating a new default block.
     - [x] Ensure that when the new default block is created it becomes focused.
+    - [x] (appeared again) Ensure that enter key press inside a block leads to creating a new default block when a cursor is at the end of block. Except cases when user edits ul or ol list, when enter key press should lead to creating a new ul or ol item.
 - [x] **TableBlock is not editable**: The text inside a table is not editable.
 - [x] **Lists blocks margin and padding**: The padding or margin of list blocks (`ul`, `ol`, `sq`) is different from other blocks. All blocks must be aligned evenly.
 - [x] **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
+- [x] **Active block**: If the cursor is placed on block it should become active.
+- [x] (appeared again) **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
+- [x] **TaskBlock presentation**: The task block must not have `li` bullets in HTML representation. It must be rendered as `<input type="checkbox">` only. It should be aligned with proper margin from the left.
+- [x] **Block classes**: The list blocks have wrong class `block-p` instead of `block-ul`, `block-ol`. The `data-block-type` attribute value is also wrong. Other block must also be checked for this error.
 
 ## Features
 
@@ -23,21 +32,24 @@
 - [x] **Get Editor content as html**: The `Editor` must provide a static method `getHtml` for getting all its content in html format. Just a content without metadata must be provided.
 - [x] **BlockInterface**. Each block must implement a `BlockInterface`.
 - [x] **Toolbar buttons groups**. Toolbar buttons must be placed inside a group. A block can create its own group or put its control buttons to other groups.
-- [x] **Block integration with Toolbar**: Blocks must provide control buttons to Toolbar. I.e. a `TableBlock` should put a button to toolbar for creating tables. Each block must provide a static method returning toolbar configuration. Block must have control on its own toolbar buttons and buttons of other blocks. Headers blocks must disable buttons such as bold, italic, list controls and so on, because you cannot make Header bold, italic or put a list inside a header.
+- [x] **Block integration with Toolbar**: Blocks must provide control buttons to Toolbar. I.e. a `TableBlock` should put a button to toolbar for creating tables. Each block must provide a static method returning toolbar configuration. Block must have control on its own toolbar buttons and buttons of other blocks.
 - [x] **Checklist support**: A BlockType for working with checklists (square brackets, where `- [ ] unchecked item` means unchecked item and `- [x] checked item` means checked item). Checklists must be represented as `<input type="checkbox">` html tag.
 - [x] **Tables support**: A BlockType for working with basic markdown tables.
+    - [ ] The ability to add table columns and table rows.
 - [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
+- [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-` attribute for holding timestamp value.
+- [ ] **Specific HeaderBlock toolbar control**: Headers blocks must disable buttons such as bold, italic, underline, strikethrough, list controls and so on, because you cannot make Header bold, italic or put a list inside a header. When the Header Block is active the toolbar buttons must become disabled.
 
 ## Improvements
+Instruction: Improvements must be prioritized according by the list.
 
 - [x] **Block Architecture Refactoring**: Refactored the editor to use a modular block architecture where each block type is its own class with specific key press handling and behavior. This provides perfect extensibility for future block types.
 - [x] **Code Quality**: Enforce consistent code style using Prettier and ESLint. Refactor repetitive code in `Editor.js` and `ToolbarHandlers.js`. *(Partially completed with block architecture refactoring)*
+- [ ] **Dynamic Toolbar Configuration**: Allow users to dynamically configure toolbar buttons and their behavior via a plugin system.
+- [ ] **Export/Import**: Support exporting and import of Editor content to JSON with block metadata.
 - [ ] **Performance Optimization**: Use a virtual DOM approach to minimize DOM updates and improve rendering efficiency, especially for large documents.
 - [ ] **Accessibility**: Add ARIA roles and keyboard navigation support to ensure the editor is fully accessible.
 - [ ] **Scalability**: Optimize the `Editor.update()` method to handle thousands of blocks efficiently without performance degradation.
 - [ ] **Testing Coverage**: Write integration tests for edge cases, such as invalid toolbar configurations and malformed content blocks.
-- [ ] **Dynamic Toolbar Configuration**: Allow users to dynamically configure toolbar buttons and their behavior via a plugin system.
 - [ ] **Enhanced Parsing**: Extend markdown parsing to support advanced syntax like tables, task lists, and fenced code blocks.
-- [ ] **Real-Time Collaboration**: Implement a mechanism for real-time collaborative editing with conflict resolution strategies.
 - [ ] **Version Control**: Add versioning capabilities to track changes and allow rollback to previous states.
-- [ ] **Export/Import**: Support exporting content to formats like PDF, Word, and JSON, and importing from external sources like Google Docs.

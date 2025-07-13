@@ -93,11 +93,22 @@ The project is organized into the following key directories:
    - Handle edge cases like empty keybuffer or invalid event targets.
    - **Enter Key Handling**: Create new blocks when Enter is pressed at the end of a block. For list blocks (ul, ol), create new list items when cursor is at the end of the item, or end the list if the current item is empty. For non-list blocks, create a new paragraph block when cursor is at the end.
    - **Backspace Key Handling**: Remove empty blocks when Backspace is pressed and focus on the previous block. Maintain at least one block in the editor.
+   - **Cursor-based Block Activation**: When a user clicks or places cursor within a block, that block automatically becomes the active/current block.
 
 4. **Focus Management**:
    - Automatically focus on the first block when the editor is initialized.
    - Provide methods to programmatically set focus on specific blocks.
    - Handle focus transitions when blocks are added, removed, or updated.
+   - Support cursor placement detection via mouseup events to track which block contains the cursor.
+
+5. **Block Rendering and Classes**:
+   - Each block type has a corresponding CSS class for proper styling: `block-p` for paragraphs, `block-h1` through `block-h6` for headers, `block-ul` for unordered lists, `block-ol` for ordered lists, `block-sq` for task lists, `block-code` for code blocks, `block-table` for tables, `block-image` for images, and `block-quote` for quotes.
+   - Task blocks (`sq` type) are rendered as div elements with checkboxes rather than list items to avoid bullet points and ensure proper alignment.
+   - All data-block-type attributes correctly match the actual block type for proper key handling and styling.
+
+6. **Code Block Parsing**:
+   - Fenced code blocks (using triple backticks ``` or tildes ~~~) are properly parsed as separate blocks.
+   - Pre-processing ensures fenced code blocks are isolated on their own lines before markdown conversion.
    - **Intelligent Block Removal**: When empty blocks are removed via Backspace, automatically focus on the nearest available block (previous block preferred, fallback to next block).
 
 5. **Clipboard Support**:

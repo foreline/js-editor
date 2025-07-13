@@ -213,6 +213,18 @@ export class Parser
         // Pre-process markdown to handle task lists
         let processedMarkdown = markdownString;
         
+        // Pre-process fenced code blocks to ensure they are properly separated
+        // Match fenced code blocks with triple backticks or tildes
+        processedMarkdown = processedMarkdown.replace(/^```[\s\S]*?^```$/gm, (match) => {
+            // Ensure fenced code blocks are on their own lines
+            return '\n' + match + '\n';
+        });
+        
+        processedMarkdown = processedMarkdown.replace(/^~~~[\s\S]*?^~~~$/gm, (match) => {
+            // Ensure fenced code blocks are on their own lines
+            return '\n' + match + '\n';
+        });
+        
         // Convert task list syntax to custom HTML first
         processedMarkdown = processedMarkdown.replace(/^- \[([x ])\] (.+)$/gm, (match, checked, text) => {
             const isChecked = checked === 'x';
@@ -266,18 +278,27 @@ export class Parser
         element.setAttribute('data-block-type', block.type);
         element.setAttribute('data-placeholder', 'Type "/" to insert block');
 
-        // For task list items, create li element instead of div
+        // For task list items, create div element (not li) to avoid bullets
         if (block.type === BlockType.SQ) {
-            element = document.createElement('li');
-            element.classList.add('block');
+            element.classList.add('block-sq');
             element.setAttribute('data-block-type', 'sq');
             element.setAttribute('data-placeholder', 'Task item');
-            element.contentEditable = true;
+            element.contentEditable = false; // Task items manage their own content editing
+            element.style.listStyle = 'none'; // Remove any list styling
+            element.style.marginLeft = '0';   // Align with other blocks
+            element.style.paddingLeft = '0';  // Remove padding
             
             // Create checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.style.marginRight = '8px';
+            checkbox.style.verticalAlign = 'middle';
+            
+            // Create text container that is editable
+            const textContainer = document.createElement('span');
+            textContainer.contentEditable = true;
+            textContainer.style.outline = 'none';
+            textContainer.textContent = block.content || '';
             
             // Set checked state if block instance has the information
             if (block._blockInstance && block._blockInstance.isChecked) {
@@ -292,7 +313,7 @@ export class Parser
             });
             
             element.appendChild(checkbox);
-            element.appendChild(document.createTextNode(' ' + (block.content || '')));
+            element.appendChild(textContainer);
             
             return element;
         }
@@ -362,14 +383,41 @@ export class Parser
             case BlockType.H3:
                 element.classList.add('block-h3');
                 break;
+            case BlockType.H4:
+                element.classList.add('block-h4');
+                break;
+            case BlockType.H5:
+                element.classList.add('block-h5');
+                break;
+            case BlockType.H6:
+                element.classList.add('block-h6');
+                break;
             case BlockType.PARAGRAPH:
                 element.classList.add('block-p');
+                break;
+            case BlockType.CODE:
+                element.classList.add('block-code');
                 break;
             case BlockType.QUOTE:
                 element.classList.add('block-quote');
                 break;
+            case BlockType.UL:
+                element.classList.add('block-ul');
+                break;
+            case BlockType.OL:
+                element.classList.add('block-ol');
+                break;
+            case BlockType.SQ:
+                element.classList.add('block-sq');
+                break;
             case BlockType.TABLE:
                 element.classList.add('block-table');
+                break;
+            case BlockType.IMAGE:
+                element.classList.add('block-image');
+                break;
+            case BlockType.DELIMITER:
+                element.classList.add('block-delimiter');
                 break;
             default:
                 element.classList.add('block-p');

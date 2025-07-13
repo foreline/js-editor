@@ -125,6 +125,9 @@ export class KeyHandler
 
         // Check if cursor is at the end of the block for default behavior
         const selection = window.getSelection();
+        if (!selection.rangeCount) {
+            return;
+        }
         const range = selection.getRangeAt(0);
         const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
         

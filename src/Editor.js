@@ -202,6 +202,29 @@ export class Editor
                 }
             }
         });
+        
+        // Add mouseup event to catch cursor placement
+        this.instance.addEventListener('mouseup', function(e) {
+            // Ignore mouse events outside the editor
+            if ( !e.target.closest('.editor') ) {
+                return;
+            }
+
+            // Check if cursor is placed in a block
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const commonAncestor = range.commonAncestorContainer;
+                let block = commonAncestor.nodeType === Node.TEXT_NODE ? 
+                    commonAncestor.parentElement : commonAncestor;
+                
+                // Find the closest block element
+                block = block.closest('.block');
+                if ( block ) {
+                    Editor.setCurrentBlock(block);
+                }
+            }
+        });
     }
 
     /**
