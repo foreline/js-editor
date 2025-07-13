@@ -5,7 +5,8 @@ import { H1Block, H2Block, H3Block } from '@/blocks/HeadingBlock.js';
 import { UnorderedListBlock } from '@/blocks/UnorderedListBlock.js';
 import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
-import { CodeBlock, QuoteBlock, DelimiterBlock } from '@/blocks/SpecialBlock.js';
+import { CodeBlock } from '@/blocks/CodeBlock.js';
+import { QuoteBlock, DelimiterBlock } from '@/blocks/SpecialBlock.js';
 import { BlockType } from '@/BlockType.js';
 
 describe('BlockFactory', () => {

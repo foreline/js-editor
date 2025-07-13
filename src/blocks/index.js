@@ -8,5 +8,6 @@ export {ListBlock} from './ListBlock.js';
 export {UnorderedListBlock} from './UnorderedListBlock.js';
 export {OrderedListBlock} from './OrderedListBlock.js';
 export {TaskListBlock} from './TaskListBlock.js';
-export {CodeBlock, QuoteBlock, DelimiterBlock} from './SpecialBlock.js';
+export {CodeBlock} from './CodeBlock.js';
+export {QuoteBlock, DelimiterBlock} from './SpecialBlock.js';
 export {BlockFactory} from './BlockFactory.js';

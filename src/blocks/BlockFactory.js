@@ -6,7 +6,8 @@ import {H1Block, H2Block, H3Block, H4Block, H5Block, H6Block} from "@/blocks/Hea
 import {UnorderedListBlock} from "@/blocks/UnorderedListBlock";
 import {OrderedListBlock} from "@/blocks/OrderedListBlock";
 import {TaskListBlock} from "@/blocks/TaskListBlock";
-import {CodeBlock, QuoteBlock, DelimiterBlock} from "@/blocks/SpecialBlock";
+import {CodeBlock} from "@/blocks/CodeBlock";
+import {QuoteBlock, DelimiterBlock} from "@/blocks/SpecialBlock";
 import {TableBlock} from "@/blocks/TableBlock";
 import {ImageBlock} from "@/blocks/ImageBlock";
 import {BlockType} from "@/BlockType";
