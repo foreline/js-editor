@@ -44,7 +44,7 @@ export class Parser
      */
     static extractHtmlBlocks(htmlString) {
         const blocks = [];
-        const blockTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'pre', 'code', 'blockquote', 'ul', 'ol', 'li', 'table', 'img', 'del'];
+        const blockTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'pre', 'blockquote', 'ul', 'ol', 'table', 'img', 'del'];
         
         // First handle self-closing tags
         const selfClosingRegex = /<(img|hr|br)[^>]*\/?>/gi;

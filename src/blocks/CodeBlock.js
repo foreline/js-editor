@@ -224,7 +224,10 @@ export class CodeBlock extends BaseBlock
         if (!htmlString || typeof htmlString !== 'string') {
             return false;
         }
-        return /^<(pre|code)[^>]*>/i.test(htmlString);
+        
+        // Only match block-level code elements starting with <pre>
+        // This excludes inline <code> elements which should not be treated as code blocks
+        return /^<pre[^>]*>/i.test(htmlString);
     }
 
     /**

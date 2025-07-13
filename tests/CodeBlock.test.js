@@ -369,10 +369,16 @@ describe('CodeBlock', () => {
       expect(CodeBlock.canParseHtml('<PRE>code</PRE>')).toBe(true);
     });
 
-    test('returns true for code elements', () => {
-      expect(CodeBlock.canParseHtml('<code>code</code>')).toBe(true);
-      expect(CodeBlock.canParseHtml('<code class="language-js">code</code>')).toBe(true);
-      expect(CodeBlock.canParseHtml('<CODE>code</CODE>')).toBe(true);
+    test('returns true for pre elements only', () => {
+      expect(CodeBlock.canParseHtml('<pre><code>code</code></pre>')).toBe(true);
+      expect(CodeBlock.canParseHtml('<pre class="language-js"><code>code</code></pre>')).toBe(true);
+      expect(CodeBlock.canParseHtml('<PRE>code</PRE>')).toBe(true);
+    });
+
+    test('returns false for inline code elements', () => {
+      expect(CodeBlock.canParseHtml('<code>code</code>')).toBe(false);
+      expect(CodeBlock.canParseHtml('<code class="language-js">code</code>')).toBe(false);
+      expect(CodeBlock.canParseHtml('<CODE>code</CODE>')).toBe(false);
     });
 
     test('returns false for non-code elements', () => {

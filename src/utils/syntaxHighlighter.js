@@ -3,6 +3,8 @@
 import Prism from 'prismjs';
 
 // Import core languages that are commonly available and stable
+import 'prismjs/components/prism-markup'; // HTML - must be loaded before markup-templating
+import 'prismjs/components/prism-markup-templating'; // Required for PHP
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-python';
@@ -10,7 +12,6 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-csharp';
 import 'prismjs/components/prism-php';
 import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-markup'; // HTML
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-bash';
