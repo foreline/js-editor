@@ -2,7 +2,8 @@ import { BlockFactory } from '@/blocks/BlockFactory.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
 import { H1Block, H2Block, H3Block } from '@/blocks/HeadingBlock.js';
-import { UnorderedListBlock, OrderedListBlock, TaskListBlock } from '@/blocks/ListBlock.js';
+import { UnorderedListBlock, OrderedListBlock } from '@/blocks/ListBlock.js';
+import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 import { CodeBlock, QuoteBlock, DelimiterBlock } from '@/blocks/SpecialBlock.js';
 import { BlockType } from '@/BlockType.js';
 
@@ -43,7 +44,7 @@ describe('BlockFactory', () => {
     const quoteClass = BlockFactory.findBlockClassForTrigger('> ');
     expect(quoteClass).toBe(QuoteBlock);
 
-    const taskClass = BlockFactory.findBlockClassForTrigger('[] ');
+    const taskClass = BlockFactory.findBlockClassForTrigger('- [ ]');
     expect(taskClass).toBe(TaskListBlock);
   });
 
@@ -98,9 +99,9 @@ describe('Block types', () => {
   });
 
   test('TaskListBlock has correct markdown triggers', () => {
-    expect(TaskListBlock.getMarkdownTriggers()).toContain('[] ');
-    expect(TaskListBlock.matchesMarkdownTrigger('[] ')).toBe(true);
-    expect(TaskListBlock.matchesMarkdownTrigger('* ')).toBe(false);
+    expect(TaskListBlock.getMarkdownTriggers()).toContain('- [ ]');
+    expect(TaskListBlock.getMarkdownTriggers()).toContain('- [x]');
+    expect(TaskListBlock.getMarkdownTriggers()).toContain('- []');
   });
 
   test('QuoteBlock has correct markdown triggers', () => {
