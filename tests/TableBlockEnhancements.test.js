@@ -80,9 +80,16 @@ describe('TableBlock Enhancements', () => {
       
       tableBlock.showTableControls(cell);
       
-      const controlPanel = document.querySelector('.table-controls-panel');
-      expect(controlPanel).toBeTruthy();
-      expect(controlPanel.children.length).toBe(4); // 4 buttons
+      const controlsContainer = document.querySelector('.table-controls-container');
+      expect(controlsContainer).toBeTruthy();
+      
+      const topLeftControl = document.querySelector('.table-control-topleft');
+      const rightControl = document.querySelector('.table-control-right');
+      const bottomControl = document.querySelector('.table-control-bottom');
+      
+      expect(topLeftControl).toBeTruthy();
+      expect(rightControl).toBeTruthy();
+      expect(bottomControl).toBeTruthy();
     });
 
     test('should hide table controls', () => {
@@ -91,8 +98,8 @@ describe('TableBlock Enhancements', () => {
       
       tableBlock.hideTableControls();
       
-      const controlPanel = document.querySelector('.table-controls-panel');
-      expect(controlPanel).toBeFalsy();
+      const controlsContainer = document.querySelector('.table-controls-container');
+      expect(controlsContainer).toBeFalsy();
     });
   });
 
@@ -197,8 +204,8 @@ describe('TableBlock Enhancements', () => {
       expect(cell.style.outline).toBe('2px solid #007cba');
       expect(cell.style.backgroundColor).toBe('rgb(240, 248, 255)');
       
-      const controlPanel = document.querySelector('.table-controls-panel');
-      expect(controlPanel).toBeTruthy();
+      const controlsContainer = document.querySelector('.table-controls-container');
+      expect(controlsContainer).toBeTruthy();
     });
 
     test('should hide controls on cell blur with delay', (done) => {
@@ -206,7 +213,7 @@ describe('TableBlock Enhancements', () => {
       
       // First focus to show controls
       tableBlock.showTableControls(cell);
-      expect(document.querySelector('.table-controls-panel')).toBeTruthy();
+      expect(document.querySelector('.table-controls-container')).toBeTruthy();
       
       // Then blur
       const event = new Event('blur');
@@ -215,11 +222,11 @@ describe('TableBlock Enhancements', () => {
       tableBlock.handleCellBlur(event);
       
       // Check immediately - controls should still be there
-      expect(document.querySelector('.table-controls-panel')).toBeTruthy();
+      expect(document.querySelector('.table-controls-container')).toBeTruthy();
       
       // Check after delay - controls should be hidden
       setTimeout(() => {
-        expect(document.querySelector('.table-controls-panel')).toBeFalsy();
+        expect(document.querySelector('.table-controls-container')).toBeFalsy();
         done();
       }, 250);
     });

@@ -303,7 +303,7 @@ export class TableBlock extends BaseBlock
     }
 
     /**
-     * Show table control buttons near the focused table
+     * Show table control buttons around the focused table
      * @param {HTMLElement} cell - The focused cell
      */
     showTableControls(cell) {
@@ -316,104 +316,280 @@ export class TableBlock extends BaseBlock
         const table = tableBlock.querySelector('table');
         if (!table) return;
         
-        // Create control panel
-        const controlPanel = document.createElement('div');
-        controlPanel.className = 'table-controls-panel';
-        controlPanel.style.cssText = `
+        // Create main container for all controls
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'table-controls-container';
+        controlsContainer.style.cssText = `
             position: absolute;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
             z-index: 1000;
-            display: flex;
-            gap: 4px;
         `;
         
-        // Create buttons
-        const buttons = [
-            {
-                icon: '➕📋',
-                title: 'Add Row',
-                action: () => this.addNewRow()
-            },
-            {
-                icon: '➖📋',
-                title: 'Remove Row',
-                action: () => this.removeRow()
-            },
-            {
-                icon: '➕📄',
-                title: 'Add Column',
-                action: () => this.addColumn()
-            },
-            {
-                icon: '➖📄',
-                title: 'Remove Column',
-                action: () => this.removeColumn()
-            }
-        ];
+        // Create top-left corner control (add column/row controls)
+        const topLeftControl = document.createElement('div');
+        topLeftControl.className = 'table-control-topleft';
+        topLeftControl.style.cssText = `
+            position: absolute;
+            top: -35px;
+            left: -35px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        topLeftControl.innerHTML = '⊞';
+        topLeftControl.title = 'Table Controls';
         
-        buttons.forEach(buttonConfig => {
-            const button = document.createElement('button');
-            button.innerHTML = buttonConfig.icon;
-            button.title = buttonConfig.title;
-            button.style.cssText = `
-                background: #f8f9fa;
-                border: 1px solid #ddd;
-                border-radius: 3px;
-                padding: 6px 8px;
-                cursor: pointer;
-                font-size: 12px;
-                min-width: 28px;
-                height: 28px;
-            `;
-            
-            button.addEventListener('mouseenter', () => {
-                button.style.background = '#e9ecef';
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                button.style.background = '#f8f9fa';
-            });
-            
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                buttonConfig.action();
-            });
-            
-            controlPanel.appendChild(button);
+        // Create right edge control (add column)
+        const rightControl = document.createElement('div');
+        rightControl.className = 'table-control-right';
+        rightControl.style.cssText = `
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 30px;
+            background: #4285f4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        `;
+        rightControl.innerHTML = '+';
+        rightControl.title = 'Add Column';
+        
+        // Create bottom edge control (add row)
+        const bottomControl = document.createElement('div');
+        bottomControl.className = 'table-control-bottom';
+        bottomControl.style.cssText = `
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 16px;
+            background: #4285f4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        `;
+        bottomControl.innerHTML = '+';
+        bottomControl.title = 'Add Row';
+        
+        // Add event listeners
+        rightControl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.addColumn();
         });
         
-        // Position the control panel
-        const tableRect = table.getBoundingClientRect();
-        const containerRect = tableBlock.getBoundingClientRect();
+        bottomControl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.addNewRow();
+        });
         
-        controlPanel.style.left = '10px';
-        controlPanel.style.top = '-45px';
+        // Create dropdown menu for top-left control
+        topLeftControl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showTableMenu(topLeftControl);
+        });
+        
+        // Add hover effects
+        [rightControl, bottomControl].forEach(control => {
+            control.addEventListener('mouseenter', () => {
+                control.style.background = '#3367d6';
+            });
+            control.addEventListener('mouseleave', () => {
+                control.style.background = '#4285f4';
+            });
+        });
+        
+        topLeftControl.addEventListener('mouseenter', () => {
+            topLeftControl.style.background = '#f0f0f0';
+        });
+        topLeftControl.addEventListener('mouseleave', () => {
+            topLeftControl.style.background = 'white';
+        });
+        
+        // Append controls to container
+        controlsContainer.appendChild(topLeftControl);
+        controlsContainer.appendChild(rightControl);
+        controlsContainer.appendChild(bottomControl);
         
         // Add to table block with relative positioning
         tableBlock.style.position = 'relative';
-        tableBlock.appendChild(controlPanel);
+        tableBlock.appendChild(controlsContainer);
         
         // Store reference for cleanup
-        this._controlPanel = controlPanel;
+        this._controlsContainer = controlsContainer;
+    }
+
+    /**
+     * Show table menu with all available actions
+     * @param {HTMLElement} triggerElement - The element that triggered the menu
+     */
+    showTableMenu(triggerElement) {
+        // Remove any existing menu
+        this.hideTableMenu();
+        
+        const menu = document.createElement('div');
+        menu.className = 'table-menu';
+        menu.style.cssText = `
+            position: absolute;
+            top: 35px;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            min-width: 150px;
+            pointer-events: auto;
+        `;
+        
+        const menuItems = [
+            {
+                label: 'Add Row Above',
+                action: () => this.addRowAbove()
+            },
+            {
+                label: 'Add Row Below', 
+                action: () => this.addNewRow()
+            },
+            {
+                label: 'Add Column Left',
+                action: () => this.addColumnLeft()
+            },
+            {
+                label: 'Add Column Right',
+                action: () => this.addColumn()
+            },
+            { divider: true },
+            {
+                label: 'Remove Row',
+                action: () => this.removeRow()
+            },
+            {
+                label: 'Remove Column',
+                action: () => this.removeColumn()
+            },
+            { divider: true },
+            {
+                label: 'Delete Table',
+                action: () => this.deleteTable(),
+                className: 'danger'
+            }
+        ];
+        
+        menuItems.forEach(item => {
+            if (item.divider) {
+                const divider = document.createElement('div');
+                divider.style.cssText = `
+                    height: 1px;
+                    background: #eee;
+                    margin: 4px 0;
+                `;
+                menu.appendChild(divider);
+            } else {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'table-menu-item';
+                menuItem.textContent = item.label;
+                menuItem.style.cssText = `
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    border-radius: 2px;
+                    ${item.className === 'danger' ? 'color: #dc3545;' : ''}
+                `;
+                
+                menuItem.addEventListener('mouseenter', () => {
+                    menuItem.style.background = item.className === 'danger' ? '#fff5f5' : '#f0f0f0';
+                });
+                
+                menuItem.addEventListener('mouseleave', () => {
+                    menuItem.style.background = 'white';
+                });
+                
+                menuItem.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    item.action();
+                    this.hideTableMenu();
+                });
+                
+                menu.appendChild(menuItem);
+            }
+        });
+        
+        triggerElement.appendChild(menu);
+        this._tableMenu = menu;
+        
+        // Close menu when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', this.handleClickOutsideMenu.bind(this));
+        }, 100);
+    }
+
+    /**
+     * Hide table menu
+     */
+    hideTableMenu() {
+        if (this._tableMenu) {
+            this._tableMenu.remove();
+            this._tableMenu = null;
+        }
+        document.removeEventListener('click', this.handleClickOutsideMenu);
+    }
+
+    /**
+     * Handle clicks outside the menu to close it
+     * @param {Event} event
+     */
+    handleClickOutsideMenu(event) {
+        if (this._tableMenu && !this._tableMenu.contains(event.target)) {
+            this.hideTableMenu();
+        }
     }
 
     /**
      * Hide table control buttons
      */
     hideTableControls() {
-        if (this._controlPanel) {
-            this._controlPanel.remove();
-            this._controlPanel = null;
+        if (this._controlsContainer) {
+            this._controlsContainer.remove();
+            this._controlsContainer = null;
         }
         
-        // Also remove any orphaned control panels
-        document.querySelectorAll('.table-controls-panel').forEach(panel => {
-            panel.remove();
+        this.hideTableMenu();
+        
+        // Also remove any orphaned control containers
+        document.querySelectorAll('.table-controls-container').forEach(container => {
+            container.remove();
         });
     }
 
@@ -495,6 +671,116 @@ export class TableBlock extends BaseBlock
         this._rows.forEach(row => row.pop());
         
         Editor.update();
+    }
+
+    /**
+     * Add a new column to the left of the table
+     */
+    addColumnLeft() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        // Get current table structure
+        const headerRow = table.querySelector('thead tr');
+        const bodyRows = table.querySelectorAll('tbody tr');
+        
+        // Add header for new column at the beginning
+        if (headerRow) {
+            const newHeader = document.createElement('th');
+            newHeader.contentEditable = true;
+            newHeader.style.border = '1px solid #ddd';
+            newHeader.style.padding = '8px';
+            newHeader.style.background = '#f5f5f5';
+            newHeader.textContent = 'New Column';
+            headerRow.insertBefore(newHeader, headerRow.firstChild);
+        }
+        
+        // Add cells to all existing rows at the beginning
+        bodyRows.forEach(row => {
+            const newCell = document.createElement('td');
+            newCell.contentEditable = true;
+            newCell.style.border = '1px solid #ddd';
+            newCell.style.padding = '8px';
+            newCell.textContent = '';
+            row.insertBefore(newCell, row.firstChild);
+        });
+        
+        // Update internal data structure
+        this._headers.unshift('New Column');
+        this._rows.forEach(row => row.unshift(''));
+        
+        // Re-setup cell editing
+        this.setupCellEditing(currentBlock);
+        Editor.update();
+    }
+
+    /**
+     * Add a new row above the current row
+     */
+    addRowAbove() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        
+        // Create new row with same number of columns as headers
+        const newRow = document.createElement('tr');
+        for (let i = 0; i < this._headers.length; i++) {
+            const cell = document.createElement('td');
+            cell.contentEditable = true;
+            cell.style.border = '1px solid #ddd';
+            cell.style.padding = '8px';
+            cell.textContent = '';
+            newRow.appendChild(cell);
+        }
+        
+        // Insert at the beginning of tbody
+        tbody.insertBefore(newRow, tbody.firstChild);
+        
+        // Focus on first cell of new row
+        const firstCell = newRow.querySelector('td');
+        if (firstCell) {
+            firstCell.focus();
+        }
+        
+        // Update internal data structure
+        this._rows.unshift(new Array(this._headers.length).fill(''));
+        
+        // Re-setup cell editing
+        this.setupCellEditing(currentBlock);
+        Editor.update();
+    }
+
+    /**
+     * Delete the entire table
+     */
+    deleteTable() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Confirm deletion
+        if (confirm('Are you sure you want to delete this table?')) {
+            // Hide controls first
+            this.hideTableControls();
+            
+            // Replace with empty paragraph block
+            currentBlock.setAttribute('data-block-type', 'paragraph');
+            currentBlock.className = 'block block-p';
+            currentBlock.innerHTML = '<p><br></p>';
+            currentBlock.contentEditable = true;
+            
+            // Focus the new paragraph
+            currentBlock.focus();
+            
+            Editor.update();
+        }
     }
 
     /**
