@@ -41,10 +41,18 @@ export class CodeBlock extends BaseBlock
         return false;
     }
 
+    /**
+     * Get markdown triggers for code blocks
+     * @returns {Array<string>} - Array of markdown triggers
+     */
     static getMarkdownTriggers() {
         return ['```', '~~~'];
     }
 
+    /**
+     * Apply code block transformation via toolbar
+     * @returns {void}
+     */
     applyTransformation() {
         Toolbar.code();
     }
