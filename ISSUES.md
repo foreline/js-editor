@@ -13,6 +13,9 @@
     - [x] Ensure that enter key press inside a block leads to creating a new default block when a cursor is at the end of block. Except cases when user edits ul or ol list, when enter key press should lead to creating a new ul or ol item.
     - [x] In lists (`ol` and `ul`) when the cursor is at the end of the its last item the `Enter` keypress must lead to creating a new list item. Now it is creating a new default block.
     - [x] Ensure that when the new default block is created it becomes focused.
+- [ ] **TableBlock is not editable**: The text inside a table is not editable.
+- [ ] **Lists blocks margin and padding**: The padding or margin of list blocks (`ul`, `ol`, `sq`) is different from other blocks. All blocks must be aligned evenly.
+- [ ] **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
 
 ## Features
 

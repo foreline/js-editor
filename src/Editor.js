@@ -550,6 +550,7 @@ export class Editor
         // Ensure the block is attached before focusing
         requestAnimationFrame(() => {
             htmlBlock.focus();
+            Editor.update();
         });
         
         return htmlBlock;
