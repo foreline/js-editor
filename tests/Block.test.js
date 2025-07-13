@@ -1,7 +1,7 @@
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
-import { H1Block } from '@/blocks/HeadingBlock.js';
+import { H1Block } from '@/blocks/H1Block.js';
 
 describe('Block', () => {
   test('constructor initializes with default type', () => {

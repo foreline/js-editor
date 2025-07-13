@@ -4,7 +4,7 @@
 
 import { Editor } from '../src/Editor.js';
 import { ParagraphBlock } from '../src/blocks/ParagraphBlock.js';
-import { H1Block } from '../src/blocks/HeadingBlock.js';
+import { H1Block } from '../src/blocks/H1Block.js';
 
 describe('Content Export Methods', () => {
     beforeEach(() => {

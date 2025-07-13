@@ -132,15 +132,8 @@ export class HeadingBlock extends BaseBlock
         const level = parseInt(match[1]);
         const content = match[2].trim();
         
-        switch (level) {
-            case 1: return new H1Block(content, htmlString);
-            case 2: return new H2Block(content, htmlString);
-            case 3: return new H3Block(content, htmlString);
-            case 4: return new H4Block(content, htmlString);
-            case 5: return new H5Block(content, htmlString);
-            case 6: return new H6Block(content, htmlString);
-            default: return null;
-        }
+        // Create the appropriate heading block dynamically
+        return new HeadingBlock(level, content, htmlString);
     }
 
     /**
@@ -165,146 +158,7 @@ export class HeadingBlock extends BaseBlock
         const content = match[2].trim();
         const html = `<h${level}>${content}</h${level}>`;
         
-        switch (level) {
-            case 1: return new H1Block(content, html);
-            case 2: return new H2Block(content, html);
-            case 3: return new H3Block(content, html);
-            case 4: return new H4Block(content, html);
-            case 5: return new H5Block(content, html);
-            case 6: return new H6Block(content, html);
-            default: return null;
-        }
-    }
-}
-
-/**
- * H1 block
- */
-export class H1Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(1, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['# '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header1',
-            label: 'Heading 1',
-            group: 'headers'
-        };
-    }
-}
-
-/**
- * H2 block
- */
-export class H2Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(2, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['## '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header2',
-            label: 'Heading 2',
-            group: 'headers'
-        };
-    }
-}
-
-/**
- * H3 block
- */
-export class H3Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(3, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['### '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header3',
-            label: 'Heading 3',
-            group: 'headers'
-        };
-    }
-}
-
-/**
- * H4 block
- */
-export class H4Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(4, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['#### '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header4',
-            label: 'Heading 4',
-            group: 'headers'
-        };
-    }
-}
-
-/**
- * H5 block
- */
-export class H5Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(5, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['##### '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header5',
-            label: 'Heading 5',
-            group: 'headers'
-        };
-    }
-}
-
-/**
- * H6 block
- */
-export class H6Block extends HeadingBlock
-{
-    constructor(content = '', html = '', nested = false) {
-        super(6, content, html, nested);
-    }
-
-    static getMarkdownTriggers() {
-        return ['###### '];
-    }
-
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-header6',
-            label: 'Heading 6',
-            group: 'headers'
-        };
+        // Create the appropriate heading block dynamically
+        return new HeadingBlock(level, content, html);
     }
 }

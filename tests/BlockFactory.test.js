@@ -1,7 +1,9 @@
 import { BlockFactory } from '@/blocks/BlockFactory.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
-import { H1Block, H2Block, H3Block } from '@/blocks/HeadingBlock.js';
+import { H1Block } from '@/blocks/H1Block.js';
+import { H2Block } from '@/blocks/H2Block.js';
+import { H3Block } from '@/blocks/H3Block.js';
 import { UnorderedListBlock } from '@/blocks/UnorderedListBlock.js';
 import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';

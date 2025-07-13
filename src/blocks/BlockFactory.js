@@ -2,7 +2,12 @@
 
 import {BaseBlock} from "@/blocks/BaseBlock";
 import {ParagraphBlock} from "@/blocks/ParagraphBlock";
-import {H1Block, H2Block, H3Block, H4Block, H5Block, H6Block} from "@/blocks/HeadingBlock";
+import {H1Block} from "@/blocks/H1Block";
+import {H2Block} from "@/blocks/H2Block";
+import {H3Block} from "@/blocks/H3Block";
+import {H4Block} from "@/blocks/H4Block";
+import {H5Block} from "@/blocks/H5Block";
+import {H6Block} from "@/blocks/H6Block";
 import {UnorderedListBlock} from "@/blocks/UnorderedListBlock";
 import {OrderedListBlock} from "@/blocks/OrderedListBlock";
 import {TaskListBlock} from "@/blocks/TaskListBlock";

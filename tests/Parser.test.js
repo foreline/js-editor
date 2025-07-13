@@ -2,7 +2,7 @@ import { Parser } from '@/Parser.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
-import { H1Block } from '@/blocks/HeadingBlock.js';
+import { H1Block } from '@/blocks/H1Block.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 
 // Mock DOM for testing
