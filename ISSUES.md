@@ -9,10 +9,10 @@
 - [x] **Toolbar Integration**: Ensure all toolbar buttons are dynamically initialized and their event listeners are removed during reinitialization to prevent memory leaks.
 - [x] **Error Handling**: Improve error handling in methods like `Editor.initMarkdownContainer()` and `Editor.initHtmlContainer()` to log warnings when containers are not found.
 - [x] **Focus management**: When backspace is pressed inside an empty block it should be removed and the nearest upper block should become active.
-- [ ] **Enter key press handling**. 
+- [x] **Enter key press handling**. 
     - [x] Ensure that enter key press inside a block leads to creating a new default block when a cursor is at the end of block. Except cases when user edits ul or ol list, when enter key press should lead to creating a new ul or ol item.
-    - [ ] In lists (`ol` and `ul`) when the cursor is at the end of the its last item the `Enter` keypress must lead to creating a new list item. Now it is creating a new default block.
-    - [ ] Ensure that when the new default block is created it becomes focused.
+    - [x] In lists (`ol` and `ul`) when the cursor is at the end of the its last item the `Enter` keypress must lead to creating a new list item. Now it is creating a new default block.
+    - [x] Ensure that when the new default block is created it becomes focused.
 
 ## Features
 

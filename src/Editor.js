@@ -548,11 +548,9 @@ export class Editor
         this.setCurrentBlock(htmlBlock);
     
         // Ensure the block is attached before focusing
-        /*requestAnimationFrame(() => {
-            Editor.focus(htmlBlock);
-        });*/
-    
-        htmlBlock.focus();
+        requestAnimationFrame(() => {
+            htmlBlock.focus();
+        });
         
         return htmlBlock;
     }

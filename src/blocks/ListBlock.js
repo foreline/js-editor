@@ -31,14 +31,55 @@ export class ListBlock extends BaseBlock
             currentBlock.remove();
             Editor.addEmptyBlock();
             return true;
-        } else {
-            // Create a new list item of the same type
-            event.preventDefault();
-            this.createNewListItem(currentBlock);
-            return true;
         }
         
+        // Check if cursor is at the end of the list item
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+            
+            if (isAtEnd) {
+                // Create a new list item of the same type when cursor is at the end
+                event.preventDefault();
+                this.createNewListItem(currentBlock);
+                return true;
+            }
+        }
+        
+        // If cursor is not at the end, let browser handle default behavior (line break)
         return false;
+    }
+
+    /**
+     * Check if cursor is at the end of the current block
+     * @param {HTMLElement} block
+     * @param {Range} range
+     * @returns {boolean}
+     */
+    isCursorAtEndOfBlock(block, range) {
+        if (!range || !block) {
+            return false;
+        }
+
+        // Check if the range is collapsed (cursor position, not selection)
+        if (!range.collapsed) {
+            return false;
+        }
+
+        // Get the text content length of the block
+        const textContent = block.textContent || '';
+        const textLength = textContent.length;
+        
+        // Calculate the current cursor position within the block
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(block);
+        preRange.setEnd(range.endContainer, range.endOffset);
+        const cursorPosition = preRange.toString().length;
+        
+        // Consider cursor at end if it's within 2 characters of the end
+        // (accounts for trailing spaces or formatting)
+        return cursorPosition >= textLength - 2;
     }
 
     /**
@@ -120,7 +161,11 @@ export class UnorderedListBlock extends ListBlock
         
         // Focus on the new list item
         Editor.setCurrentBlock(newListItem);
-        newListItem.focus();
+        
+        // Use requestAnimationFrame to ensure DOM is updated before focusing
+        requestAnimationFrame(() => {
+            newListItem.focus();
+        });
         
         return true;
     }
@@ -201,7 +246,11 @@ export class OrderedListBlock extends ListBlock
         
         // Focus on the new list item
         Editor.setCurrentBlock(newListItem);
-        newListItem.focus();
+        
+        // Use requestAnimationFrame to ensure DOM is updated before focusing
+        requestAnimationFrame(() => {
+            newListItem.focus();
+        });
         
         return true;
     }
