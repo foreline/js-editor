@@ -197,3 +197,60 @@
 .editor .block[data-block-type="image"] input[type="file"] {
     max-width: 200px;
 }
+
+/* Code block styles */
+.editor .block[data-block-type="code"] {
+    position: relative;
+}
+
+.editor .block[data-block-type="code"] pre {
+    margin: 0;
+    padding: 1em;
+    background: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.editor .block[data-block-type="code"] code {
+    background: none;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+}
+
+.editor .block[data-block-type="code"] .language-selector {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #586069;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.editor .block[data-block-type="code"]:hover .language-selector {
+    opacity: 1;
+}
+
+.editor .block[data-block-type="code"] .language-selector select {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #586069;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}

@@ -3,6 +3,7 @@
 import {BaseBlock} from "@/blocks/BaseBlock";
 import {BlockType} from "@/BlockType";
 import {Toolbar} from "@/Toolbar";
+import {SyntaxHighlighter} from "@/utils/syntaxHighlighter";
 
 /**
  * Code block
@@ -12,6 +13,36 @@ export class CodeBlock extends BaseBlock
     constructor(content = '', html = '', nested = false, language = '') {
         super(BlockType.CODE, content, html, nested);
         this._language = language;
+        this._highlighted = false; // Track if content is already highlighted
+    }
+
+    /**
+     * Get the language of this code block
+     * @returns {string} - Language identifier
+     */
+    get language() {
+        return this._language;
+    }
+
+    /**
+     * Set the language of this code block
+     * @param {string} language - Language identifier
+     */
+    set language(language) {
+        this._language = language;
+        this._highlighted = false; // Reset highlighting when language changes
+    }
+
+    /**
+     * Apply syntax highlighting to the content
+     * @returns {string} - Highlighted HTML content
+     */
+    highlightSyntax() {
+        if (!this._content) return '';
+        
+        const highlighted = SyntaxHighlighter.highlight(this._content, this._language);
+        this._highlighted = true;
+        return highlighted;
     }
 
     /**
@@ -62,7 +93,8 @@ export class CodeBlock extends BaseBlock
      * @returns {string} - markdown representation
      */
     toMarkdown() {
-        return `\`\`\`\n${this._content}\n\`\`\``;
+        const langSuffix = this._language ? this._language : '';
+        return `\`\`\`${langSuffix}\n${this._content}\n\`\`\``;
     }
 
     /**
@@ -70,7 +102,16 @@ export class CodeBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
-        return `<pre><code>${this._content}</code></pre>`;
+        const highlighted = this.highlightSyntax();
+        
+        if (!this._language) {
+            return `<pre><code>${highlighted}</code></pre>`;
+        }
+        
+        const normalizedLang = SyntaxHighlighter.normalizeLanguage(this._language);
+        const classes = [normalizedLang, `language-${this._language}`].filter(Boolean).join(' ');
+        
+        return `<pre><code class="${classes}">${highlighted}</code></pre>`;
     }
 
     /**
@@ -83,8 +124,95 @@ export class CodeBlock extends BaseBlock
         element.classList.add('block-code');
         element.setAttribute('data-block-type', this._type);
         element.setAttribute('data-placeholder', 'Type "/" to insert block');
-        element.innerHTML = this._html || `<pre><code>${this._content}</code></pre>` || '';
+        
+        // Create code container
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        
+        // Apply syntax highlighting
+        const highlighted = this.highlightSyntax();
+        code.innerHTML = highlighted;
+        
+        // Add language classes
+        if (this._language) {
+            const normalizedLang = SyntaxHighlighter.normalizeLanguage(this._language);
+            code.classList.add(normalizedLang);
+            code.classList.add(`language-${this._language}`);
+        }
+        
+        pre.appendChild(code);
+        
+        // Create language selector
+        const languageSelector = this.createLanguageSelector();
+        
+        element.appendChild(pre);
+        element.appendChild(languageSelector);
+        
         return element;
+    }
+
+    /**
+     * Create language selector dropdown
+     * @returns {HTMLElement} - Language selector element
+     */
+    createLanguageSelector() {
+        const container = document.createElement('div');
+        container.classList.add('language-selector');
+        
+        const select = document.createElement('select');
+        select.setAttribute('title', 'Select programming language');
+        
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Plain text';
+        select.appendChild(defaultOption);
+        
+        // Add supported languages
+        const languages = SyntaxHighlighter.getSupportedLanguages();
+        languages.forEach(lang => {
+            const option = document.createElement('option');
+            option.value = lang.key;
+            option.textContent = lang.name;
+            if (lang.key === this._language) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        // Handle language change
+        select.addEventListener('change', (e) => {
+            this.language = e.target.value;
+            this.refreshHighlighting();
+        });
+        
+        container.appendChild(select);
+        return container;
+    }
+
+    /**
+     * Refresh syntax highlighting after language change
+     */
+    refreshHighlighting() {
+        const element = document.querySelector(`[data-block-type="code"]`);
+        if (element) {
+            const code = element.querySelector('code');
+            if (code) {
+                // Remove old language classes
+                code.className = '';
+                
+                // Apply new highlighting
+                const highlighted = this.highlightSyntax();
+                code.innerHTML = highlighted;
+                
+                // Add new language classes
+                if (this._language) {
+                    const normalizedLang = SyntaxHighlighter.normalizeLanguage(this._language);
+                    code.classList.add(normalizedLang);
+                    code.classList.add(`language-${this._language}`);
+                }
+            }
+        }
     }
 
     /**
@@ -215,7 +343,12 @@ export class CodeBlock extends BaseBlock
         const language = match[1] || match[3] || '';
         const content = match[2] || match[4] || '';
         
-        const html = `<pre><code class="${language} language-${language}">${content}</code></pre>`;
+        // Generate highlighted HTML
+        const highlighted = SyntaxHighlighter.highlight(content, language);
+        const normalizedLang = SyntaxHighlighter.normalizeLanguage(language);
+        const classes = [normalizedLang, `language-${language}`].filter(Boolean).join(' ');
+        const html = `<pre><code class="${classes}">${highlighted}</code></pre>`;
+        
         return new CodeBlock(content, html, false, language);
     }
 }
