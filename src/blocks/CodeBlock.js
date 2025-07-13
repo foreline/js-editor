@@ -110,24 +110,77 @@ export class CodeBlock extends BaseBlock
         }
         
         // Handle <pre><code>content</code></pre> pattern
-        let match = htmlString.match(/^<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/is);
+        let match = htmlString.match(/^<pre[^>]*><code([^>]*)>(.*?)<\/code><\/pre>/is);
         if (match) {
-            const content = match[1].trim();
-            return new CodeBlock(content, htmlString);
+            const codeAttributes = match[1];
+            const content = match[2].trim();
+            
+            // Extract language from class attribute
+            let language = '';
+            const classMatch = codeAttributes.match(/class="([^"]*?)"/);
+            if (classMatch) {
+                // Look for language-* pattern or direct language name
+                const classes = classMatch[1].split(' ');
+                for (const cls of classes) {
+                    if (cls.startsWith('language-')) {
+                        language = cls.replace('language-', '');
+                        break;
+                    } else if (cls && !cls.includes('-') && cls !== 'hljs' && cls !== 'language') {
+                        // Likely a direct language class name
+                        language = cls;
+                    }
+                }
+            }
+            
+            return new CodeBlock(content, htmlString, false, language);
         }
 
         // Handle standalone <code>content</code> pattern
-        match = htmlString.match(/^<code[^>]*>(.*?)<\/code>/is);
+        match = htmlString.match(/^<code([^>]*)>(.*?)<\/code>/is);
         if (match) {
-            const content = match[1].trim();
-            return new CodeBlock(content, htmlString);
+            const codeAttributes = match[1];
+            const content = match[2].trim();
+            
+            // Extract language from class attribute
+            let language = '';
+            const classMatch = codeAttributes.match(/class="([^"]*?)"/);
+            if (classMatch) {
+                const classes = classMatch[1].split(' ');
+                for (const cls of classes) {
+                    if (cls.startsWith('language-')) {
+                        language = cls.replace('language-', '');
+                        break;
+                    } else if (cls && !cls.includes('-') && cls !== 'hljs' && cls !== 'language') {
+                        language = cls;
+                    }
+                }
+            }
+            
+            return new CodeBlock(content, htmlString, false, language);
         }
 
         // Handle <pre>content</pre> pattern
-        match = htmlString.match(/^<pre[^>]*>(.*?)<\/pre>/is);
+        match = htmlString.match(/^<pre([^>]*)>(.*?)<\/pre>/is);
         if (match) {
-            const content = match[1].trim();
-            return new CodeBlock(content, htmlString);
+            const preAttributes = match[1];
+            const content = match[2].trim();
+            
+            // Extract language from class attribute if present
+            let language = '';
+            const classMatch = preAttributes.match(/class="([^"]*?)"/);
+            if (classMatch) {
+                const classes = classMatch[1].split(' ');
+                for (const cls of classes) {
+                    if (cls.startsWith('language-')) {
+                        language = cls.replace('language-', '');
+                        break;
+                    } else if (cls && !cls.includes('-') && cls !== 'hljs' && cls !== 'language') {
+                        language = cls;
+                    }
+                }
+            }
+            
+            return new CodeBlock(content, htmlString, false, language);
         }
 
         return null;

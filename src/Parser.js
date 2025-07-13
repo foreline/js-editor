@@ -23,21 +23,94 @@ export class Parser
 
         if (!htmlString || htmlString.trim() === '') return [];
 
-        // Extract top-level HTML blocks
-        const blockRegex = /<(h[1-6]|div|del|p|ol|ul|blockquote|pre|code|li|table|img)[^>]*>([^]*?)<\/\1>|<(img)[^>]*\/?>/gi;
-        const matches = [...htmlString.matchAll(blockRegex)];
-        
+        // Split HTML into individual block elements
         const blocks = [];
+        const blockElements = this.extractHtmlBlocks(htmlString);
         
-        for (const match of matches) {
-            const fullMatch = match[0];
-            const block = this.parseHtmlBlock(fullMatch);
+        for (const htmlBlock of blockElements) {
+            const block = this.parseHtmlBlock(htmlBlock);
             if (block) {
                 blocks.push(block);
             }
         }
 
         return blocks;
+    }
+
+    /**
+     * Extract individual HTML blocks from a string
+     * @param {string} htmlString
+     * @returns {string[]} - Array of HTML block strings
+     */
+    static extractHtmlBlocks(htmlString) {
+        const blocks = [];
+        const blockTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'pre', 'code', 'blockquote', 'ul', 'ol', 'li', 'table', 'img', 'del'];
+        
+        // First handle self-closing tags
+        const selfClosingRegex = /<(img|hr|br)[^>]*\/?>/gi;
+        const selfClosingMatches = htmlString.match(selfClosingRegex);
+        if (selfClosingMatches) {
+            selfClosingMatches.forEach(match => {
+                if (htmlString.includes(match)) {
+                    blocks.push(match);
+                    htmlString = htmlString.replace(match, '');
+                }
+            });
+        }
+        
+        // Handle regular block elements
+        let currentPos = 0;
+        while (currentPos < htmlString.length) {
+            // Find the next opening tag
+            const tagMatch = htmlString.slice(currentPos).match(/<(\w+)[^>]*>/);
+            if (!tagMatch) break;
+            
+            const tagName = tagMatch[1].toLowerCase();
+            if (!blockTags.includes(tagName)) {
+                currentPos += tagMatch.index + tagMatch[0].length;
+                continue;
+            }
+            
+            const startPos = currentPos + tagMatch.index;
+            const tagStart = tagMatch[0];
+            
+            // Find the matching closing tag
+            const closingTag = `</${tagName}>`;
+            let depth = 1;
+            let searchPos = startPos + tagStart.length;
+            let endPos = -1;
+            
+            while (searchPos < htmlString.length && depth > 0) {
+                const nextOpen = htmlString.indexOf(`<${tagName}`, searchPos);
+                const nextClose = htmlString.indexOf(closingTag, searchPos);
+                
+                if (nextClose === -1) break;
+                
+                if (nextOpen !== -1 && nextOpen < nextClose) {
+                    // Found another opening tag
+                    depth++;
+                    searchPos = nextOpen + `<${tagName}`.length;
+                } else {
+                    // Found a closing tag
+                    depth--;
+                    if (depth === 0) {
+                        endPos = nextClose + closingTag.length;
+                    } else {
+                        searchPos = nextClose + closingTag.length;
+                    }
+                }
+            }
+            
+            if (endPos !== -1) {
+                const blockHtml = htmlString.slice(startPos, endPos);
+                blocks.push(blockHtml);
+                currentPos = endPos;
+            } else {
+                currentPos = startPos + tagStart.length;
+            }
+        }
+        
+        return blocks.filter(block => block.trim().length > 0);
     }
 
     /**
@@ -111,13 +184,14 @@ export class Parser
     static preprocessMarkdown(markdownString) {
         let processed = markdownString;
         
-        // Pre-process fenced code blocks
-        processed = processed.replace(/^```[\s\S]*?^```$/gm, (match) => {
-            return '\n' + match + '\n';
+        // Pre-process fenced code blocks to ensure proper separation
+        processed = processed.replace(/^```([\w]*)\n?([\s\S]*?)\n?```$/gm, (match, language, content) => {
+            // Ensure code blocks are surrounded by newlines for proper separation
+            return `\n\`\`\`${language}\n${content}\n\`\`\`\n`;
         });
         
-        processed = processed.replace(/^~~~[\s\S]*?^~~~$/gm, (match) => {
-            return '\n' + match + '\n';
+        processed = processed.replace(/^~~~([\w]*)\n?([\s\S]*?)\n?~~~$/gm, (match, language, content) => {
+            return `\n~~~${language}\n${content}\n~~~\n`;
         });
         
         // Pre-process task lists

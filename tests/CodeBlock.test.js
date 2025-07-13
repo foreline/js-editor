@@ -322,6 +322,16 @@ describe('CodeBlock', () => {
       expect(block).toBeInstanceOf(CodeBlock);
       expect(block.content).toBe('<div>Hello & "World"</div>');
     });
+
+    test('parses code block with language specification', () => {
+      const markdown = '\n```javascript\nconsole.log("Hello World");\n```\n';
+      const block = CodeBlock.parseFromMarkdown(markdown);
+      
+      expect(block).toBeInstanceOf(CodeBlock);
+      expect(block.content).toBe('console.log("Hello World");');
+      expect(block._language).toBe('javascript');
+      expect(block.html).toBe('<pre><code class="javascript language-javascript">console.log("Hello World");</code></pre>');
+    });
   });
 
   describe('canParseMarkdown', () => {
