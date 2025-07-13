@@ -67,9 +67,16 @@ export class HeadingBlock extends BaseBlock
         return [
             'editor-toolbar-bold',
             'editor-toolbar-italic', 
+            'editor-toolbar-underline',
+            'editor-toolbar-strikethrough',
+            'editor-toolbar-quote',
             'editor-toolbar-ul',
             'editor-toolbar-ol',
-            'editor-toolbar-sq'
+            'editor-toolbar-sq',
+            'editor-toolbar-code',
+            'editor-toolbar-delimiter',
+            'editor-toolbar-table',
+            'editor-toolbar-image'
         ];
     }
 

@@ -25,6 +25,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] (appeared again) **Code Block parsing error**: The ```\ncode block\n``` must be parsed as a separate block.
 - [x] **TaskBlock presentation**: The task block must not have `li` bullets in HTML representation. It must be rendered as `<input type="checkbox">` only. It should be aligned with proper margin from the left.
 - [x] **Block classes**: The list blocks have wrong class `block-p` instead of `block-ul`, `block-ol`. The `data-block-type` attribute value is also wrong. Other block must also be checked for this error.
+- [ ] **Blocks conversion**: If a list inserted inside a `Paragraph` block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same way. This should be implemented as a common mechanism for converting a block from one type to another.
 
 ## Features
 

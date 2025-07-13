@@ -44,6 +44,10 @@
     color: #aaa;
 }
 
+.editor-toolbar button:disabled i {
+    color: #ccc;
+}
+
 .editor-toolbar button:hover {
     background-color: #f1f1f1;
 }

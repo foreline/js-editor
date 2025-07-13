@@ -584,6 +584,8 @@ export class Editor
      */
     static updateToolbarButtonStates()
     {
+        log('updateToolbarButtonStates()', 'Editor.');
+
         if (!Editor.currentBlock) {
             return;
         }
@@ -622,6 +624,8 @@ export class Editor
      */
     static enableAllToolbarButtons()
     {
+        log('enableAllToolbarButtons()', 'Editor.');
+
         const toolbarButtons = document.querySelectorAll('.editor-toolbar button');
         toolbarButtons.forEach(button => {
             // Don't re-enable view buttons that are currently disabled for good reason
@@ -644,6 +648,8 @@ export class Editor
      */
     static getBlockInstance(blockType)
     {
+        log('getBlockInstance()', 'Editor.', { blockType });
+
         try {
             // Create a temporary instance to access its methods
             return BlockFactory.createBlock(blockType, '', '', false);
@@ -675,6 +681,8 @@ export class Editor
      */
     static setCurrentBlock(block)
     {
+        log('setCurrentBlock()', 'Editor.', { block });
+
         if (Editor.currentBlock) {
             Editor.currentBlock.classList.remove('active-block');
         }
@@ -691,6 +699,8 @@ export class Editor
      */
     static initMarkdownContainer()
     {
+        log('initMarkdownContainer()', 'Editor.');
+
         try {
             const markdownContainer = document.createElement('textarea');
             markdownContainer.id = 'editor-markdown';
@@ -724,6 +734,8 @@ export class Editor
      */
     static initHtmlContainer()
     {
+        log('initHtmlContainer()', 'Editor.');
+        
         try {
             const htmlContainer = document.createElement('div');
             htmlContainer.id = 'editor-html';
