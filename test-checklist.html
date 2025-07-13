@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Test</title>
+    <link rel="stylesheet" href="./src/css/editor.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-instructions { background: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .editor { border: 1px solid #ccc; padding: 20px; min-height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Checklist Feature Test</h1>
+    
+    <div class="test-instructions">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Type "- [ ]" followed by a space to create an unchecked task item</li>
+            <li>Type "- [x]" followed by a space to create a checked task item</li>
+            <li>Click checkboxes to toggle their state</li>
+            <li>Use Ctrl+Space to toggle checkbox state via keyboard</li>
+            <li>Press Enter at the end of a task item to create a new task item</li>
+        </ol>
+    </div>
+    
+    <div id="editor" class="editor"></div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="showMarkdown()">Show Markdown</button>
+        <button onclick="showHTML()">Show HTML</button>
+        <div id="output" style="margin-top: 10px; padding: 10px; background: #f8f8f8; border-radius: 3px; font-family: monospace; white-space: pre-wrap;"></div>
+    </div>
+    
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        
+        // Initialize the editor
+        const editor = new Editor({ id: 'editor' });
+        
+        // Add some test content
+        const editorEl = document.getElementById('editor');
+        editorEl.innerHTML = `
+            <p class="block" data-block-type="paragraph" contenteditable="true">Try typing task list markdown below:</p>
+        `;
+        
+        // Make functions global for button clicks
+        window.showMarkdown = function() {
+            const markdown = Editor.getMarkdown();
+            document.getElementById('output').textContent = 'Markdown Output:\n' + markdown;
+        };
+        
+        window.showHTML = function() {
+            const html = Editor.getHtml();
+            document.getElementById('output').textContent = 'HTML Output:\n' + html;
+        };
+        
+        console.log('Checklist test page loaded. Try the markdown triggers!');
+    </script>
+</body>
+</html>

@@ -117,6 +117,7 @@ The project is organized into the following key directories:
    - All blocks provide static methods: `getMarkdownTriggers()`, `getToolbarConfig()`, `getDisabledButtons()`.
    - Blocks maintain consistent properties: `type`, `content`, `html`, `nested`.
    - Interface validation available for ensuring blocks meet contract requirements.
+   - **Task List Support**: TaskListBlock supports checkbox lists with markdown syntax `- [ ]` for unchecked and `- [x]` for checked items. Checkboxes are interactive HTML input elements with toggle functionality via click or Ctrl+Space keyboard shortcut.
 
 ### Toolbar
 1. **Toolbar Buttons**:

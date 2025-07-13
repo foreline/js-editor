@@ -11,7 +11,8 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 - **Markdown support**: Full markdown parsing and conversion using Showdown.
 - **Advanced key handling**: Smart Enter/Backspace behavior for different block types.
 - **Clipboard integration**: Paste support with markdown conversion and XSS protection.
-- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), and special blocks.
+- **Block type system**: Support for paragraphs, headings (H1-H6), lists (ul/ol), checklists, and special blocks.
+- **Interactive checklists**: Task lists with clickable checkboxes supporting markdown syntax `- [ ]` and `- [x]`.
 
 ## Setup
 
@@ -93,20 +94,37 @@ console.log(htmlContent);
 The editor uses a modular block system where each block type implements the BlockInterface:
 
 ```javascript
-import { ParagraphBlock, H1Block } from './src/blocks/';
+import { ParagraphBlock, H1Block, TaskListBlock } from './src/blocks/';
 
 // Create blocks programmatically
 const paragraph = new ParagraphBlock('Hello world');
 const heading = new H1Block('My Title');
+const checklist = new TaskListBlock('My task item');
 
 // Get markdown representation
 console.log(paragraph.toMarkdown()); // "Hello world"
 console.log(heading.toMarkdown());   // "# My Title"
+console.log(checklist.toMarkdown()); // "- [ ] My task item"
 
 // Get HTML representation  
 console.log(paragraph.toHtml()); // "<p>Hello world</p>"
 console.log(heading.toHtml());   // "<h1>My Title</h1>"
+console.log(checklist.toHtml()); // "<li><input type=\"checkbox\"> My task item</li>"
 ```
+
+### Checklist Features
+
+Create interactive task lists using markdown syntax:
+
+```markdown
+- [ ] Unchecked task item
+- [x] Checked task item
+```
+
+- Click checkboxes to toggle completion status
+- Use `Ctrl+Space` keyboard shortcut to toggle checkboxes
+- Press `Enter` at the end of a task item to create a new task item
+- Export maintains checkbox state in both markdown and HTML formats
 
 ## Contribution Guidelines
 

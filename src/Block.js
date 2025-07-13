@@ -14,10 +14,16 @@ export class Block
      * @param {string} content
      * @param {string} html
      * @param {boolean} nested
+     * @param {boolean} checked - For task list items
      */
-    constructor(type = '', content = '', html = '', nested = false) {
+    constructor(type = '', content = '', html = '', nested = false, checked = false) {
         // Create the appropriate block instance using the factory
         const blockInstance = BlockFactory.createBlock(type, content, html, nested);
+        
+        // For task list blocks, set the checked state
+        if (type === BlockType.SQ && blockInstance.setChecked) {
+            blockInstance.setChecked(checked);
+        }
         
         // Copy properties from the block instance to this instance
         this._type = blockInstance._type;

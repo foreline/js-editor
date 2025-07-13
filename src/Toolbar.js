@@ -4,6 +4,7 @@
 
 import {Editor} from "./Editor.js";
 import { ToolbarHandlers } from "./ToolbarHandlers.js";
+import { BlockFactory } from "./blocks/BlockFactory.js";
 import {log} from "./utils/log.js";
 
 /**
@@ -150,7 +151,14 @@ export const Toolbar = {
     sq: () =>
     {
         log('sq()', 'Toolbar.');
-        // @fixme @todo
+        
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Create task list block using BlockFactory
+        const taskBlock = BlockFactory.createBlock('sq');
+        taskBlock.applyTransformation();
+        
         Toolbar.after();
     },
     
