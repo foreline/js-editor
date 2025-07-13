@@ -93,6 +93,9 @@ export class CodeBlock extends BaseBlock
      * @returns {boolean} - true if can parse, false otherwise
      */
     static canParseHtml(htmlString) {
+        if (!htmlString || typeof htmlString !== 'string') {
+            return false;
+        }
         return /^<(pre|code)[^>]*>/i.test(htmlString);
     }
 
@@ -102,6 +105,10 @@ export class CodeBlock extends BaseBlock
      * @returns {CodeBlock|null} - Block instance or null if can't parse
      */
     static parseFromHtml(htmlString) {
+        if (!htmlString || typeof htmlString !== 'string') {
+            return null;
+        }
+        
         // Handle <pre><code>content</code></pre> pattern
         let match = htmlString.match(/^<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/is);
         if (match) {
@@ -132,6 +139,9 @@ export class CodeBlock extends BaseBlock
      * @returns {boolean} - true if can parse, false otherwise
      */
     static canParseMarkdown(markdownString) {
+        if (!markdownString || typeof markdownString !== 'string') {
+            return false;
+        }
         return /^```/.test(markdownString.trim()) || /^~~~/.test(markdownString.trim());
     }
 
@@ -141,6 +151,10 @@ export class CodeBlock extends BaseBlock
      * @returns {CodeBlock|null} - Block instance or null if can't parse
      */
     static parseFromMarkdown(markdownString) {
+        if (!markdownString || typeof markdownString !== 'string') {
+            return null;
+        }
+        
         const match = markdownString.trim().match(/^```([\w]*)\n?([\s\S]*?)\n?```$|^~~~([\w]*)\n?([\s\S]*?)\n?~~~$/);
         if (!match) return null;
 
