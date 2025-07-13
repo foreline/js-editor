@@ -162,8 +162,103 @@ export class TableBlock extends BaseBlock
         currentBlock.setAttribute('data-block-type', 'table');
         currentBlock.innerHTML = this.generateTableHTML();
         
+        // Ensure cells are properly editable
+        this.setupCellEditing(currentBlock);
+        
         Editor.setCurrentBlock(currentBlock);
         Editor.update();
+    }
+
+    /**
+     * Set up cell editing for the table
+     * @param {HTMLElement} tableBlock - the table block element
+     */
+    setupCellEditing(tableBlock) {
+        const table = tableBlock.querySelector('table');
+        if (!table) return;
+        
+        // Ensure all cells are properly set up for editing
+        const cells = table.querySelectorAll('td, th');
+        cells.forEach(cell => {
+            // Ensure contentEditable is set
+            cell.contentEditable = true;
+            
+            // Add tabindex to make cells focusable
+            cell.tabIndex = 0;
+            
+            // Remove any existing event listeners to avoid duplicates
+            cell.removeEventListener('focus', this.handleCellFocus);
+            cell.removeEventListener('blur', this.handleCellBlur);
+            cell.removeEventListener('input', this.handleCellInput);
+            
+            // Add event listeners
+            cell.addEventListener('focus', this.handleCellFocus.bind(this));
+            cell.addEventListener('blur', this.handleCellBlur.bind(this));
+            cell.addEventListener('input', this.handleCellInput.bind(this));
+        });
+        
+        // Focus on first cell if it exists
+        const firstCell = table.querySelector('td, th');
+        if (firstCell) {
+            setTimeout(() => {
+                firstCell.focus();
+            }, 100);
+        }
+    }
+
+    /**
+     * Handle cell focus events
+     * @param {Event} event
+     */
+    handleCellFocus(event) {
+        const cell = event.target;
+        cell.style.outline = '2px solid #007cba';
+        cell.style.backgroundColor = '#f0f8ff';
+    }
+
+    /**
+     * Handle cell blur events
+     * @param {Event} event
+     */
+    handleCellBlur(event) {
+        const cell = event.target;
+        cell.style.outline = '';
+        cell.style.backgroundColor = '';
+        
+        // Update internal data structure when cell loses focus
+        this.updateDataFromDOM();
+    }
+
+    /**
+     * Handle cell input events
+     * @param {Event} event
+     */
+    handleCellInput(event) {
+        // Update internal data structure as user types
+        this.updateDataFromDOM();
+        Editor.update();
+    }
+
+    /**
+     * Update internal data structure from current DOM state
+     */
+    updateDataFromDOM() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        // Update headers
+        const headerCells = table.querySelectorAll('th');
+        this._headers = Array.from(headerCells).map(cell => cell.textContent || '');
+        
+        // Update rows
+        const rows = table.querySelectorAll('tbody tr');
+        this._rows = Array.from(rows).map(row => {
+            const cells = row.querySelectorAll('td');
+            return Array.from(cells).map(cell => cell.textContent || '');
+        });
     }
 
     /**

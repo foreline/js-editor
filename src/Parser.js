@@ -276,7 +276,16 @@ export class Parser
                 element.innerHTML = block._blockInstance.generateTableHTML();
             } else {
                 // Fallback: create basic table
-                element.innerHTML = '<table style="border-collapse: collapse; width: 100%;"><tr><td style="border: 1px solid #ddd; padding: 8px;">Cell</td></tr></table>';
+                element.innerHTML = '<table style="border-collapse: collapse; width: 100%;"><tr><td contenteditable="true" style="border: 1px solid #ddd; padding: 8px;">Cell</td></tr></table>';
+            }
+            
+            // Set up cell editing for the table
+            const tableBlockInstance = BlockFactory.createBlock('table');
+            if (tableBlockInstance && tableBlockInstance.setupCellEditing) {
+                // Use a timeout to ensure DOM is ready
+                setTimeout(() => {
+                    tableBlockInstance.setupCellEditing(element);
+                }, 0);
             }
             
             return element;
