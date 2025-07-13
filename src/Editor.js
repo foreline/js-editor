@@ -13,6 +13,7 @@ import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
 import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
+import {KeyHandler} from "@/KeyHandler.js";
 
 /**
  * Editor class
@@ -155,18 +156,11 @@ export class Editor
         log('addListeners()', 'Editor.');
         
         this.instance.addEventListener('keydown', (e) => {
-            if ( 'Tab' === e.key ) {
-                e.preventDefault();
-                Toolbar.tab();
-            }
+            KeyHandler.handleSpecialKeys(e);
         });
     
         this.instance.addEventListener('keyup', (e) => {
-            Editor.key(e);
-        });
-    
-        this.instance.addEventListener('keydown', (e) => {
-            Editor.checkKeys(e);
+            KeyHandler.handleKeyPress(e);
         });
         
         // PASTE TEXT/HTML Event handler

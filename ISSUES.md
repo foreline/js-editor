@@ -11,11 +11,12 @@
 
 ## Improvements
 
+- [x] **Block Architecture Refactoring**: Refactored the editor to use a modular block architecture where each block type is its own class with specific key press handling and behavior. This provides perfect extensibility for future block types.
 - [ ] **Performance Optimization**: Use a virtual DOM approach to minimize DOM updates and improve rendering efficiency, especially for large documents.
 - [ ] **Accessibility**: Add ARIA roles and keyboard navigation support to ensure the editor is fully accessible.
 - [ ] **Scalability**: Optimize the `Editor.update()` method to handle thousands of blocks efficiently without performance degradation.
 - [ ] **Testing Coverage**: Write integration tests for edge cases, such as invalid toolbar configurations and malformed content blocks.
-- [ ] **Code Quality**: Enforce consistent code style using Prettier and ESLint. Refactor repetitive code in `Editor.js` and `ToolbarHandlers.js`.
+- [x] **Code Quality**: Enforce consistent code style using Prettier and ESLint. Refactor repetitive code in `Editor.js` and `ToolbarHandlers.js`. *(Partially completed with block architecture refactoring)*
 - [ ] **Dynamic Toolbar Configuration**: Allow users to dynamically configure toolbar buttons and their behavior via a plugin system.
 - [ ] **Enhanced Parsing**: Extend markdown parsing to support advanced syntax like tables, task lists, and fenced code blocks.
 - [ ] **Real-Time Collaboration**: Implement a mechanism for real-time collaborative editing with conflict resolution strategies.

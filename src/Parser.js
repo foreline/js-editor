@@ -2,6 +2,7 @@
 
 import {log} from "@/utils/log.js";
 import {Block} from "@/Block.js";
+import {BlockFactory} from "@/blocks/BlockFactory.js";
 import {BlockType} from "@/BlockType";
 import showdown from "showdown";
 
@@ -104,7 +105,9 @@ export class Parser
         let element = document.createElement('div');
 
         element.classList.add('block');
-
+        
+        // Add block type as data attribute for key handling
+        element.setAttribute('data-block-type', block.type);
         element.setAttribute('data-placeholder', 'Type "/" to insert block');
 
         switch (block.type) {
