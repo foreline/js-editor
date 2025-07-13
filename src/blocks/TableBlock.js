@@ -120,7 +120,11 @@ export class TableBlock extends BaseBlock
             cell.contentEditable = true;
             cell.style.border = '1px solid #ddd';
             cell.style.padding = '8px';
+            cell.tabIndex = 0;
             newRow.appendChild(cell);
+            
+            // Add event listeners to new cell
+            this.addCellEventListeners(cell);
         }
         
         tbody.appendChild(newRow);
@@ -186,15 +190,8 @@ export class TableBlock extends BaseBlock
             // Add tabindex to make cells focusable
             cell.tabIndex = 0;
             
-            // Remove any existing event listeners to avoid duplicates
-            cell.removeEventListener('focus', this.handleCellFocus);
-            cell.removeEventListener('blur', this.handleCellBlur);
-            cell.removeEventListener('input', this.handleCellInput);
-            
             // Add event listeners
-            cell.addEventListener('focus', this.handleCellFocus.bind(this));
-            cell.addEventListener('blur', this.handleCellBlur.bind(this));
-            cell.addEventListener('input', this.handleCellInput.bind(this));
+            this.addCellEventListeners(cell);
         });
         
         // Focus on first cell if it exists
@@ -204,6 +201,22 @@ export class TableBlock extends BaseBlock
                 firstCell.focus();
             }, 100);
         }
+    }
+
+    /**
+     * Add event listeners to a table cell
+     * @param {HTMLElement} cell - The cell element
+     */
+    addCellEventListeners(cell) {
+        // Remove any existing event listeners to avoid duplicates
+        cell.removeEventListener('focus', this.handleCellFocus);
+        cell.removeEventListener('blur', this.handleCellBlur);
+        cell.removeEventListener('input', this.handleCellInput);
+        
+        // Add event listeners
+        cell.addEventListener('focus', this.handleCellFocus.bind(this));
+        cell.addEventListener('blur', this.handleCellBlur.bind(this));
+        cell.addEventListener('input', this.handleCellInput.bind(this));
     }
 
     /**
@@ -614,9 +627,13 @@ export class TableBlock extends BaseBlock
             newHeader.style.border = '1px solid #ddd';
             newHeader.style.padding = '8px';
             newHeader.style.background = '#f5f5f5';
+            newHeader.tabIndex = 0;
             const columnCount = headerRow.children.length;
             newHeader.textContent = `Column ${columnCount + 1}`;
             headerRow.appendChild(newHeader);
+            
+            // Add event listeners to new header
+            this.addCellEventListeners(newHeader);
         }
         
         // Add cells to all existing rows
@@ -625,16 +642,18 @@ export class TableBlock extends BaseBlock
             newCell.contentEditable = true;
             newCell.style.border = '1px solid #ddd';
             newCell.style.padding = '8px';
+            newCell.tabIndex = 0;
             newCell.textContent = '';
             row.appendChild(newCell);
+            
+            // Add event listeners to new cell
+            this.addCellEventListeners(newCell);
         });
         
         // Update internal data structure
         this._headers.push(`Column ${this._headers.length + 1}`);
         this._rows.forEach(row => row.push(''));
         
-        // Re-setup cell editing
-        this.setupCellEditing(currentBlock);
         Editor.update();
     }
 
@@ -694,8 +713,12 @@ export class TableBlock extends BaseBlock
             newHeader.style.border = '1px solid #ddd';
             newHeader.style.padding = '8px';
             newHeader.style.background = '#f5f5f5';
+            newHeader.tabIndex = 0;
             newHeader.textContent = 'New Column';
             headerRow.insertBefore(newHeader, headerRow.firstChild);
+            
+            // Add event listeners to new header
+            this.addCellEventListeners(newHeader);
         }
         
         // Add cells to all existing rows at the beginning
@@ -704,16 +727,18 @@ export class TableBlock extends BaseBlock
             newCell.contentEditable = true;
             newCell.style.border = '1px solid #ddd';
             newCell.style.padding = '8px';
+            newCell.tabIndex = 0;
             newCell.textContent = '';
             row.insertBefore(newCell, row.firstChild);
+            
+            // Add event listeners to new cell
+            this.addCellEventListeners(newCell);
         });
         
         // Update internal data structure
         this._headers.unshift('New Column');
         this._rows.forEach(row => row.unshift(''));
         
-        // Re-setup cell editing
-        this.setupCellEditing(currentBlock);
         Editor.update();
     }
 
@@ -737,8 +762,12 @@ export class TableBlock extends BaseBlock
             cell.contentEditable = true;
             cell.style.border = '1px solid #ddd';
             cell.style.padding = '8px';
+            cell.tabIndex = 0;
             cell.textContent = '';
             newRow.appendChild(cell);
+            
+            // Add event listeners to new cell
+            this.addCellEventListeners(cell);
         }
         
         // Insert at the beginning of tbody
@@ -753,8 +782,6 @@ export class TableBlock extends BaseBlock
         // Update internal data structure
         this._rows.unshift(new Array(this._headers.length).fill(''));
         
-        // Re-setup cell editing
-        this.setupCellEditing(currentBlock);
         Editor.update();
     }
 
