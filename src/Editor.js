@@ -593,14 +593,14 @@ export class Editor
             return;
         }
 
-        // Get the block instance to access its methods
-        const blockInstance = Editor.getBlockInstance(blockType);
-        if (!blockInstance) {
+        // Get the block class to access its static methods
+        const blockClass = Editor.getBlockClass(blockType);
+        if (!blockClass) {
             return;
         }
 
-        // Get disabled buttons for this block type
-        const disabledButtons = blockInstance.getDisabledButtons();
+        // Get disabled buttons for this block type (static method)
+        const disabledButtons = blockClass.getDisabledButtons();
         
         // Reset all toolbar buttons to enabled state
         Editor.enableAllToolbarButtons();
@@ -649,6 +649,22 @@ export class Editor
             return BlockFactory.createBlock(blockType, '', '', false);
         } catch (error) {
             console.warn(`Could not create block instance for type: ${blockType}`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Gets a block class for the given block type
+     * @param {string} blockType The block type identifier
+     * @returns {Function|null} Block class or null if not found
+     */
+    static getBlockClass(blockType)
+    {
+        try {
+            // Get the block class from the factory
+            return BlockFactory.getBlockClass(blockType);
+        } catch (error) {
+            console.warn(`Could not get block class for type: ${blockType}`, error);
             return null;
         }
     }

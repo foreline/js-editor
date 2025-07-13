@@ -186,7 +186,8 @@ export class KeyHandler
      * Handle Backspace key press
      * @param {KeyboardEvent} e
      */
-    static handleBackspaceKey(e) {
+    static handleBackspaceKey(e) 
+    {
         log('handleBackspaceKey()', 'KeyHandler.');
 
         const currentBlock = Editor.currentBlock;

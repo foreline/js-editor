@@ -62,6 +62,50 @@ export class BlockFactory
     }
 
     /**
+     * Get a block class for the given block type
+     * @param {string} type - Block type
+     * @returns {Function|null} - Block class or null if not found
+     */
+    static getBlockClass(type) {
+        if (type === '' || type === BlockType.PARAGRAPH) {
+            return ParagraphBlock;
+        }
+
+        switch (type) {
+            case BlockType.H1:
+                return H1Block;
+            case BlockType.H2:
+                return H2Block;
+            case BlockType.H3:
+                return H3Block;
+            case BlockType.H4:
+                return H4Block;
+            case BlockType.H5:
+                return H5Block;
+            case BlockType.H6:
+                return H6Block;
+            case BlockType.UL:
+                return UnorderedListBlock;
+            case BlockType.OL:
+                return OrderedListBlock;
+            case BlockType.SQ:
+                return TaskListBlock;
+            case BlockType.CODE:
+                return CodeBlock;
+            case BlockType.QUOTE:
+                return QuoteBlock;
+            case BlockType.DELIMITER:
+                return DelimiterBlock;
+            case BlockType.TABLE:
+                return TableBlock;
+            case BlockType.IMAGE:
+                return ImageBlock;
+            default:
+                return ParagraphBlock;
+        }
+    }
+
+    /**
      * Get all registered block classes
      * @returns {Array} - Array of block classes
      */
