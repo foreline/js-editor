@@ -200,6 +200,19 @@ export const ToolbarHandlers = {
         });
 
     /*
+    * TABLE
+    */
+
+    document
+        .querySelectorAll('.editor-toolbar-table')
+        .forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                Toolbar.table();
+            });
+        });
+
+    /*
     * TEXT | MARKDOWN | HTML
     */
 

@@ -129,7 +129,7 @@ The project is organized into the following key directories:
    - Blocks maintain consistent properties: `type`, `content`, `html`, `nested`.
    - Interface validation available for ensuring blocks meet contract requirements.
    - **Task List Support**: TaskListBlock supports checkbox lists with markdown syntax `- [ ]` for unchecked and `- [x]` for checked items. Checkboxes are interactive HTML input elements with toggle functionality via click or Ctrl+Space keyboard shortcut.
-   - **Table Support**: TableBlock supports markdown table syntax with header rows and data rows. Tables are rendered as HTML table elements with interactive cell editing, Tab navigation between cells, and Enter key to add new rows.
+   - **Table Support**: TableBlock supports markdown table syntax with header rows and data rows. Tables are rendered as HTML table elements with interactive cell editing, Tab navigation between cells, and Enter key to add new rows. **Contextual table controls** appear near the table when any cell is focused, providing buttons to add/remove columns and rows. The control panel automatically appears on cell focus and disappears on blur with a short delay to allow interaction with the buttons.
    - **Image Support**: ImageBlock supports image insertion via URL input, drag & drop file upload, and file picker selection. Images are resizable by dragging the resize handle and support markdown syntax `![alt](src)`. Uploaded images are converted to base64 data URLs for embedding.
 
 ### Toolbar

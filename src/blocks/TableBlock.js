@@ -214,6 +214,9 @@ export class TableBlock extends BaseBlock
         const cell = event.target;
         cell.style.outline = '2px solid #007cba';
         cell.style.backgroundColor = '#f0f8ff';
+        
+        // Show table controls when any cell is focused
+        this.showTableControls(cell);
     }
 
     /**
@@ -227,6 +230,11 @@ export class TableBlock extends BaseBlock
         
         // Update internal data structure when cell loses focus
         this.updateDataFromDOM();
+        
+        // Hide table controls after a short delay (to allow clicking on controls)
+        setTimeout(() => {
+            this.hideTableControls();
+        }, 200);
     }
 
     /**
@@ -295,16 +303,225 @@ export class TableBlock extends BaseBlock
     }
 
     /**
-     * Get toolbar configuration for tables
-     * @returns {Object} - toolbar button configuration
+     * Show table control buttons near the focused table
+     * @param {HTMLElement} cell - The focused cell
      */
-    static getToolbarConfig() {
-        return {
-            class: 'editor-toolbar-table',
-            icon: 'fa-table',
-            title: 'Table',
-            group: 'blocks'
-        };
+    showTableControls(cell) {
+        // Remove any existing control panel
+        this.hideTableControls();
+        
+        const tableBlock = cell.closest('[data-block-type="table"]');
+        if (!tableBlock) return;
+        
+        const table = tableBlock.querySelector('table');
+        if (!table) return;
+        
+        // Create control panel
+        const controlPanel = document.createElement('div');
+        controlPanel.className = 'table-controls-panel';
+        controlPanel.style.cssText = `
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+        `;
+        
+        // Create buttons
+        const buttons = [
+            {
+                icon: '➕📋',
+                title: 'Add Row',
+                action: () => this.addNewRow()
+            },
+            {
+                icon: '➖📋',
+                title: 'Remove Row',
+                action: () => this.removeRow()
+            },
+            {
+                icon: '➕📄',
+                title: 'Add Column',
+                action: () => this.addColumn()
+            },
+            {
+                icon: '➖📄',
+                title: 'Remove Column',
+                action: () => this.removeColumn()
+            }
+        ];
+        
+        buttons.forEach(buttonConfig => {
+            const button = document.createElement('button');
+            button.innerHTML = buttonConfig.icon;
+            button.title = buttonConfig.title;
+            button.style.cssText = `
+                background: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 3px;
+                padding: 6px 8px;
+                cursor: pointer;
+                font-size: 12px;
+                min-width: 28px;
+                height: 28px;
+            `;
+            
+            button.addEventListener('mouseenter', () => {
+                button.style.background = '#e9ecef';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.background = '#f8f9fa';
+            });
+            
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                buttonConfig.action();
+            });
+            
+            controlPanel.appendChild(button);
+        });
+        
+        // Position the control panel
+        const tableRect = table.getBoundingClientRect();
+        const containerRect = tableBlock.getBoundingClientRect();
+        
+        controlPanel.style.left = '10px';
+        controlPanel.style.top = '-45px';
+        
+        // Add to table block with relative positioning
+        tableBlock.style.position = 'relative';
+        tableBlock.appendChild(controlPanel);
+        
+        // Store reference for cleanup
+        this._controlPanel = controlPanel;
+    }
+
+    /**
+     * Hide table control buttons
+     */
+    hideTableControls() {
+        if (this._controlPanel) {
+            this._controlPanel.remove();
+            this._controlPanel = null;
+        }
+        
+        // Also remove any orphaned control panels
+        document.querySelectorAll('.table-controls-panel').forEach(panel => {
+            panel.remove();
+        });
+    }
+
+    /**
+     * Add a new column to the table
+     */
+    addColumn() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        // Get current table structure
+        const headerRow = table.querySelector('thead tr');
+        const bodyRows = table.querySelectorAll('tbody tr');
+        
+        // Add header for new column
+        if (headerRow) {
+            const newHeader = document.createElement('th');
+            newHeader.contentEditable = true;
+            newHeader.style.border = '1px solid #ddd';
+            newHeader.style.padding = '8px';
+            newHeader.style.background = '#f5f5f5';
+            const columnCount = headerRow.children.length;
+            newHeader.textContent = `Column ${columnCount + 1}`;
+            headerRow.appendChild(newHeader);
+        }
+        
+        // Add cells to all existing rows
+        bodyRows.forEach(row => {
+            const newCell = document.createElement('td');
+            newCell.contentEditable = true;
+            newCell.style.border = '1px solid #ddd';
+            newCell.style.padding = '8px';
+            newCell.textContent = '';
+            row.appendChild(newCell);
+        });
+        
+        // Update internal data structure
+        this._headers.push(`Column ${this._headers.length + 1}`);
+        this._rows.forEach(row => row.push(''));
+        
+        // Re-setup cell editing
+        this.setupCellEditing(currentBlock);
+        Editor.update();
+    }
+
+    /**
+     * Remove the last column from the table
+     */
+    removeColumn() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        const headerRow = table.querySelector('thead tr');
+        const bodyRows = table.querySelectorAll('tbody tr');
+        
+        // Don't remove if only one column left
+        if (headerRow && headerRow.children.length <= 1) return;
+        
+        // Remove header
+        if (headerRow) {
+            const lastHeader = headerRow.lastElementChild;
+            if (lastHeader) lastHeader.remove();
+        }
+        
+        // Remove cells from all rows
+        bodyRows.forEach(row => {
+            const lastCell = row.lastElementChild;
+            if (lastCell) lastCell.remove();
+        });
+        
+        // Update internal data structure
+        this._headers.pop();
+        this._rows.forEach(row => row.pop());
+        
+        Editor.update();
+    }
+
+    /**
+     * Remove the last row from the table
+     */
+    removeRow() {
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        const table = currentBlock.querySelector('table');
+        if (!table) return;
+        
+        const tbody = table.querySelector('tbody');
+        
+        if (tbody) {
+            // Don't remove if only one row left
+            if (tbody.children.length <= 1) return;
+            
+            // Remove last row
+            const lastRow = tbody.lastElementChild;
+            if (lastRow) lastRow.remove();
+            
+            // Update internal data structure
+            this._rows.pop();
+            
+            Editor.update();
+        }
     }
 
     /**
@@ -370,5 +587,18 @@ export class TableBlock extends BaseBlock
      */
     getRows() {
         return this._rows;
+    }
+
+    /**
+     * Get toolbar configuration for tables
+     * @returns {Object} - toolbar button configuration
+     */
+    static getToolbarConfig() {
+        return {
+            class: 'editor-toolbar-table',
+            icon: 'fa-table',
+            title: 'Table',
+            group: 'blocks'
+        };
     }
 }

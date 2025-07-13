@@ -36,10 +36,9 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Block integration with Toolbar**: Blocks must provide control buttons to Toolbar. I.e. a `TableBlock` should put a button to toolbar for creating tables. Each block must provide a static method returning toolbar configuration. Block must have control on its own toolbar buttons and buttons of other blocks.
 - [x] **Checklist support**: A BlockType for working with checklists (square brackets, where `- [ ] unchecked item` means unchecked item and `- [x] checked item` means checked item). Checklists must be represented as `<input type="checkbox">` html tag.
 - [x] **Tables support**: A BlockType for working with basic markdown tables.
-    - [ ] The ability to add table columns and table rows.
+    - [x] The ability to add and remove table columns and table rows. The buttons should appear near the current table when it is in focus.
 - [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
 - [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-` attribute for holding timestamp value.
-- [ ] **Specific HeaderBlock toolbar control**: Headers blocks must disable buttons such as bold, italic, underline, strikethrough, list controls and so on, because you cannot make Header bold, italic or put a list inside a header. When the Header Block is active the toolbar buttons must become disabled.
 
 ## Improvements
 Instruction: Improvements must be prioritized according by the list.
