@@ -13,6 +13,7 @@ import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
 import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
+import {BlockFactory} from "@/blocks/BlockFactory.js";
 import {KeyHandler} from "@/KeyHandler.js";
 
 /**
@@ -557,6 +558,80 @@ export class Editor
     }
 
     /**
+     * Updates toolbar button states based on the current block
+     */
+    static updateToolbarButtonStates()
+    {
+        if (!Editor.currentBlock) {
+            return;
+        }
+
+        const blockType = Editor.currentBlock.getAttribute('data-block-type');
+        if (!blockType) {
+            return;
+        }
+
+        // Get the block instance to access its methods
+        const blockInstance = Editor.getBlockInstance(blockType);
+        if (!blockInstance) {
+            return;
+        }
+
+        // Get disabled buttons for this block type
+        const disabledButtons = blockInstance.getDisabledButtons();
+        
+        // Reset all toolbar buttons to enabled state
+        Editor.enableAllToolbarButtons();
+        
+        // Disable buttons that shouldn't be available for this block type
+        disabledButtons.forEach(buttonClass => {
+            const button = document.querySelector(`.${buttonClass}`);
+            if (button) {
+                button.disabled = true;
+                button.classList.add('disabled');
+            }
+        });
+
+        log('updateToolbarButtonStates()', 'Editor.', { blockType, disabledButtons });
+    }
+
+    /**
+     * Enables all toolbar buttons (resets their state)
+     */
+    static enableAllToolbarButtons()
+    {
+        const toolbarButtons = document.querySelectorAll('.editor-toolbar button');
+        toolbarButtons.forEach(button => {
+            // Don't re-enable view buttons that are currently disabled for good reason
+            const isViewButton = button.classList.contains('editor-toolbar-text') || 
+                               button.classList.contains('editor-toolbar-markdown') || 
+                               button.classList.contains('editor-toolbar-html');
+            
+            // Enable all non-view buttons, but preserve view button states
+            if (!isViewButton) {
+                button.disabled = false;
+                button.classList.remove('disabled');
+            }
+        });
+    }
+
+    /**
+     * Gets a block instance for the given block type
+     * @param {string} blockType The block type identifier
+     * @returns {object|null} Block instance or null if not found
+     */
+    static getBlockInstance(blockType)
+    {
+        try {
+            // Create a temporary instance to access its methods
+            return BlockFactory.createBlock(blockType, '', '', false);
+        } catch (error) {
+            console.warn(`Could not create block instance for type: ${blockType}`, error);
+            return null;
+        }
+    }
+
+    /**
      * Sets the current block
      * @param {HTMLElement} block 
      */
@@ -567,6 +642,9 @@ export class Editor
         }
         Editor.currentBlock = block;
         Editor.currentBlock.classList.add('active-block');
+        
+        // Update toolbar button states based on current block
+        Editor.updateToolbarButtonStates();
     }
 
     /**

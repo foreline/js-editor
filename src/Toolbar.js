@@ -331,7 +331,10 @@ export const Toolbar = {
         const toolbar = document.createElement('div');
         toolbar.className = 'editor-toolbar';
 
-        config.config.forEach((section) => {
+        // Handle both config.config and direct config array formats
+        const sections = config.config || config || [];
+        
+        sections.forEach((section) => {
             const group = document.createElement('div');
             group.className = 'editor-toolbar-group';
             if (section.dropdown) {
