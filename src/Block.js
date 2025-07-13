@@ -15,22 +15,42 @@ export class Block
      * @param {string} html
      * @param {boolean} nested
      * @param {boolean} checked - For task list items
+     * @param {object} blockInstance - Pre-created block instance
      */
-    constructor(type = '', content = '', html = '', nested = false, checked = false) {
-        // Create the appropriate block instance using the factory
-        const blockInstance = BlockFactory.createBlock(type, content, html, nested);
-        
-        // For task list blocks, set the checked state
-        if (type === BlockType.SQ && blockInstance.setChecked) {
-            blockInstance.setChecked(checked);
+    constructor(type = '', content = '', html = '', nested = false, checked = false, blockInstance = null) {
+        // If we already have a block instance, use it
+        if (blockInstance) {
+            this._blockInstance = blockInstance;
+            this._type = blockInstance._type;
+            this._content = blockInstance._content;
+            this._html = blockInstance._html;
+            this._nested = blockInstance._nested;
+            
+            // For task list blocks, make sure checked state is available at Block level
+            if (type === BlockType.SQ && blockInstance.isChecked) {
+                this._checkedState = blockInstance.isChecked();
+            } else {
+                this._checkedState = checked;
+            }
+        } else {
+            // Create the appropriate block instance using the factory
+            const newBlockInstance = BlockFactory.createBlock(type, content, html, nested);
+            
+            // For task list blocks, set the checked state
+            if (type === BlockType.SQ && newBlockInstance.setChecked) {
+                newBlockInstance.setChecked(checked);
+                this._checkedState = checked;
+            } else {
+                this._checkedState = checked;
+            }
+            
+            // Copy properties from the block instance to this instance
+            this._type = newBlockInstance._type;
+            this._content = newBlockInstance._content;
+            this._html = newBlockInstance._html;
+            this._nested = newBlockInstance._nested;
+            this._blockInstance = newBlockInstance;
         }
-        
-        // Copy properties from the block instance to this instance
-        this._type = blockInstance._type;
-        this._content = blockInstance._content;
-        this._html = blockInstance._html;
-        this._nested = blockInstance._nested;
-        this._blockInstance = blockInstance;
     }
 
     get type() {
@@ -74,6 +94,20 @@ export class Block
         this._nested = value;
         if (this._blockInstance) {
             this._blockInstance._nested = value;
+        }
+    }
+
+    get _checked() {
+        if (this._blockInstance && this._blockInstance.isChecked) {
+            return this._blockInstance.isChecked();
+        }
+        return this._checkedState || false;
+    }
+
+    set _checked(value) {
+        this._checkedState = value;
+        if (this._blockInstance && this._blockInstance.setChecked) {
+            this._blockInstance.setChecked(value);
         }
     }
 

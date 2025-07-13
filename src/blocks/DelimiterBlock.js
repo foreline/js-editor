@@ -41,4 +41,77 @@ export class DelimiterBlock extends BaseBlock
     applyTransformation() {
         Toolbar.delimiter();
     }
+
+    /**
+     * Render this delimiter block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('hr');
+        element.classList.add('block');
+        element.classList.add('block-delimiter');
+        element.setAttribute('data-block-type', 'delimiter');
+        element.contentEditable = false; // Delimiters are not editable
+        
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<hr[^>]*\/?>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create a delimiter block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {DelimiterBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        if (!this.canParseHtml(htmlString)) return null;
+        
+        return new DelimiterBlock('', htmlString);
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        const trimmed = markdownString.trim();
+        return /^---+$/.test(trimmed) || 
+               /^\*\*\*+$/.test(trimmed) || 
+               /^___+$/.test(trimmed);
+    }
+
+    /**
+     * Parse markdown string to create a delimiter block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {DelimiterBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        if (!this.canParseMarkdown(markdownString)) return null;
+        
+        return new DelimiterBlock(markdownString.trim());
+    }
+
+    /**
+     * Convert this delimiter block to markdown
+     * @returns {string} - markdown representation
+     */
+    toMarkdown() {
+        return '---';
+    }
+
+    /**
+     * Convert this delimiter block to HTML
+     * @returns {string} - HTML representation
+     */
+    toHtml() {
+        return '<hr>';
+    }
 }

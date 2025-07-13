@@ -19,6 +19,43 @@ import {BlockType} from "@/BlockType";
 export class BlockFactory
 {
     /**
+     * Registry of all block classes
+     */
+    static blockRegistry = new Map([
+        [BlockType.PARAGRAPH, ParagraphBlock],
+        [BlockType.H1, H1Block],
+        [BlockType.H2, H2Block],
+        [BlockType.H3, H3Block],
+        [BlockType.H4, H4Block],
+        [BlockType.H5, H5Block],
+        [BlockType.H6, H6Block],
+        [BlockType.UL, UnorderedListBlock],
+        [BlockType.OL, OrderedListBlock],
+        [BlockType.SQ, TaskListBlock],
+        [BlockType.CODE, CodeBlock],
+        [BlockType.QUOTE, QuoteBlock],
+        [BlockType.DELIMITER, DelimiterBlock],
+        [BlockType.TABLE, TableBlock],
+        [BlockType.IMAGE, ImageBlock]
+    ]);
+
+    /**
+     * Get all registered block classes
+     * @returns {Array} - Array of block classes
+     */
+    static getAllBlockClasses() {
+        return Array.from(this.blockRegistry.values());
+    }
+
+    /**
+     * Get block class by type
+     * @param {string} type - Block type
+     * @returns {Class|null} - Block class or null if not found
+     */
+    static getBlockClass(type) {
+        return this.blockRegistry.get(type) || null;
+    }
+    /**
      * Create a block instance based on type
      * @param {string} type - Block type
      * @param {string} content - Block content

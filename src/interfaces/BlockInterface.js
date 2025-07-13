@@ -19,12 +19,17 @@
  * - applyTransformation(): void
  * - toMarkdown(): string
  * - toHtml(): string
+ * - renderToElement(): HTMLElement
  * 
  * Static Methods:
  * - getMarkdownTriggers(): string[]
  * - matchesMarkdownTrigger(text): boolean
  * - getToolbarConfig(): Object|null
  * - getDisabledButtons(): string[]
+ * - parseFromHtml(htmlString): Block|null
+ * - parseFromMarkdown(markdownString): Block|null
+ * - canParseHtml(htmlString): boolean
+ * - canParseMarkdown(markdownString): boolean
  * 
  * Properties (getters/setters):
  * - type: string
@@ -42,12 +47,23 @@ export const BlockInterfaceContract = {
         'handleEnterKey', 
         'applyTransformation',
         'toMarkdown',
-        'toHtml'
+        'toHtml',
+        'renderToElement'
     ],
     
     /**
      * Required static methods
      */
+    STATIC_METHODS: [
+        'getMarkdownTriggers',
+        'matchesMarkdownTrigger',
+        'getToolbarConfig',
+        'getDisabledButtons',
+        'parseFromHtml',
+        'parseFromMarkdown',
+        'canParseHtml',
+        'canParseMarkdown'
+    ],
     STATIC_METHODS: [
         'getMarkdownTriggers',
         'matchesMarkdownTrigger',

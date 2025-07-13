@@ -41,4 +41,79 @@ export class QuoteBlock extends BaseBlock
     applyTransformation() {
         Toolbar.quote();
     }
+
+    /**
+     * Convert this quote block to markdown
+     * @returns {string} - markdown representation
+     */
+    toMarkdown() {
+        return `> ${this._content}`;
+    }
+
+    /**
+     * Convert this quote block to HTML
+     * @returns {string} - HTML representation
+     */
+    toHtml() {
+        return `<blockquote>${this._content}</blockquote>`;
+    }
+
+    /**
+     * Render this quote block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add('block-quote');
+        element.setAttribute('data-block-type', this._type);
+        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.innerHTML = this._html || this._content || '';
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<blockquote[^>]*>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create a quote block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {QuoteBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        const match = htmlString.match(/^<blockquote[^>]*>(.*?)<\/blockquote>/i);
+        if (!match) return null;
+
+        const content = match[1].trim();
+        return new QuoteBlock(content, htmlString);
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        return /^>\s/.test(markdownString.trim());
+    }
+
+    /**
+     * Parse markdown string to create a quote block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {QuoteBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        const match = markdownString.trim().match(/^>\s+(.*)$/);
+        if (!match) return null;
+
+        const content = match[1].trim();
+        const html = `<blockquote>${content}</blockquote>`;
+        return new QuoteBlock(content, html);
+    }
 }

@@ -183,4 +183,99 @@ export class TaskListBlock extends ListBlock
     isChecked() {
         return this._checked;
     }
+
+    /**
+     * Render this task list block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add('block-sq');
+        element.setAttribute('data-block-type', 'sq');
+        element.setAttribute('data-placeholder', 'Task item');
+        element.contentEditable = false; // Task items manage their own content editing
+        element.style.listStyle = 'none';
+        element.style.marginLeft = '0';
+        element.style.paddingLeft = '0';
+        
+        // Create checkbox
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.style.marginRight = '8px';
+        checkbox.style.verticalAlign = 'middle';
+        checkbox.checked = this._checked;
+        
+        // Create text container that is editable
+        const textContainer = document.createElement('span');
+        textContainer.contentEditable = true;
+        textContainer.style.outline = 'none';
+        textContainer.textContent = this._content || '';
+        
+        // Add change event listener
+        checkbox.addEventListener('change', (e) => {
+            this.toggleCheckbox(element);
+        });
+        
+        element.appendChild(checkbox);
+        element.appendChild(textContainer);
+        
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return htmlString.includes('data-block-type="sq"') ||
+               (htmlString.includes('<input type="checkbox"') && htmlString.includes('<li'));
+    }
+
+    /**
+     * Parse HTML string to create a task list block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {TaskListBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        if (!this.canParseHtml(htmlString)) return null;
+
+        // Extract checkbox state and text content
+        const checkboxMatch = htmlString.match(/<input type="checkbox"([^>]*)?>/);
+        const isChecked = checkboxMatch && checkboxMatch[1] && checkboxMatch[1].includes('checked');
+        const textContent = htmlString.replace(/<[^>]+>/g, '').trim();
+        
+        const taskBlock = new TaskListBlock(textContent, htmlString);
+        taskBlock.setChecked(isChecked);
+        return taskBlock;
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        return /^-\s*\[[x ]\]\s+/.test(markdownString.trim());
+    }
+
+    /**
+     * Parse markdown string to create a task list block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {TaskListBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        const match = markdownString.trim().match(/^-\s*\[([x ])\]\s+(.*)$/);
+        if (!match) return null;
+
+        const isChecked = match[1] === 'x';
+        const content = match[2].trim();
+        const checked = isChecked ? ' checked' : '';
+        const html = `<li class="task-list-item" data-block-type="sq"><input type="checkbox"${checked}> ${content}</li>`;
+        
+        const taskBlock = new TaskListBlock(content, html);
+        taskBlock.setChecked(isChecked);
+        return taskBlock;
+    }
 }

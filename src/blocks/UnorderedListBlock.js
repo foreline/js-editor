@@ -88,4 +88,88 @@ export class UnorderedListBlock extends ListBlock
         const listItems = items.map(item => `<li>${item}</li>`).join('\n');
         return `<ul>\n${listItems}\n</ul>`;
     }
+
+    /**
+     * Render this unordered list block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('ul');
+        element.classList.add('block');
+        element.classList.add('block-ul');
+        element.setAttribute('data-block-type', 'ul');
+        element.setAttribute('data-placeholder', 'List item');
+        
+        const items = this._content.split('\n').filter(item => item.trim());
+        if (items.length === 0) {
+            const li = document.createElement('li');
+            li.contentEditable = true;
+            li.classList.add('block');
+            element.appendChild(li);
+        } else {
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                li.contentEditable = true;
+                li.classList.add('block');
+                element.appendChild(li);
+            });
+        }
+        
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<ul[^>]*>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create an unordered list block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {UnorderedListBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        if (!this.canParseHtml(htmlString)) return null;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const ul = doc.querySelector('ul');
+        
+        if (!ul) return null;
+        
+        const items = Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
+        const content = items.join('\n');
+        
+        return new UnorderedListBlock(content, htmlString);
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        const lines = markdownString.trim().split('\n');
+        return lines.every(line => /^[-*+]\s/.test(line.trim()));
+    }
+
+    /**
+     * Parse markdown string to create an unordered list block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {UnorderedListBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        if (!this.canParseMarkdown(markdownString)) return null;
+        
+        const lines = markdownString.trim().split('\n');
+        const items = lines.map(line => line.replace(/^[-*+]\s/, ''));
+        const content = items.join('\n');
+        
+        return new UnorderedListBlock(content);
+    }
 }

@@ -135,6 +135,26 @@ describe('Parser', () => {
         expect(result[1].html).toBe('<p>Paragraph text with <strong>bold</strong> and <em>italic</em></p>');
     });
 
+    test('should parse blockquote from parseHtml method directly', () => {
+        const blockquoteHtml = '<blockquote>This is a quote.</blockquote>';
+        const result = Parser.parseHtml(blockquoteHtml);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.QUOTE);
+        expect(result[0].content).toBe('This is a quote.');
+        expect(result[0].html).toBe('<blockquote>This is a quote.</blockquote>');
+    });
+
+    test('should parse simple blockquote markdown', () => {
+        const markdownString = '> This is a quote.';
+        const result = Parser.parse(markdownString);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].type).toBe(BlockType.QUOTE);
+        expect(result[0].content).toBe('This is a quote.');
+        expect(result[0].html).toBe('<blockquote>This is a quote.</blockquote>');
+    });
+
     test('should parse complex translated markdown sample', () => {
         const markdownString = `# Heading 1
 

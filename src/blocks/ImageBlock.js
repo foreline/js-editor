@@ -357,4 +357,106 @@ export class ImageBlock extends BaseBlock
             height: this._height
         };
     }
+
+    /**
+     * Render this image block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add('block-image');
+        element.setAttribute('data-block-type', 'image');
+        element.setAttribute('data-placeholder', 'Drag an image or paste URL');
+        element.contentEditable = true;
+        
+        if (this._src) {
+            const img = document.createElement('img');
+            img.src = this._src;
+            img.alt = this._alt || 'Image';
+            
+            if (this._width) img.style.width = this._width + 'px';
+            if (this._height) img.style.height = this._height + 'px';
+            
+            element.appendChild(img);
+            element.contentEditable = false;
+        } else {
+            element.textContent = this._content || '';
+        }
+        
+        // Set up drag and drop and resizing
+        setTimeout(() => {
+            this.setupDragAndDrop(element);
+            if (this._src) {
+                this.setupImageResizing(element);
+            }
+        }, 0);
+        
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<img[^>]*>/i.test(htmlString) || 
+               /^<figure[^>]*>.*<img[^>]*>.*<\/figure>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create an image block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {ImageBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        if (!this.canParseHtml(htmlString)) return null;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const img = doc.querySelector('img');
+        
+        if (!img) return null;
+        
+        const imageBlock = new ImageBlock();
+        imageBlock._src = img.getAttribute('src') || '';
+        imageBlock._alt = img.getAttribute('alt') || '';
+        
+        // Extract dimensions if present
+        const width = img.getAttribute('width') || img.style.width;
+        const height = img.getAttribute('height') || img.style.height;
+        
+        if (width) imageBlock._width = parseInt(width);
+        if (height) imageBlock._height = parseInt(height);
+        
+        return imageBlock;
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        return /^!\[.*?\]\(.*?\)/.test(markdownString.trim());
+    }
+
+    /**
+     * Parse markdown string to create an image block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {ImageBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        if (!this.canParseMarkdown(markdownString)) return null;
+        
+        const match = markdownString.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)/);
+        if (!match) return null;
+        
+        const imageBlock = new ImageBlock();
+        imageBlock._alt = match[1];
+        imageBlock._src = match[2];
+        
+        return imageBlock;
+    }
 }

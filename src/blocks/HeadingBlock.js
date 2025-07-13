@@ -96,6 +96,85 @@ export class HeadingBlock extends BaseBlock
     toHtml() {
         return `<h${this.level}>${this._content}</h${this.level}>`;
     }
+
+    /**
+     * Render this heading block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add(`block-h${this.level}`);
+        element.setAttribute('data-block-type', this._type);
+        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.innerHTML = this._html || this._content || '';
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<h[1-6][^>]*>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create a heading block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {HeadingBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        const match = htmlString.match(/^<h([1-6])[^>]*>(.*?)<\/h\1>/i);
+        if (!match) return null;
+
+        const level = parseInt(match[1]);
+        const content = match[2].trim();
+        
+        switch (level) {
+            case 1: return new H1Block(content, htmlString);
+            case 2: return new H2Block(content, htmlString);
+            case 3: return new H3Block(content, htmlString);
+            case 4: return new H4Block(content, htmlString);
+            case 5: return new H5Block(content, htmlString);
+            case 6: return new H6Block(content, htmlString);
+            default: return null;
+        }
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        return /^#{1,6}\s+/.test(markdownString.trim());
+    }
+
+    /**
+     * Parse markdown string to create a heading block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {HeadingBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        const match = markdownString.trim().match(/^(#{1,6})\s+(.*)$/);
+        if (!match) return null;
+
+        const level = match[1].length;
+        const content = match[2].trim();
+        const html = `<h${level}>${content}</h${level}>`;
+        
+        switch (level) {
+            case 1: return new H1Block(content, html);
+            case 2: return new H2Block(content, html);
+            case 3: return new H3Block(content, html);
+            case 4: return new H4Block(content, html);
+            case 5: return new H5Block(content, html);
+            case 6: return new H6Block(content, html);
+            default: return null;
+        }
+    }
 }
 
 /**

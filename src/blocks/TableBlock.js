@@ -914,4 +914,116 @@ export class TableBlock extends BaseBlock
             group: 'blocks'
         };
     }
+
+    /**
+     * Render this table block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add('block-table');
+        element.setAttribute('data-block-type', 'table');
+        element.setAttribute('data-placeholder', 'Table');
+        element.contentEditable = false; // Tables manage their own editing
+        
+        // Use the HTML from the block or generate from content
+        if (this._html && this._html.includes('<table')) {
+            element.innerHTML = this._html;
+        } else {
+            element.innerHTML = this.generateTableHTML();
+        }
+        
+        // Set up cell editing for the table
+        setTimeout(() => {
+            this.setupCellEditing(element);
+        }, 0);
+        
+        return element;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        return /^<table[^>]*>/i.test(htmlString);
+    }
+
+    /**
+     * Parse HTML string to create a table block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {TableBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        if (!this.canParseHtml(htmlString)) return null;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const table = doc.querySelector('table');
+        
+        if (!table) return null;
+        
+        const tableBlock = new TableBlock('', htmlString);
+        
+        // Extract headers
+        const headerCells = table.querySelectorAll('th');
+        if (headerCells.length > 0) {
+            tableBlock._headers = Array.from(headerCells).map(cell => cell.textContent.trim());
+        }
+        
+        // Extract data rows
+        const dataRows = table.querySelectorAll('tbody tr, tr:not(:has(th))');
+        tableBlock._rows = Array.from(dataRows).map(row => {
+            const cells = row.querySelectorAll('td, th');
+            return Array.from(cells).map(cell => cell.textContent.trim());
+        });
+        
+        return tableBlock;
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        const lines = markdownString.trim().split('\n');
+        return lines.length >= 2 && 
+               lines[0].includes('|') && 
+               lines[1].includes('|') && 
+               lines[1].includes('-');
+    }
+
+    /**
+     * Parse markdown string to create a table block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {TableBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        const lines = markdownString.trim().split('\n').map(line => line.trim()).filter(line => line);
+        
+        if (lines.length < 2) return null;
+        
+        // Check if it's a table format
+        if (!lines[0].includes('|') || !lines[1].includes('-')) return null;
+        
+        const tableBlock = new TableBlock();
+        
+        // Parse headers (first line)
+        tableBlock._headers = lines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
+        
+        // Skip separator line (second line with dashes)
+        // Parse data rows (remaining lines)
+        tableBlock._rows = lines.slice(2).map(line => 
+            line.split('|').map(cell => cell.trim()).filter(cell => cell)
+        );
+        
+        // Generate HTML
+        const html = tableBlock.generateTableHTML();
+        tableBlock._html = html;
+        
+        return tableBlock;
+    }
 }

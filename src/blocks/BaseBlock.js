@@ -24,7 +24,18 @@ export class BaseBlock
         if ( 0 === type.length ) {
             type = BlockType.PARAGRAPH;
         }
-        type = BlockType.getBlockTypeFromHtmlTag(type);
+        
+        // Only convert from HTML tag if it's not already a BlockType value
+        const blockTypeValues = [
+            BlockType.H1, BlockType.H2, BlockType.H3, BlockType.H4, BlockType.H5, BlockType.H6,
+            BlockType.PARAGRAPH, BlockType.CODE, BlockType.DELIMITER, BlockType.QUOTE,
+            BlockType.UL, BlockType.OL, BlockType.SQ, BlockType.TABLE, BlockType.IMAGE
+        ];
+        
+        if (!blockTypeValues.includes(type)) {
+            type = BlockType.getBlockTypeFromHtmlTag(type);
+        }
+        
         this._type = type;
         this._content = content;
         this._html = html;
@@ -140,5 +151,59 @@ export class BaseBlock
      */
     toHtml() {
         return this._html;
+    }
+
+    /**
+     * Render this block as an HTML element
+     * @returns {HTMLElement} - DOM element representation
+     */
+    renderToElement() {
+        // Default implementation - override in subclasses for custom rendering
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.setAttribute('data-block-type', this._type);
+        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.innerHTML = this._html || this._content || '';
+        return element;
+    }
+
+    /**
+     * Parse HTML string to create a block instance
+     * @param {string} htmlString - HTML to parse
+     * @returns {BaseBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromHtml(htmlString) {
+        // Override in subclasses for specific parsing logic
+        return null;
+    }
+
+    /**
+     * Parse markdown string to create a block instance
+     * @param {string} markdownString - Markdown to parse
+     * @returns {BaseBlock|null} - Block instance or null if can't parse
+     */
+    static parseFromMarkdown(markdownString) {
+        // Override in subclasses for specific parsing logic
+        return null;
+    }
+
+    /**
+     * Check if this block type can parse the given HTML
+     * @param {string} htmlString - HTML to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseHtml(htmlString) {
+        // Override in subclasses for specific detection logic
+        return false;
+    }
+
+    /**
+     * Check if this block type can parse the given markdown
+     * @param {string} markdownString - Markdown to check
+     * @returns {boolean} - true if can parse, false otherwise
+     */
+    static canParseMarkdown(markdownString) {
+        // Override in subclasses for specific detection logic
+        return false;
     }
 }
