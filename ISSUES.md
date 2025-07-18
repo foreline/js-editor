@@ -64,7 +64,7 @@ Test suite analysis revealed multiple critical issues that have been addressed:
 - [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
 - [x] **Event listeners**: The support of events. A change in the editor content must trigger an event so that the whole content can be send to backend and stored. Such events can be debounced with custom interval to avoid too frequent updates.
 - [x] **Event system improvements**: Subscription to event through Editor instance. Events can be subscribed through `Editor` method `on`.
-- [x] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute for holding timestamp value.
+- [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute on Blocks for holding timestamp value.
 
 ## Improvements
 
