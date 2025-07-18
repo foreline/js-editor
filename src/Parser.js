@@ -45,24 +45,12 @@ export class Parser
     static extractHtmlBlocks(htmlString) {
         const blocks = [];
         const blockTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'pre', 'blockquote', 'ul', 'ol', 'table', 'img', 'del'];
+        const selfClosingTags = ['img', 'hr', 'br'];
         
-        // First handle self-closing tags
-        const selfClosingRegex = /<(img|hr|br)[^>]*\/?>/gi;
-        const selfClosingMatches = htmlString.match(selfClosingRegex);
-        if (selfClosingMatches) {
-            selfClosingMatches.forEach(match => {
-                if (htmlString.includes(match)) {
-                    blocks.push(match);
-                    htmlString = htmlString.replace(match, '');
-                }
-            });
-        }
-        
-        // Handle regular block elements
         let currentPos = 0;
         while (currentPos < htmlString.length) {
             // Find the next opening tag
-            const tagMatch = htmlString.slice(currentPos).match(/<(\w+)[^>]*>/);
+            const tagMatch = htmlString.slice(currentPos).match(/<(\w+)[^>]*\/?>/);
             if (!tagMatch) break;
             
             const tagName = tagMatch[1].toLowerCase();
@@ -74,7 +62,14 @@ export class Parser
             const startPos = currentPos + tagMatch.index;
             const tagStart = tagMatch[0];
             
-            // Find the matching closing tag
+            // Handle self-closing tags (including img)
+            if (selfClosingTags.includes(tagName) || tagStart.endsWith('/>')) {
+                blocks.push(tagStart);
+                currentPos = startPos + tagStart.length;
+                continue;
+            }
+            
+            // Handle regular block elements
             const closingTag = `</${tagName}>`;
             let depth = 1;
             let searchPos = startPos + tagStart.length;

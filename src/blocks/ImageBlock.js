@@ -402,7 +402,8 @@ export class ImageBlock extends BaseBlock
      */
     static canParseHtml(htmlString) {
         return /^<img[^>]*>/i.test(htmlString) || 
-               /^<figure[^>]*>.*<img[^>]*>.*<\/figure>/i.test(htmlString);
+               /^<figure[^>]*>.*<img[^>]*>.*<\/figure>/i.test(htmlString) ||
+               /^<p[^>]*>\s*<img[^>]*>\s*<\/p>$/i.test(htmlString.trim());
     }
 
     /**

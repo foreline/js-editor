@@ -27,7 +27,6 @@ export class BlockFactory
      * Registry of all block classes
      */
     static blockRegistry = new Map([
-        [BlockType.PARAGRAPH, ParagraphBlock],
         [BlockType.H1, H1Block],
         [BlockType.H2, H2Block],
         [BlockType.H3, H3Block],
@@ -41,7 +40,8 @@ export class BlockFactory
         [BlockType.QUOTE, QuoteBlock],
         [BlockType.DELIMITER, DelimiterBlock],
         [BlockType.TABLE, TableBlock],
-        [BlockType.IMAGE, ImageBlock]
+        [BlockType.IMAGE, ImageBlock],
+        [BlockType.PARAGRAPH, ParagraphBlock]  // Put paragraph last as fallback
     ]);
 
     /**
