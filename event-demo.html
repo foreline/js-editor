@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Editor - Event System Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+        
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .events-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        
+        .event-log {
+            height: 400px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .event-controls {
+            margin-bottom: 15px;
+        }
+        
+        .event-controls button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .stats {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .editor {
+            min-height: 300px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        h3 {
+            margin-top: 0;
+            color: #666;
+        }
+        
+        .event-content {
+            color: #0066cc;
+        }
+        
+        .event-user {
+            color: #009900;
+        }
+        
+        .event-block {
+            color: #cc6600;
+        }
+        
+        .event-toolbar {
+            color: #9900cc;
+        }
+    </style>
+</head>
+<body>
+    <h1>JS Editor - Event System Demo</h1>
+    <p>This example demonstrates the comprehensive event system with debouncing and throttling.</p>
+    
+    <div class="container">
+        <div class="editor-section">
+            <h3>Editor</h3>
+            <div id="editor" class="editor"></div>
+        </div>
+        
+        <div class="events-section">
+            <h3>Event Monitor</h3>
+            <div class="event-controls">
+                <button onclick="clearEventLog()">Clear Log</button>
+                <button onclick="toggleThrottling()">Toggle Throttling</button>
+                <button onclick="exportContent()">Export Content</button>
+            </div>
+            <div id="eventLog" class="event-log"></div>
+            <div class="stats">
+                <div>Total Events: <span id="eventCount">0</span></div>
+                <div>Content Changes: <span id="contentChangeCount">0</span></div>
+                <div>User Interactions: <span id="userInteractionCount">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import './src/css/editor.css';
+        import { Editor } from './src/Editor.js';
+        import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+
+        // Initialize editor
+        const editor = new Editor({ id: 'editor' });
+
+        // Event monitoring variables
+        let eventCount = 0;
+        let contentChangeCount = 0;
+        let userInteractionCount = 0;
+        let throttlingEnabled = true;
+
+        // DOM elements
+        const eventLog = document.getElementById('eventLog');
+        const eventCountEl = document.getElementById('eventCount');
+        const contentChangeCountEl = document.getElementById('contentChangeCount');
+        const userInteractionCountEl = document.getElementById('userInteractionCount');
+
+        // Event logging function
+        function logEvent(eventData, category) {
+            eventCount++;
+            const timestamp = new Date(eventData.timestamp).toLocaleTimeString();
+            const eventClass = `event-${category}`;
+            
+            let logMessage = `[${timestamp}] ${eventData.type}`;
+            
+            // Add relevant data based on event type
+            if (eventData.data) {
+                if (eventData.data.blockType) {
+                    logMessage += ` (${eventData.data.blockType})`;
+                }
+                if (eventData.data.key) {
+                    logMessage += ` (${eventData.data.key})`;
+                }
+                if (eventData.data.action) {
+                    logMessage += ` (${eventData.data.action})`;
+                }
+            }
+            
+            logMessage += `\\n`;
+            
+            const logEntry = document.createElement('span');
+            logEntry.className = eventClass;
+            logEntry.textContent = logMessage;
+            eventLog.appendChild(logEntry);
+            
+            // Scroll to bottom
+            eventLog.scrollTop = eventLog.scrollHeight;
+            
+            // Update counters
+            eventCountEl.textContent = eventCount;
+        }
+
+        // Subscribe to all event types
+        
+        // Content events
+        eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+            contentChangeCount++;
+            contentChangeCountEl.textContent = contentChangeCount;
+            logEvent(eventData, 'content');
+        });
+
+        // Block events
+        eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+            logEvent(eventData, 'block');
+        });
+
+        eventEmitter.subscribe(EVENTS.BLOCK_FOCUSED, (eventData) => {
+            logEvent(eventData, 'block');
+        });
+
+        eventEmitter.subscribe(EVENTS.BLOCK_CONTENT_CHANGED, (eventData) => {
+            logEvent(eventData, 'block');
+        });
+
+        // Editor events
+        eventEmitter.subscribe(EVENTS.EDITOR_UPDATED, (eventData) => {
+            logEvent(eventData, 'content');
+        });
+
+        eventEmitter.subscribe(EVENTS.EDITOR_INITIALIZED, (eventData) => {
+            logEvent(eventData, 'content');
+        });
+
+        // User events
+        eventEmitter.subscribe(EVENTS.USER_KEY_PRESS, (eventData) => {
+            userInteractionCount++;
+            userInteractionCountEl.textContent = userInteractionCount;
+            logEvent(eventData, 'user');
+        });
+
+        eventEmitter.subscribe(EVENTS.USER_PASTE, (eventData) => {
+            userInteractionCount++;
+            userInteractionCountEl.textContent = userInteractionCount;
+            logEvent(eventData, 'user');
+        });
+
+        // Toolbar events
+        eventEmitter.subscribe(EVENTS.TOOLBAR_ACTION, (eventData) => {
+            logEvent(eventData, 'toolbar');
+        });
+
+        // Global functions for demo buttons
+        window.clearEventLog = function() {
+            eventLog.innerHTML = '';
+            eventCount = 0;
+            contentChangeCount = 0;
+            userInteractionCount = 0;
+            eventCountEl.textContent = '0';
+            contentChangeCountEl.textContent = '0';
+            userInteractionCountEl.textContent = '0';
+        };
+
+        window.toggleThrottling = function() {
+            throttlingEnabled = !throttlingEnabled;
+            const message = throttlingEnabled ? 
+                'Throttling enabled (events limited by time)' : 
+                'Throttling disabled (all events fire)';
+            
+            eventLog.appendChild(document.createTextNode(`\\n--- ${message} ---\\n`));
+            eventLog.scrollTop = eventLog.scrollHeight;
+        };
+
+        window.exportContent = function() {
+            const markdown = Editor.getMarkdown();
+            const html = Editor.getHtml();
+            
+            console.log('Exported Markdown:', markdown);
+            console.log('Exported HTML:', html);
+            
+            eventLog.appendChild(document.createTextNode(`\\n--- Content Exported (check console) ---\\n`));
+            eventLog.scrollTop = eventLog.scrollHeight;
+        };
+
+        // Initial log message
+        eventLog.textContent = 'Event monitoring started. Start typing or interacting with the editor...\\n\\n';
+    </script>
+</body>
+</html>

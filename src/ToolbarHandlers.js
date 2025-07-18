@@ -1,12 +1,35 @@
 'use strict';
 
 import { Toolbar } from './Toolbar.js';
+import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 
 export const ToolbarHandlers = {
   /**
    * Store event listeners for cleanup
    */
   eventListeners: new Map(),
+
+  /**
+   * Create a toolbar event handler with automatic event emission
+   * @param {string} actionName - Name of the toolbar action
+   * @param {Function} actionFunction - Function to execute
+   * @returns {Function} Enhanced event handler
+   */
+  createToolbarHandler: (actionName, actionFunction) => {
+    return (e) => {
+      e.preventDefault();
+      
+      // Emit toolbar action event
+      eventEmitter.emit(EVENTS.TOOLBAR_ACTION, {
+        action: actionName,
+        timestamp: Date.now(),
+        button: e.target
+      }, { source: 'toolbar.action' });
+      
+      // Execute the action
+      actionFunction(e);
+    };
+  },
 
   /**
    * Handles the click event for the toolbar button.
@@ -29,10 +52,7 @@ export const ToolbarHandlers = {
     document
         .querySelectorAll('.editor-toolbar-undo')
         .forEach(btn => {
-            const handler = (e) => {
-                e.preventDefault();
-                Toolbar.undo();
-            };
+            const handler = ToolbarHandlers.createToolbarHandler('undo', () => Toolbar.undo());
             btn.addEventListener('click', handler);
             ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });
@@ -40,10 +60,7 @@ export const ToolbarHandlers = {
     document
         .querySelectorAll('.editor-toolbar-redo')
         .forEach(btn => {
-            const handler = (e) => {
-                e.preventDefault();
-                Toolbar.redo();
-            };
+            const handler = ToolbarHandlers.createToolbarHandler('redo', () => Toolbar.redo());
             btn.addEventListener('click', handler);
             ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });

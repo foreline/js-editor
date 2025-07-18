@@ -3,28 +3,6 @@
 ## Overview
 The JS Editor project is a web-based rich text editor designed to provide users with advanced text editing capabilities. It supports features such as markdown conversion, toolbar-based formatting, event handling, and block-based content management.
 
-## Project Structure
-The project is organized into the following key directories:
-
-- **src/**: Contains the main source code for the editor.
-  - `Block.js`: Manages individual content blocks.
-  - `BlockType.js`: Defines types of blocks (e.g., paragraph, header).
-  - `Editor.js`: Core editor logic.
-  - `Event.js`: Handles custom events.
-  - `Parser.js`: Parses and converts content between formats.
-  - `Toolbar.js`: Manages toolbar functionality.
-  - `ToolbarHandlers.js`: Handles toolbar button interactions.
-  - `Utils.js`: Utility functions.
-  - `utils/`: Additional utilities like event emitters and logging.
-
-- **tests/**: Contains unit tests for the project.
-  - `Block.test.js`: Tests for `Block.js`.
-  - `Editor.test.js`: Tests for `Editor.js`.
-  - `ToolbarHandlers.test.js`: Tests for `ToolbarHandlers.js`.
-  - Other test files for integration and specific modules.
-
-- **coverage/**: Contains code coverage reports.
-
 ## Functional Requirements
 
 ### Editor Core
@@ -206,13 +184,6 @@ The project is organized into the following key directories:
 2. **Scalability**:
    - Ensure the editor can handle documents with thousands of blocks without performance degradation.
 
-### Compatibility
-1. **Browser Support**:
-   - Include polyfills for older browser versions.
-
-2. **Accessibility**:
-   - Ensure the editor is fully accessible (e.g., ARIA roles, keyboard navigation).
-
 ## Future Enhancements
 1. **Plugins**:
    - Allow users to extend functionality via plugins.
@@ -220,20 +191,14 @@ The project is organized into the following key directories:
 2. **Themes**:
    - Provide support for custom themes.
 
-3. **Collaboration**:
-   - Enable real-time collaborative editing.
-
-4. **Versioning**:
+3. **Versioning**:
    - Provide version control for editor content with rollback capabilities.
-
-5. **Export/Import**:
-   - Support exporting content to formats like PDF, Word, and JSON.
-   - Allow importing content from external sources (e.g., Google Docs, Markdown files).
 
 ## Dependencies
 - **Vite**: Build tool for development.
 - **Jest**: Testing framework.
 - **Babel**: JavaScript compiler.
+- **markdown**: The markup library.
 
 ## Development Workflow
 1. **Setup**:
@@ -248,12 +213,5 @@ The project is organized into the following key directories:
 4. **Linting**:
    - Run ESLint to check code quality.
 
-## Deployment
-1. **Static Hosting**:
-   - Deploy the editor on platforms like Netlify or Vercel.
-
-2. **CDN**:
-   - Serve assets via a Content Delivery Network for faster load times.
-
 ## Conclusion
-The JS Editor project is designed to be modular, extensible, and user-friendly. By adhering to the technical requirements outlined above, the project can achieve high performance, compatibility, and maintainability.
+The JS Editor project is designed to be modular, block-based and extensible.

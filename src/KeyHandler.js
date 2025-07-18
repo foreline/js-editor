@@ -4,6 +4,7 @@ import {BlockFactory} from "@/blocks/BlockFactory";
 import {Editor} from "@/Editor";
 import {Utils} from "@/Utils";
 import {log} from "@/utils/log.js";
+import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 
 /**
  * Centralized key handling system for the editor
@@ -18,6 +19,17 @@ export class KeyHandler
         log('handleKeyPress()', 'KeyHandler.'); 
         
         Editor.keybuffer.push(e.key);
+        
+        // Emit user key press event
+        eventEmitter.emit(EVENTS.USER_KEY_PRESS, {
+            key: e.key,
+            code: e.code,
+            ctrlKey: e.ctrlKey,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            timestamp: Date.now(),
+            blockId: Editor.currentBlock ? (Editor.currentBlock.getAttribute('data-block-id') || Editor.currentBlock.id) : null
+        }, { throttle: 50, source: 'user.keypress' });
         
         if (!Editor.currentBlock) {
             return;

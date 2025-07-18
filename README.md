@@ -91,6 +91,57 @@ const htmlContent = Editor.getHtml();
 console.log(htmlContent);
 ```
 
+### Event System
+
+The editor provides an event system for monitoring content changes and user interactions:
+
+```javascript
+import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+
+// Listen for content changes (debounced for performance)
+eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+    console.log('Content changed:', eventData.data.markdown);
+    // Send to backend for auto-save
+    saveToBackend(eventData.data);
+});
+
+// Listen for block focus changes
+eventEmitter.subscribe(EVENTS.BLOCK_FOCUSED, (eventData) => {
+    console.log('Block focused:', eventData.data.blockType);
+});
+
+// Listen for user interactions
+eventEmitter.subscribe(EVENTS.USER_KEY_PRESS, (eventData) => {
+    console.log('User pressed:', eventData.data.key);
+}, { throttle: 100 }); // Throttled for performance
+
+// Listen for toolbar actions
+eventEmitter.subscribe(EVENTS.TOOLBAR_ACTION, (eventData) => {
+    console.log('Toolbar action:', eventData.data.action);
+});
+
+// Custom event handling with priorities
+eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+    console.log('High priority handler');
+}, { priority: 10 });
+
+eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+    console.log('Low priority handler');
+}, { priority: 1 });
+```
+
+#### Event Types
+
+Available event types:
+- `EVENTS.CONTENT_CHANGED` - Debounced content changes for backend sync
+- `EVENTS.BLOCK_CREATED` - When a new block is created
+- `EVENTS.BLOCK_DELETED` - When a block is deleted  
+- `EVENTS.BLOCK_FOCUSED` - When a block gains focus
+- `EVENTS.BLOCK_CONTENT_CHANGED` - When block content changes
+- `EVENTS.TOOLBAR_ACTION` - When toolbar buttons are clicked
+- `EVENTS.USER_PASTE` - When user pastes content
+- `EVENTS.USER_KEY_PRESS` - When user presses keys (throttled)
+
 ### Block System
 
 The editor uses a modular block system where each block type implements the BlockInterface:

@@ -6,6 +6,7 @@ import {Editor} from "./Editor.js";
 import { ToolbarHandlers } from "./ToolbarHandlers.js";
 import { BlockFactory } from "./blocks/BlockFactory.js";
 import {log} from "./utils/log.js";
+import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 
 /**
  * Toolbar module for text formatting and block management
@@ -22,6 +23,13 @@ export const Toolbar = {
         const { container, config } = options;
         Toolbar.createToolbar(container, config);
         ToolbarHandlers.init();
+        
+        // Emit toolbar initialization event
+        eventEmitter.emit(EVENTS.EDITOR_INITIALIZED, {
+            toolbarContainer: container,
+            toolbarConfig: config,
+            timestamp: Date.now()
+        }, { source: 'toolbar.init' });
     },
 
     /*

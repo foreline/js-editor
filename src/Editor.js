@@ -8,7 +8,7 @@
 import {Toolbar} from "./Toolbar.js";
 import {log, logWarning} from "./utils/log.js";
 import showdown from "showdown";
-import {eventEmitter} from "@/utils/eventEmitter.js";
+import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
 import {BlockType} from "@/BlockType.js";
@@ -369,28 +369,78 @@ export class Editor
             }
         }
         
+        // Emit paste event
+        eventEmitter.emit(EVENTS.USER_PASTE, {
+            text: text,
+            html: htmlData,
+            processedHtml: finalHtml,
+            timestamp: Date.now()
+        }, { source: 'user.paste' });
+        
         // Update editor after paste
         Editor.update();
     }
     
     /**
-     * Raises editor updated event
+     * Raises editor updated event with content change tracking
      */
     static update()
     {
         log('update()', 'Editor.');
         
         let editorHtml = this.instance.innerHTML;
+        const markdownContent = Editor.html2md(editorHtml);
         
-        //document.querySelector('textarea.editor-text-md').value = Editor.html2md(editorHtml);
-        //document.querySelector('textarea.editor-text-html').value = editorHtml;
+        // Update timestamps for all blocks
+        this.updateBlockTimestamps();
         
         if ( 0 === this.instance.querySelectorAll('.block').length ) {
             this.instance.innerHTML = '';
             Editor.addEmptyBlock();
         }
-    
-        eventEmitter.emit('EDITOR.UPDATED_EVENT');
+
+        // Emit both legacy and new events
+        eventEmitter.emit('EDITOR.UPDATED_EVENT'); // Legacy compatibility
+        eventEmitter.emit(EVENTS.EDITOR_UPDATED, {
+            html: editorHtml,
+            markdown: markdownContent,
+            blockCount: this.instance.querySelectorAll('.block').length
+        });
+        
+        // Emit debounced content change event for backend synchronization
+        eventEmitter.emit(EVENTS.CONTENT_CHANGED, {
+            html: editorHtml,
+            markdown: markdownContent,
+            timestamp: Date.now()
+        }, { debounce: 500, source: 'editor.update' });
+    }
+
+    /**
+     * Update timestamps for all blocks to track content changes
+     */
+    static updateBlockTimestamps() {
+        const blocks = this.instance.querySelectorAll('.block');
+        const currentTimestamp = Date.now();
+        
+        blocks.forEach(block => {
+            const content = block.textContent || block.innerHTML;
+            const lastContent = block.getAttribute('data-last-content');
+            
+            // Only update timestamp if content has actually changed
+            if (lastContent !== content) {
+                block.setAttribute('data-timestamp', currentTimestamp.toString());
+                block.setAttribute('data-last-content', content);
+                
+                // Emit block-specific content change event
+                eventEmitter.emit(EVENTS.BLOCK_CONTENT_CHANGED, {
+                    blockId: block.getAttribute('data-block-id') || block.id,
+                    blockType: block.getAttribute('data-block-type'),
+                    content: content,
+                    previousContent: lastContent,
+                    timestamp: currentTimestamp
+                }, { throttle: 200, source: 'block.content' });
+            }
+        });
     }
       /**
      *
@@ -575,7 +625,12 @@ export class Editor
         log('addEmptyBlock()', 'Editor.');
         
         const block = new Block(BlockType.PARAGRAPH);
-        const htmlBlock = Parser.html(block)
+        const htmlBlock = Parser.html(block);
+        
+        // Generate unique block ID
+        const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        htmlBlock.setAttribute('data-block-id', blockId);
+        htmlBlock.setAttribute('data-timestamp', Date.now().toString());
         
         const currentBlock = Editor.currentBlock;
     
@@ -588,6 +643,14 @@ export class Editor
     
         // Update currentBlock reference
         this.setCurrentBlock(htmlBlock);
+    
+        // Emit block creation event
+        eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+            blockId: blockId,
+            blockType: BlockType.PARAGRAPH,
+            position: Array.from(Editor.instance.querySelectorAll('.block')).indexOf(htmlBlock),
+            timestamp: Date.now()
+        }, { source: 'editor.create' });
     
         // Ensure the block is attached before focusing
         requestAnimationFrame(() => {
@@ -702,14 +765,25 @@ export class Editor
     {
         log('setCurrentBlock()', 'Editor.', { block });
 
+        const previousBlock = Editor.currentBlock;
+        
         if (Editor.currentBlock) {
             Editor.currentBlock.classList.remove('active-block');
         }
+        
         Editor.currentBlock = block;
         Editor.currentBlock.classList.add('active-block');
         
         // Update toolbar button states based on current block
         Editor.updateToolbarButtonStates();
+        
+        // Emit block focus event
+        eventEmitter.emit(EVENTS.BLOCK_FOCUSED, {
+            blockId: block.getAttribute('data-block-id') || block.id,
+            blockType: block.getAttribute('data-block-type'),
+            previousBlockId: previousBlock ? (previousBlock.getAttribute('data-block-id') || previousBlock.id) : null,
+            timestamp: Date.now()
+        }, { throttle: 50, source: 'editor.focus' });
     }
 
     /**
