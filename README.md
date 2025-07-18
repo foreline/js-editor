@@ -73,61 +73,103 @@ Initialize the editor in your HTML:
 
 <script type="module">
     import { Editor } from './src/Editor.js';
-    const editor = new Editor({ id: 'editor' });
+    
+    // Create a single editor instance
+    const editor = new Editor({ 
+        id: 'editor',
+        debug: true  // Enable debug mode for development
+    });
+    
+    // Or create multiple isolated instances
+    const editor1 = new Editor({ id: 'editor1' });
+    const editor2 = new Editor({ id: 'editor2' });
+    
+    // Each instance has its own event system and state
+    editor1.on('CONTENT_CHANGED', (data) => console.log('Editor 1:', data));
+    editor2.on('CONTENT_CHANGED', (data) => console.log('Editor 2:', data));
 </script>
 ```
 
 ### Content Export
 
-Export editor content as markdown or HTML:
+Export editor content as markdown or HTML from any instance:
 
 ```javascript
-// Get all content as markdown
-const markdownContent = Editor.getMarkdown();
-console.log(markdownContent);
+// Instance method (recommended)
+const markdownContent = editor.getMarkdown();
+const htmlContent = editor.getHtml();
 
-// Get all content as HTML  
+// Static method (uses first editor instance for backward compatibility)
+const markdownContent = Editor.getMarkdown();
 const htmlContent = Editor.getHtml();
-console.log(htmlContent);
 ```
 
 ### Event System
 
-The editor provides an event system for monitoring content changes and user interactions:
+The editor provides an **instance-based event system** for monitoring content changes and user interactions. Each editor instance has its own isolated event emitter:
+
+```javascript
+// Create editor instances
+const editor1 = new Editor({ id: 'editor1', debug: true });
+const editor2 = new Editor({ id: 'editor2', debug: true });
+
+// Each editor has isolated events - no cross-contamination
+editor1.on(EVENTS.CONTENT_CHANGED, (data) => {
+    console.log('Editor 1 content changed:', data.markdown);
+    // Only triggered by editor1 changes
+});
+
+editor2.on(EVENTS.CONTENT_CHANGED, (data) => {
+    console.log('Editor 2 content changed:', data.markdown);
+    // Only triggered by editor2 changes
+});
+
+// Listen for block focus changes
+editor1.on(EVENTS.BLOCK_FOCUSED, (data) => {
+    console.log('Editor 1 block focused:', data.blockType);
+});
+
+// Listen for user interactions with throttling
+editor1.on(EVENTS.USER_KEY_PRESS, (data) => {
+    console.log('User pressed:', data.key);
+}, { throttle: 100 }); // Throttled for performance
+
+// One-time event subscription
+editor1.once(EVENTS.BLOCK_CREATED, (data) => {
+    console.log('First block created in editor1!');
+});
+
+// Unsubscribe from events
+const subscription = editor1.on(EVENTS.TOOLBAR_ACTION, (data) => {
+    console.log('Toolbar action:', data.action);
+});
+
+// Later, unsubscribe
+subscription.unsubscribe();
+// Or use the off method
+editor1.off(EVENTS.TOOLBAR_ACTION, callbackFunction);
+
+// Custom event handling with priorities
+editor1.on(EVENTS.BLOCK_CREATED, (data) => {
+    console.log('High priority handler');
+}, { priority: 10 });
+
+editor1.on(EVENTS.BLOCK_CREATED, (data) => {
+    console.log('Low priority handler');
+}, { priority: 1 });
+```
+
+#### Legacy Global Event Access
+
+For backward compatibility, you can still access events globally (uses first editor instance):
 
 ```javascript
 import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
 
-// Listen for content changes (debounced for performance)
+// This will use the first editor instance created
 eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
     console.log('Content changed:', eventData.data.markdown);
-    // Send to backend for auto-save
-    saveToBackend(eventData.data);
 });
-
-// Listen for block focus changes
-eventEmitter.subscribe(EVENTS.BLOCK_FOCUSED, (eventData) => {
-    console.log('Block focused:', eventData.data.blockType);
-});
-
-// Listen for user interactions
-eventEmitter.subscribe(EVENTS.USER_KEY_PRESS, (eventData) => {
-    console.log('User pressed:', eventData.data.key);
-}, { throttle: 100 }); // Throttled for performance
-
-// Listen for toolbar actions
-eventEmitter.subscribe(EVENTS.TOOLBAR_ACTION, (eventData) => {
-    console.log('Toolbar action:', eventData.data.action);
-});
-
-// Custom event handling with priorities
-eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
-    console.log('High priority handler');
-}, { priority: 10 });
-
-eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
-    console.log('Low priority handler');
-}, { priority: 1 });
 ```
 
 #### Event Types

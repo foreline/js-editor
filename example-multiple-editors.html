@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple JS Editor Instances</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .editor-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .editor-container h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .editor {
+            min-height: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background: white;
+        }
+        
+        .block {
+            margin: 8px 0;
+            padding: 4px;
+            border-left: 3px solid transparent;
+        }
+        
+        .block.active-block {
+            border-left-color: #007cba;
+            background-color: #f8f9fa;
+        }
+        
+        .event-log {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .event-log .event {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .event-log .event:last-child {
+            border-bottom: none;
+        }
+        
+        .event-log .event-type {
+            color: #007cba;
+            font-weight: bold;
+        }
+        
+        .event-log .event-data {
+            color: #666;
+        }
+        
+        .stats {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            margin: 10px 0;
+        }
+        
+        .controls button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        
+        .controls button:hover {
+            background: #005a8b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiple JS Editor Instances Demo</h1>
+    <p>This demonstrates the new instance-based architecture where each editor has isolated events and state.</p>
+    
+    <div class="editor-container">
+        <h2>Editor Instance 1</h2>
+        <div id="editor1" class="editor" contenteditable="true">
+            <div class="block">
+                <p>Welcome to Editor 1! Try typing here...</p>
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="getContent('editor1')">Get Content</button>
+            <button onclick="addBlock('editor1')">Add Block</button>
+            <button onclick="clearEvents('log1')">Clear Log</button>
+        </div>
+        <div class="stats">
+            <strong>Editor 1 Stats:</strong>
+            <span id="stats1">No events yet</span>
+        </div>
+        <div class="event-log" id="log1"></div>
+    </div>
+    
+    <div class="editor-container">
+        <h2>Editor Instance 2</h2>
+        <div id="editor2" class="editor" contenteditable="true">
+            <div class="block">
+                <p>Welcome to Editor 2! This is completely isolated from Editor 1.</p>
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="getContent('editor2')">Get Content</button>
+            <button onclick="addBlock('editor2')">Add Block</button>
+            <button onclick="clearEvents('log2')">Clear Log</button>
+        </div>
+        <div class="stats">
+            <strong>Editor 2 Stats:</strong>
+            <span id="stats2">No events yet</span>
+        </div>
+        <div class="event-log" id="log2"></div>
+    </div>
+
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        import { EVENTS } from './src/utils/eventEmitter.js';
+        
+        // Create two independent editor instances
+        const editor1 = new Editor({
+            id: 'editor1',
+            debug: true
+        });
+        
+        const editor2 = new Editor({
+            id: 'editor2', 
+            debug: true
+        });
+        
+        // Event counters for each editor
+        const eventCounts = {
+            editor1: {},
+            editor2: {}
+        };
+        
+        // Subscribe to events for Editor 1
+        editor1.on(EVENTS.CONTENT_CHANGED, (data) => {
+            logEvent('log1', 'CONTENT_CHANGED', data);
+            updateStats('editor1');
+        });
+        
+        editor1.on(EVENTS.BLOCK_FOCUSED, (data) => {
+            logEvent('log1', 'BLOCK_FOCUSED', data);
+            updateStats('editor1');
+        });
+        
+        editor1.on(EVENTS.USER_KEY_PRESS, (data) => {
+            logEvent('log1', 'USER_KEY_PRESS', data);
+            updateStats('editor1');
+        });
+        
+        editor1.on(EVENTS.BLOCK_CREATED, (data) => {
+            logEvent('log1', 'BLOCK_CREATED', data);
+            updateStats('editor1');
+        });
+        
+        // Subscribe to events for Editor 2 
+        editor2.on(EVENTS.CONTENT_CHANGED, (data) => {
+            logEvent('log2', 'CONTENT_CHANGED', data);
+            updateStats('editor2');
+        });
+        
+        editor2.on(EVENTS.BLOCK_FOCUSED, (data) => {
+            logEvent('log2', 'BLOCK_FOCUSED', data);
+            updateStats('editor2');
+        });
+        
+        editor2.on(EVENTS.USER_KEY_PRESS, (data) => {
+            logEvent('log2', 'USER_KEY_PRESS', data);
+            updateStats('editor2');
+        });
+        
+        editor2.on(EVENTS.BLOCK_CREATED, (data) => {
+            logEvent('log2', 'BLOCK_CREATED', data);
+            updateStats('editor2');
+        });
+        
+        function logEvent(logId, eventType, data) {
+            const log = document.getElementById(logId);
+            const eventElement = document.createElement('div');
+            eventElement.className = 'event';
+            
+            const time = new Date().toLocaleTimeString();
+            eventElement.innerHTML = `
+                <span class="event-type">[${time}] ${eventType}</span><br>
+                <span class="event-data">${JSON.stringify(data, null, 2)}</span>
+            `;
+            
+            log.appendChild(eventElement);
+            log.scrollTop = log.scrollHeight;
+            
+            // Update event counter
+            const editorId = logId === 'log1' ? 'editor1' : 'editor2';
+            if (!eventCounts[editorId][eventType]) {
+                eventCounts[editorId][eventType] = 0;
+            }
+            eventCounts[editorId][eventType]++;
+        }
+        
+        function updateStats(editorId) {
+            const stats = document.getElementById(editorId === 'editor1' ? 'stats1' : 'stats2');
+            const counts = eventCounts[editorId];
+            const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+            
+            if (total === 0) {
+                stats.textContent = 'No events yet';
+                return;
+            }
+            
+            const summary = Object.entries(counts)
+                .map(([type, count]) => `${type}: ${count}`)
+                .join(', ');
+            
+            stats.textContent = `Total: ${total} events (${summary})`;
+        }
+        
+        // Global functions for demo buttons
+        window.getContent = function(editorId) {
+            const editor = editorId === 'editor1' ? editor1 : editor2;
+            const content = editor.getMarkdown();
+            alert(`${editorId} content:\\n\\n${content}`);
+        };
+        
+        window.addBlock = function(editorId) {
+            const editor = editorId === 'editor1' ? editor1 : editor2;
+            editor.addEmptyBlock();
+        };
+        
+        window.clearEvents = function(logId) {
+            const log = document.getElementById(logId);
+            log.innerHTML = '';
+            
+            // Reset event counters
+            const editorId = logId === 'log1' ? 'editor1' : 'editor2';
+            eventCounts[editorId] = {};
+            updateStats(editorId);
+        };
+        
+        // Make editors available globally for debugging
+        window.editor1 = editor1;
+        window.editor2 = editor2;
+        
+        console.log('Multiple editor instances created:', { editor1, editor2 });
+        console.log('Editor instances registry:', Editor._instances);
+    </script>
+</body>
+</html>

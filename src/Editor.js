@@ -8,7 +8,7 @@
 import {Toolbar} from "./Toolbar.js";
 import {log, logWarning} from "./utils/log.js";
 import showdown from "showdown";
-import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
+import {EditorEventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
 import {BlockType} from "@/BlockType.js";
@@ -24,28 +24,17 @@ import {KeyHandler} from "@/KeyHandler.js";
  * @property {HTMLElement} currentBlock - The currently focused block
  * @property {Array.<string>} keybuffer - Buffer for tracking key presses
  * @property {Array.<Object>} rules - Custom rules for the editor
+ * @property {EditorEventEmitter} eventEmitter - Instance-specific event emitter
  */
 export class Editor
 {
-    /** {?HTMLElement} */
-    static instance = null;
+    // Static registry to track all editor instances
+    static _instances = new Map();
     
-    /** {array<Block>} */
-    static blocks = [];
-    
-    /** {HTMLElement} */
-    static currentBlock;
-    
-    static rules = [];
+    // Static fallback properties for backward compatibility when no instances exist
+    static _fallbackBlocks = [];
     
     /**
-     *
-     * @type {Array.<string>}
-     */
-    static keybuffer = [];
-    
-    /**
-     *
      * @param {object} options
      */
     constructor(options = {})
@@ -57,7 +46,18 @@ export class Editor
         if ( !elementId ) {
             return console.warn('Element id is not set.');
         }
+
+        // Instance properties
+        this.instance = null;
+        this.blocks = [];
+        this.currentBlock = null;
+        this.rules = [];
+        this.keybuffer = [];
         
+        // Create instance-specific event emitter
+        this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
+        
+        // Initialize toolbar
         const toolbarOptions = {
             id: options.toolbarId ?? null,
             container: document.querySelector('.editor-container'),
@@ -65,14 +65,17 @@ export class Editor
         };
         Toolbar.init(toolbarOptions);
 
-        Editor.init(options);
+        this.init(options);
+        
+        // Register this instance
+        Editor._instances.set(this.instance, this);
     }
     
     /**
-     *
+     * Initialize the editor instance
      * @param {object} options
      */
-    static init(options)
+    init(options)
     {
         log('init()', 'Editor.'); console.log({options});
 
@@ -91,12 +94,12 @@ export class Editor
         }
 
         this.instance = document.getElementById(options.id);
-
         this.instance.setAttribute('contenteditable', 'true');
 
         let content = options.text || this.instance.innerHTML || '';
-        
         let blocks = Parser.parse(content);
+        
+        this.blocks = blocks;
         
         if ( 0 === blocks.length ) {
             blocks = [new Block()];
@@ -142,38 +145,128 @@ export class Editor
         
         // @fixme focus only if empty content
         if ( 0 ) {
-            Editor.focus();
+            this.focus();
         }
 
         this.initMarkdownContainer();
         this.initHtmlContainer();
+        
+        // Emit editor initialization event
+        this.eventEmitter.emit(EVENTS.EDITOR_INITIALIZED, {
+            elementId: options.id,
+            blockCount: this.blocks.length,
+            timestamp: Date.now()
+        }, { source: 'editor.init' });
     }
     
     /**
-     * Adds event listeners
+     * Subscribe to events on this editor instance
+     * @param {string} eventType - The event type to subscribe to
+     * @param {Function} callback - The callback function
+     * @param {Object} options - Subscription options
+     * @returns {Object} Subscription object with unsubscribe method
      */
-    static addListeners()
+    on(eventType, callback, options = {}) {
+        return this.eventEmitter.subscribe(eventType, callback, options);
+    }
+    
+    /**
+     * Unsubscribe from events (alias for more intuitive API)
+     * @param {string} eventType - The event type
+     * @param {Function} callback - The callback function to remove
+     */
+    off(eventType, callback) {
+        // Find and remove the specific callback
+        const listeners = this.eventEmitter.events.get(eventType);
+        if (listeners) {
+            for (const listener of listeners) {
+                if (listener.callback === callback) {
+                    listeners.delete(listener);
+                    break;
+                }
+            }
+            if (listeners.size === 0) {
+                this.eventEmitter.events.delete(eventType);
+            }
+        }
+    }
+    
+    /**
+     * Subscribe to event that fires only once
+     * @param {string} eventType - The event type
+     * @param {Function} callback - The callback function
+     * @param {Object} options - Subscription options
+     * @returns {Object} Subscription object with unsubscribe method
+     */
+    once(eventType, callback, options = {}) {
+        return this.eventEmitter.subscribe(eventType, callback, { ...options, once: true });
+    }
+    
+    /**
+     * Emit events from this editor instance
+     * @param {string} eventType - The event type
+     * @param {*} data - Event data
+     * @param {Object} options - Emission options
+     */
+    emit(eventType, data, options = {}) {
+        this.eventEmitter.emit(eventType, data, options);
+    }
+    
+    /**
+     * Get the editor instance from a DOM element
+     * @param {HTMLElement} element - The editor DOM element
+     * @returns {Editor|null} The editor instance or null if not found
+     */
+    static getInstance(element) {
+        return Editor._instances.get(element) || null;
+    }
+    
+    /**
+     * Destroy the editor instance and cleanup
+     */
+    destroy() {
+        // Cleanup event emitter
+        this.eventEmitter.cleanup();
+        
+        // Remove from instances registry
+        Editor._instances.delete(this.instance);
+        
+        // Remove DOM event listeners
+        // (Event listeners will be cleaned up when element is removed)
+        
+        // Clear instance properties
+        this.instance = null;
+        this.blocks = [];
+        this.currentBlock = null;
+        this.rules = [];
+        this.keybuffer = [];
+    }
+    
+    /**
+     * Adds event listeners to this editor instance
+     */
+    addListeners()
     {
         log('addListeners()', 'Editor.');
         
         this.instance.addEventListener('keydown', (e) => {
-            KeyHandler.handleSpecialKeys(e);
+            KeyHandler.handleSpecialKeys(e, this);
         });
     
         this.instance.addEventListener('keyup', (e) => {
-            KeyHandler.handleKeyPress(e);
+            KeyHandler.handleKeyPress(e, this);
         });
         
         // PASTE TEXT/HTML Event handler
         this.instance.addEventListener('paste', (e) => {
-            Editor.paste(e);
+            this.paste(e);
             e.preventDefault();
         });
         
         // mask focused block as currentBlock
-        document.addEventListener('click', function(e) {
-            // Ignore clicks outside the editor
-            if ( !e.target.closest('.editor') ) {
+        document.addEventListener('click', (e) => {
+            // Only handle clicks for this editor instance
+            if (!e.target.closest(`#${this.instance.id}`)) {
                 return;
             }
 
@@ -187,13 +280,13 @@ export class Editor
             if ( !block ) {
                 return;
             }
-            Editor.setCurrentBlock(block);
+            this.setCurrentBlock(block);
         });
 
         // Add focus event for keyboard navigation
-        this.instance.addEventListener('focusin', function(e) {
-            // Ignore focus events outside the editor
-            if ( !e.target.closest('.editor') ) {
+        this.instance.addEventListener('focusin', (e) => {
+            // Only handle focus events for this editor instance
+            if (!e.target.closest(`#${this.instance.id}`)) {
                 return;
             }
 
@@ -205,20 +298,20 @@ export class Editor
             }
             
             if ( block ) {
-                Editor.setCurrentBlock(block);
+                this.setCurrentBlock(block);
             } else {
                 // If no block is found but we're in the editor, try to focus on first block
-                const firstBlock = Editor.instance.querySelector('.block');
+                const firstBlock = this.instance.querySelector('.block');
                 if ( firstBlock ) {
-                    Editor.setCurrentBlock(firstBlock);
+                    this.setCurrentBlock(firstBlock);
                 }
             }
         });
         
         // Add mouseup event to catch cursor placement
-        this.instance.addEventListener('mouseup', function(e) {
-            // Ignore mouse events outside the editor
-            if ( !e.target.closest('.editor') ) {
+        this.instance.addEventListener('mouseup', (e) => {
+            // Only handle mouse events for this editor instance
+            if (!e.target.closest(`#${this.instance.id}`)) {
                 return;
             }
 
@@ -240,7 +333,7 @@ export class Editor
                 }
                 
                 if ( block ) {
-                    Editor.setCurrentBlock(block);
+                    this.setCurrentBlock(block);
                 }
             }
         });
@@ -250,12 +343,12 @@ export class Editor
      * Sets focus on given or current editor block.
      * @param {?HTMLElement} element
      */
-    static focus(element= null)
+    focus(element= null)
     {
         log('focus()', 'Editor.');
         
         if ( !element ) {
-            element = Editor.currentBlock;
+            element = this.currentBlock;
         }
         
         console.log({element});
@@ -303,7 +396,7 @@ export class Editor
      *
      * @param {ClipboardEvent} e
      */
-    static paste(e)
+    paste(e)
     {
         log('paste()', 'Editor.'); console.log({e});
         
@@ -384,7 +477,7 @@ export class Editor
     /**
      * Raises editor updated event with content change tracking
      */
-    static update()
+    update()
     {
         log('update()', 'Editor.');
         
@@ -396,19 +489,19 @@ export class Editor
         
         if ( 0 === this.instance.querySelectorAll('.block').length ) {
             this.instance.innerHTML = '';
-            Editor.addEmptyBlock();
+            this.addEmptyBlock();
         }
 
         // Emit both legacy and new events
-        eventEmitter.emit('EDITOR.UPDATED_EVENT'); // Legacy compatibility
-        eventEmitter.emit(EVENTS.EDITOR_UPDATED, {
+        this.eventEmitter.emit('EDITOR.UPDATED_EVENT'); // Legacy compatibility
+        this.eventEmitter.emit(EVENTS.EDITOR_UPDATED, {
             html: editorHtml,
             markdown: markdownContent,
             blockCount: this.instance.querySelectorAll('.block').length
         });
         
         // Emit debounced content change event for backend synchronization
-        eventEmitter.emit(EVENTS.CONTENT_CHANGED, {
+        this.eventEmitter.emit(EVENTS.CONTENT_CHANGED, {
             html: editorHtml,
             markdown: markdownContent,
             timestamp: Date.now()
@@ -418,7 +511,7 @@ export class Editor
     /**
      * Update timestamps for all blocks to track content changes
      */
-    static updateBlockTimestamps() {
+    updateBlockTimestamps() {
         const blocks = this.instance.querySelectorAll('.block');
         const currentTimestamp = Date.now();
         
@@ -620,7 +713,7 @@ export class Editor
     /**
      * @return HTMLElement
      */
-    static addEmptyBlock()
+    addEmptyBlock()
     {
         log('addEmptyBlock()', 'Editor.');
         
@@ -632,11 +725,11 @@ export class Editor
         htmlBlock.setAttribute('data-block-id', blockId);
         htmlBlock.setAttribute('data-timestamp', Date.now().toString());
         
-        const currentBlock = Editor.currentBlock;
+        const currentBlock = this.currentBlock;
     
         // Ensure currentBlock exists
         if ( !currentBlock ) {
-            Editor.instance.appendChild(htmlBlock);
+            this.instance.appendChild(htmlBlock);
         } else {
             currentBlock.after(htmlBlock);
         }
@@ -645,17 +738,17 @@ export class Editor
         this.setCurrentBlock(htmlBlock);
     
         // Emit block creation event
-        eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+        this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
             blockId: blockId,
             blockType: BlockType.PARAGRAPH,
-            position: Array.from(Editor.instance.querySelectorAll('.block')).indexOf(htmlBlock),
+            position: Array.from(this.instance.querySelectorAll('.block')).indexOf(htmlBlock),
             timestamp: Date.now()
         }, { source: 'editor.create' });
     
         // Ensure the block is attached before focusing
         requestAnimationFrame(() => {
-            Editor.focus(htmlBlock);
-            Editor.update();
+            this.focus(htmlBlock);
+            this.update();
         });
         
         return htmlBlock;
@@ -664,15 +757,15 @@ export class Editor
     /**
      * Updates toolbar button states based on the current block
      */
-    static updateToolbarButtonStates()
+    updateToolbarButtonStates()
     {
         log('updateToolbarButtonStates()', 'Editor.');
 
-        if (!Editor.currentBlock) {
+        if (!this.currentBlock) {
             return;
         }
 
-        const blockType = Editor.currentBlock.getAttribute('data-block-type');
+        const blockType = this.currentBlock.getAttribute('data-block-type');
         if (!blockType) {
             return;
         }
@@ -687,7 +780,7 @@ export class Editor
         const disabledButtons = blockClass.getDisabledButtons();
         
         // Reset all toolbar buttons to enabled state
-        Editor.enableAllToolbarButtons();
+        this.enableAllToolbarButtons();
         
         // Disable buttons that shouldn't be available for this block type
         disabledButtons.forEach(buttonClass => {
@@ -704,7 +797,7 @@ export class Editor
     /**
      * Enables all toolbar buttons (resets their state)
      */
-    static enableAllToolbarButtons()
+    enableAllToolbarButtons()
     {
         log('enableAllToolbarButtons()', 'Editor.');
 
@@ -761,24 +854,24 @@ export class Editor
      * Sets the current block
      * @param {HTMLElement} block 
      */
-    static setCurrentBlock(block)
+    setCurrentBlock(block)
     {
         log('setCurrentBlock()', 'Editor.', { block });
 
-        const previousBlock = Editor.currentBlock;
+        const previousBlock = this.currentBlock;
         
-        if (Editor.currentBlock) {
-            Editor.currentBlock.classList.remove('active-block');
+        if (this.currentBlock) {
+            this.currentBlock.classList.remove('active-block');
         }
         
-        Editor.currentBlock = block;
-        Editor.currentBlock.classList.add('active-block');
+        this.currentBlock = block;
+        this.currentBlock.classList.add('active-block');
         
         // Update toolbar button states based on current block
-        Editor.updateToolbarButtonStates();
+        this.updateToolbarButtonStates();
         
         // Emit block focus event
-        eventEmitter.emit(EVENTS.BLOCK_FOCUSED, {
+        this.eventEmitter.emit(EVENTS.BLOCK_FOCUSED, {
             blockId: block.getAttribute('data-block-id') || block.id,
             blockType: block.getAttribute('data-block-type'),
             previousBlockId: previousBlock ? (previousBlock.getAttribute('data-block-id') || previousBlock.id) : null,
@@ -790,7 +883,7 @@ export class Editor
      * Creates and initializes the markdown container
      * @returns {boolean} True if successful, false otherwise
      */
-    static initMarkdownContainer()
+    initMarkdownContainer()
     {
         log('initMarkdownContainer()', 'Editor.');
 
@@ -825,7 +918,7 @@ export class Editor
      * Creates and initializes the HTML container
      * @returns {boolean} True if successful, false otherwise
      */
-    static initHtmlContainer()
+    initHtmlContainer()
     {
         log('initHtmlContainer()', 'Editor.');
         
@@ -860,7 +953,7 @@ export class Editor
      * Get all editor content as markdown
      * @returns {string} - markdown representation of all content
      */
-    static getMarkdown()
+    getMarkdown()
     {
         log('getMarkdown()', 'Editor.');
         
@@ -874,7 +967,7 @@ export class Editor
                     return block.toMarkdown();
                 }
                 // Fallback for blocks that don't implement toMarkdown
-                return this.html2md(block.html || block.content || '');
+                return Editor.html2md(block.html || block.content || '');
             });
 
             return markdownBlocks.join('\n\n').trim();
@@ -888,7 +981,7 @@ export class Editor
      * Get all editor content as HTML
      * @returns {string} - HTML representation of all content
      */
-    static getHtml()
+    getHtml()
     {
         log('getHtml()', 'Editor.');
         
@@ -902,13 +995,146 @@ export class Editor
                     return block.toHtml();
                 }
                 // Fallback for blocks that don't implement toHtml
-                return block.html || this.md2html(block.content || '');
+                return block.html || Editor.md2html(block.content || '');
             });
 
             return htmlBlocks.join('\n').trim();
         } catch (error) {
             logWarning('Error getting HTML content: ' + error.message, 'Editor.getHtml()');
             return '';
+        }
+    }
+    
+    // Static backward compatibility methods - these delegate to the first editor instance
+    static getMarkdown() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            return firstInstance.getMarkdown();
+        }
+        
+        // Fallback for when no instances exist (for testing compatibility)
+        try {
+            if (!Editor._fallbackBlocks || Editor._fallbackBlocks.length === 0) {
+                return '';
+            }
+
+            const markdownBlocks = Editor._fallbackBlocks.map(block => {
+                if (typeof block.toMarkdown === 'function') {
+                    return block.toMarkdown();
+                }
+                // Fallback for blocks that don't implement toMarkdown
+                return Editor.html2md(block.html || block.content || '');
+            });
+
+            return markdownBlocks.join('\n\n').trim();
+        } catch (error) {
+            return '';
+        }
+    }
+    
+    static getHtml() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            return firstInstance.getHtml();
+        }
+        
+        // Fallback for when no instances exist (for testing compatibility)
+        try {
+            if (!Editor._fallbackBlocks || Editor._fallbackBlocks.length === 0) {
+                return '';
+            }
+
+            const htmlBlocks = Editor._fallbackBlocks.map(block => {
+                if (typeof block.toHtml === 'function') {
+                    return block.toHtml();
+                }
+                // Fallback for blocks that don't implement toHtml
+                return block.html || Editor.md2html(block.content || '');
+            });
+
+            return htmlBlocks.join('\n').trim();
+        } catch (error) {
+            return '';
+        }
+    }
+    
+    // Add convenience properties for backward compatibility with tests
+    static get instance() {
+        const firstInstance = Array.from(Editor._instances.keys())[0];
+        return firstInstance || null;
+    }
+    
+    static set instance(value) {
+        // This is for test compatibility - in real use cases, instances are managed automatically
+        if (value === null) {
+            Editor._instances.clear();
+        }
+    }
+    
+    static get currentBlock() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        return firstInstance ? firstInstance.currentBlock : null;
+    }
+    
+    static set currentBlock(value) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.currentBlock = value;
+        }
+    }
+    
+    // Static backward compatibility methods for KeyHandler and other components
+    static addEmptyBlock() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            return firstInstance.addEmptyBlock();
+        }
+    }
+    
+    static update() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.update();
+        }
+    }
+    
+    static setCurrentBlock(block) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.setCurrentBlock(block);
+        }
+    }
+    
+    static focus(element) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.focus(element);
+        }
+    }
+    
+    static get keybuffer() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        return firstInstance ? firstInstance.keybuffer : [];
+    }
+    
+    static set keybuffer(value) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.keybuffer = value;
+        }
+    }
+    
+    static get blocks() {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        return firstInstance ? firstInstance.blocks : Editor._fallbackBlocks;
+    }
+    
+    static set blocks(value) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            firstInstance.blocks = value;
+        } else {
+            Editor._fallbackBlocks = value;
         }
     }
 }

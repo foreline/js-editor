@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✅ COMPLETED: Instance-Based Architecture
+
+**MAJOR UPDATE**: Successfully converted Editor from static to instance-based architecture with isolated event systems.
+
 ### Added
+- **Instance-Based Editor Architecture**: Complete refactoring to support multiple editor instances
+  - Each `new Editor()` creates an isolated instance with its own event system
+  - Multiple editors can coexist on the same page without interference
+  - Instance methods: `editor.on()`, `editor.off()`, `editor.once()`, `editor.emit()`
+  - Static instance registry: `Editor._instances` Map for tracking all instances
+  - Backward compatibility: Static methods delegate to first instance
+  - Lifecycle management: `editor.destroy()` for proper cleanup
 - **Enhanced Event Management System**: Implemented comprehensive event system with debouncing and throttling
   - Added `EditorEventEmitter` class with advanced features
   - Support for event priorities and one-time subscriptions

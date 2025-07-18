@@ -14,28 +14,29 @@ export class KeyHandler
     /**
      * Handle key press events
      * @param {KeyboardEvent} e
+     * @param {Editor} editorInstance - The editor instance
      */
-    static handleKeyPress(e) {
+    static handleKeyPress(e, editorInstance) {
         log('handleKeyPress()', 'KeyHandler.'); 
         
-        Editor.keybuffer.push(e.key);
+        editorInstance.keybuffer.push(e.key);
         
         // Emit user key press event
-        eventEmitter.emit(EVENTS.USER_KEY_PRESS, {
+        editorInstance.eventEmitter.emit(EVENTS.USER_KEY_PRESS, {
             key: e.key,
             code: e.code,
             ctrlKey: e.ctrlKey,
             altKey: e.altKey,
             shiftKey: e.shiftKey,
             timestamp: Date.now(),
-            blockId: Editor.currentBlock ? (Editor.currentBlock.getAttribute('data-block-id') || Editor.currentBlock.id) : null
+            blockId: editorInstance.currentBlock ? (editorInstance.currentBlock.getAttribute('data-block-id') || editorInstance.currentBlock.id) : null
         }, { throttle: 50, source: 'user.keypress' });
         
-        if (!Editor.currentBlock) {
+        if (!editorInstance.currentBlock) {
             return;
         }
 
-        const innerHtml = Editor.currentBlock.innerHTML;
+        const innerHtml = editorInstance.currentBlock.innerHTML;
         const text = Utils.stripTags(innerHtml);
 
         // Try to find a block type that matches the current text as a markdown trigger
@@ -43,10 +44,10 @@ export class KeyHandler
         
         if (matchingBlockClass) {
             // Clear the current block content and apply the transformation
-            Editor.currentBlock.innerHTML = '';
+            editorInstance.currentBlock.innerHTML = '';
             const blockInstance = new matchingBlockClass();
             blockInstance.applyTransformation();
-            Editor.update();
+            editorInstance.update();
             return;
         }
 
@@ -69,21 +70,22 @@ export class KeyHandler
     /**
      * Handle special key combinations
      * @param {KeyboardEvent} e
+     * @param {Editor} editorInstance - The editor instance
      */
-    static handleSpecialKeys(e) {
+    static handleSpecialKeys(e, editorInstance) {
         log('handleSpecialKeys()', 'KeyHandler.');
         
         if ('Enter' === e.key && !e.shiftKey) {
-            return this.handleEnterKey(e);
+            return this.handleEnterKey(e, editorInstance);
         }
         
         if ('Backspace' === e.key) {
-            return this.handleBackspaceKey(e);
+            return this.handleBackspaceKey(e, editorInstance);
         }
         
         if ('Tab' === e.key) {
             // Let individual block types handle tab
-            const currentBlock = Editor.currentBlock;
+            const currentBlock = editorInstance.currentBlock;
             if (currentBlock && currentBlock.dataset && currentBlock.dataset.blockType) {
                 const blockType = currentBlock.dataset.blockType;
                 const block = BlockFactory.createBlock(blockType);
