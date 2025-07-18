@@ -64,26 +64,46 @@
 }
 
 /* Task list (checkbox) styles */
+.editor .task-list-item,
 .editor .block[data-block-type="sq"] {
-    list-style: none;
-    display: flex;
-    align-items: flex-start;
-    margin-left: 0;
+    list-style: none !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    border: 1px dashed #b6b0ff;
+    margin-bottom: 0.2em;
 }
 
+.editor .task-list-item input[type="checkbox"],
 .editor .block[data-block-type="sq"] input[type="checkbox"] {
-    margin-right: 8px;
-    margin-top: 2px;
-    flex-shrink: 0;
+    margin-right: 8px !important;
+    margin-top: 2px !important;
+    flex-shrink: 0 !important;
 }
 
+.editor .task-list-item.task-completed,
 .editor .block[data-block-type="sq"].task-completed {
     opacity: 0.6;
     text-decoration: line-through;
 }
 
-.editor .block[data-block-type="sq"] {
-    padding-left: 0;
+.editor .task-list-item span,
+.editor .block[data-block-type="sq"] span {
+    flex: 1;
+    outline: none;
+}
+
+.editor .task-list-item:empty::before,
+.editor .block[data-block-type="sq"]:empty::before {
+    content: attr(data-placeholder);
+    color: #666;
+}
+
+/* Active state for task list items */
+.editor .task-list-item.active-block,
+.editor .block[data-block-type="sq"].active-block {
+    border: 1px dashed #900;
 }
 
 /* List styles for ul and ol */
