@@ -213,7 +213,7 @@ export class KeyHandler
             if (previousBlock && previousBlock.classList.contains('block')) {
                 Editor.setCurrentBlock(previousBlock);
                 currentBlock.remove();
-                previousBlock.focus();
+                Editor.focus(previousBlock);
                 Editor.update();
                 e.preventDefault();
                 return;
@@ -223,7 +223,7 @@ export class KeyHandler
                 if (nextBlock && nextBlock.classList.contains('block')) {
                     Editor.setCurrentBlock(nextBlock);
                     currentBlock.remove();
-                    nextBlock.focus();
+                    Editor.focus(nextBlock);
                     Editor.update();
                     e.preventDefault();
                     return;

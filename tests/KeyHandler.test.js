@@ -1,6 +1,7 @@
 import { KeyHandler } from '@/KeyHandler.js';
 import { Editor } from '@/Editor.js';
 import { BlockFactory } from '@/blocks/BlockFactory.js';
+import { Utils } from '@/Utils.js';
 
 // Mock dependencies
 jest.mock('@/Editor.js');
@@ -18,10 +19,16 @@ describe('KeyHandler', () => {
     Editor.currentBlock = null;
     Editor.update = jest.fn();
     Editor.addEmptyBlock = jest.fn();
+    Editor.focus = jest.fn();
+    Editor.setCurrentBlock = jest.fn();
     
     // Reset BlockFactory mock
     BlockFactory.findBlockClassForTrigger.mockClear();
     BlockFactory.createBlock.mockClear();
+    
+    // Reset Utils mock
+    Utils.stripTags.mockClear();
+    Utils.stripTags.mockImplementation((html) => html || '');
   });
 
   test('adds key to keybuffer on key press', () => {
@@ -115,5 +122,131 @@ describe('KeyHandler', () => {
     
     KeyHandler.clearKeyBuffer();
     expect(Editor.keybuffer).toEqual([]);
+  });
+
+  test('handles Backspace key for empty blocks', () => {
+    // Create mock blocks
+    const currentBlock = document.createElement('div');
+    currentBlock.className = 'block';
+    currentBlock.innerHTML = ''; // Empty block
+    
+    const previousBlock = document.createElement('div');
+    previousBlock.className = 'block';
+    previousBlock.innerHTML = 'Previous block content';
+    
+    const nextBlock = document.createElement('div');
+    nextBlock.className = 'block';
+    nextBlock.innerHTML = 'Next block content';
+    
+    // Set up DOM structure
+    const container = document.createElement('div');
+    container.appendChild(previousBlock);
+    container.appendChild(currentBlock);
+    container.appendChild(nextBlock);
+    
+    // Mock Editor.instance to contain our blocks
+    Editor.instance = container;
+    Editor.currentBlock = currentBlock;
+    
+    // Mock Editor.focus method
+    const focusSpy = jest.spyOn(Editor, 'focus').mockImplementation(() => {});
+    const setCurrentBlockSpy = jest.spyOn(Editor, 'setCurrentBlock').mockImplementation(() => {});
+    const updateSpy = jest.spyOn(Editor, 'update').mockImplementation(() => {});
+    
+    const event = { 
+      key: 'Backspace', 
+      preventDefault: jest.fn() 
+    };
+    
+    KeyHandler.handleSpecialKeys(event);
+    
+    // Verify the current block was removed
+    expect(container.children.length).toBe(2);
+    expect(container.contains(currentBlock)).toBe(false);
+    
+    // Verify focus was set to previous block using Editor.focus (not native focus)
+    expect(setCurrentBlockSpy).toHaveBeenCalledWith(previousBlock);
+    expect(focusSpy).toHaveBeenCalledWith(previousBlock);
+    expect(updateSpy).toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalled();
+    
+    // Clean up
+    focusSpy.mockRestore();
+    setCurrentBlockSpy.mockRestore();
+    updateSpy.mockRestore();
+  });
+
+  test('handles Backspace key when no previous block exists', () => {
+    // Create mock blocks
+    const currentBlock = document.createElement('div');
+    currentBlock.className = 'block';
+    currentBlock.innerHTML = ''; // Empty block
+    
+    const nextBlock = document.createElement('div');
+    nextBlock.className = 'block';
+    nextBlock.innerHTML = 'Next block content';
+    
+    // Set up DOM structure (no previous block)
+    const container = document.createElement('div');
+    container.appendChild(currentBlock);
+    container.appendChild(nextBlock);
+    
+    // Mock Editor.instance to contain our blocks
+    Editor.instance = container;
+    Editor.currentBlock = currentBlock;
+    
+    // Mock Editor.focus method
+    const focusSpy = jest.spyOn(Editor, 'focus').mockImplementation(() => {});
+    const setCurrentBlockSpy = jest.spyOn(Editor, 'setCurrentBlock').mockImplementation(() => {});
+    const updateSpy = jest.spyOn(Editor, 'update').mockImplementation(() => {});
+    
+    const event = { 
+      key: 'Backspace', 
+      preventDefault: jest.fn() 
+    };
+    
+    KeyHandler.handleSpecialKeys(event);
+    
+    // Verify the current block was removed
+    expect(container.children.length).toBe(1);
+    expect(container.contains(currentBlock)).toBe(false);
+    
+    // Verify focus was set to next block using Editor.focus (not native focus)
+    expect(setCurrentBlockSpy).toHaveBeenCalledWith(nextBlock);
+    expect(focusSpy).toHaveBeenCalledWith(nextBlock);
+    expect(updateSpy).toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalled();
+    
+    // Clean up
+    focusSpy.mockRestore();
+    setCurrentBlockSpy.mockRestore();
+    updateSpy.mockRestore();
+  });
+
+  test('does not remove last remaining block on Backspace', () => {
+    // Create single mock block
+    const currentBlock = document.createElement('div');
+    currentBlock.className = 'block';
+    currentBlock.innerHTML = ''; // Empty block
+    
+    // Set up DOM structure (only one block)
+    const container = document.createElement('div');
+    container.appendChild(currentBlock);
+    
+    // Mock Editor.instance to contain our single block
+    Editor.instance = container;
+    Editor.currentBlock = currentBlock;
+    
+    const event = { 
+      key: 'Backspace', 
+      preventDefault: jest.fn() 
+    };
+    
+    KeyHandler.handleSpecialKeys(event);
+    
+    // Verify the block was NOT removed (last remaining block)
+    expect(container.children.length).toBe(1);
+    expect(container.contains(currentBlock)).toBe(true);
+    expect(event.preventDefault).not.toHaveBeenCalled();
   });
 });

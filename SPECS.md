@@ -92,7 +92,7 @@ The project is organized into the following key directories:
    - Provide listeners for key events (`keydown`, `keyup`, `paste`, `click`) and ensure proper propagation.
    - Handle edge cases like empty keybuffer or invalid event targets.
    - **Enter Key Handling**: Create new blocks when Enter is pressed at the end of a block. For list blocks (ul, ol), create new list items when cursor is at the end of the item, or end the list if the current item is empty. For non-list blocks, create a new paragraph block when cursor is at the end.
-   - **Backspace Key Handling**: Remove empty blocks when Backspace is pressed and focus on the previous block. Maintain at least one block in the editor.
+   - **Backspace Key Handling**: Remove empty blocks when Backspace is pressed and focus on the previous block with cursor positioned at the end of the content. When no previous block exists, focus on the next block. Maintain at least one block in the editor.
    - **Cursor-based Block Activation**: When a user clicks or places cursor within a block, that block automatically becomes the active/current block.
 
 4. **Focus Management**:

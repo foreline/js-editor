@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backspace Test</title>
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        import { Parser } from './src/Parser.js';
+        import { Block } from './src/Block.js';
+        import { BlockType } from './src/BlockType.js';
+
+        window.onload = function() {
+            // Create a simple editor setup
+            const container = document.getElementById('editor-container');
+            
+            // Initialize a basic editor
+            Editor.instance = container;
+            Editor.currentBlock = null;
+            Editor.keybuffer = [];
+            
+            // Add some test blocks
+            const block1 = document.createElement('div');
+            block1.className = 'block';
+            block1.setAttribute('contenteditable', 'true');
+            block1.innerHTML = 'First block with some content';
+            block1.setAttribute('data-block-type', 'p');
+            
+            const block2 = document.createElement('div');
+            block2.className = 'block';
+            block2.setAttribute('contenteditable', 'true');
+            block2.innerHTML = ''; // Empty block
+            block2.setAttribute('data-block-type', 'p');
+            
+            const block3 = document.createElement('div');
+            block3.className = 'block';
+            block3.setAttribute('contenteditable', 'true');
+            block3.innerHTML = 'Third block with content';
+            block3.setAttribute('data-block-type', 'p');
+            
+            container.appendChild(block1);
+            container.appendChild(block2);
+            container.appendChild(block3);
+            
+            // Set current block to the empty middle block
+            Editor.setCurrentBlock(block2);
+            block2.focus();
+            
+            // Add listeners for the editor
+            Editor.addListeners();
+            
+            console.log('Test setup complete. Focus on the empty block and press Backspace to test.');
+            console.log('Expected: Empty block should be deleted and cursor should be at the end of the first block.');
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #editor-container {
+            border: 2px solid #ccc;
+            min-height: 200px;
+            padding: 10px;
+        }
+        .block {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px dashed #ddd;
+            min-height: 20px;
+        }
+        .instructions {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h2>Backspace Focus Test</h2>
+        <p>Instructions:</p>
+        <ol>
+            <li>The middle block is empty and should be focused when the page loads</li>
+            <li>Press Backspace while in the empty block</li>
+            <li>Expected result: The empty block should be deleted and the cursor should be placed at the END of the first block</li>
+            <li>Check console for any logs</li>
+        </ol>
+    </div>
+    
+    <div id="editor-container" class="editor"></div>
+</body>
+</html>
