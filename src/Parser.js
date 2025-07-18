@@ -156,7 +156,7 @@ export class Parser
         const converter = new showdown.Converter({ 
             ghCompatibleHeaderId: false, 
             headerIds: false,
-            tasklists: true,
+            tasklists: false, // Disabled to prevent conflicts with custom task list processing
             tables: true,
             simplifiedAutoLink: true,
             literalMidWordUnderscores: true,
@@ -189,10 +189,12 @@ export class Parser
             return `\n~~~${language}\n${content}\n~~~\n`;
         });
         
-        // Pre-process task lists
-        processed = processed.replace(/^- \[([x ])\] (.+)$/gm, (match, checked, text) => {
-            const isChecked = checked === 'x';
-            return `<task-item data-checked="${isChecked}">${text}</task-item>`;
+        // Pre-process task lists to ensure they're handled consistently
+        // This prevents Showdown's native task list (which creates disabled checkboxes)
+        // and ensures our custom interactive checkboxes are used instead
+        processed = processed.replace(/^(\s*)[-*+]\s*\[([xX ]?)\]\s*(.*)$/gm, (match, indent, checked, text) => {
+            const isChecked = checked.toLowerCase() === 'x';
+            return `${indent}<task-item data-checked="${isChecked}">${text}</task-item>`;
         });
 
         return processed;

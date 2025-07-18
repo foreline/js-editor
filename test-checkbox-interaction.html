@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskList Checkbox Interaction Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .result {
+            background: #e8f4fd;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .checkbox-test {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>TaskList Checkbox Interaction Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Showdown's Native Task Lists (disabled checkboxes)</h2>
+        <div id="showdown-test" class="checkbox-test"></div>
+        <button onclick="testShowdownTaskLists()">Test Showdown Task Lists</button>
+        <div id="showdown-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Custom Task-Item Elements (interactive checkboxes)</h2>
+        <div id="custom-test" class="checkbox-test"></div>
+        <button onclick="testCustomTaskItems()">Test Custom Task Items</button>
+        <div id="custom-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Parser's cleanHtml Processing</h2>
+        <div id="parser-test" class="checkbox-test"></div>
+        <button onclick="testParserCleanHtml()">Test Parser cleanHtml</button>
+        <div id="parser-result" class="result"></div>
+    </div>
+
+    <script src="https://unpkg.com/showdown/dist/showdown.min.js"></script>
+    <script>
+        // Test Showdown's native task list support
+        function testShowdownTaskLists() {
+            const resultDiv = document.getElementById('showdown-result');
+            const testDiv = document.getElementById('showdown-test');
+            
+            const converter = new showdown.Converter({ 
+                tasklists: true
+            });
+            
+            const markdown = `- [ ] Unchecked task
+- [x] Checked task`;
+            
+            const html = converter.makeHtml(markdown);
+            testDiv.innerHTML = html;
+            
+            resultDiv.textContent = 'Showdown HTML Output:\n' + html + '\n\n';
+            
+            // Test if checkboxes are clickable
+            const checkboxes = testDiv.querySelectorAll('input[type="checkbox"]');
+            resultDiv.textContent += `Found ${checkboxes.length} checkboxes:\n`;
+            
+            checkboxes.forEach((checkbox, index) => {
+                const isDisabled = checkbox.disabled;
+                const isChecked = checkbox.checked;
+                resultDiv.textContent += `Checkbox ${index + 1}: disabled=${isDisabled}, checked=${isChecked}\n`;
+                
+                if (isDisabled) {
+                    resultDiv.innerHTML += '<span class="error">ERROR: Checkbox is disabled and not interactive!</span>\n';
+                } else {
+                    resultDiv.innerHTML += '<span class="success">OK: Checkbox is interactive</span>\n';
+                }
+            });
+        }
+
+        // Test custom task-item processing
+        function testCustomTaskItems() {
+            const resultDiv = document.getElementById('custom-result');
+            const testDiv = document.getElementById('custom-test');
+            
+            // Simulate the custom preprocessing
+            const taskItemHtml = `<task-item data-checked="false">Unchecked task</task-item>
+<task-item data-checked="true">Checked task</task-item>`;
+            
+            resultDiv.textContent = 'Task-item HTML:\n' + taskItemHtml + '\n\n';
+            
+            // Simulate cleanHtml processing
+            const cleanHtml = taskItemHtml.replace(/<task-item data-checked="(true|false)">(.*?)<\/task-item>/g, (match, checked, text) => {
+                const checkedAttr = checked === 'true' ? ' checked' : '';
+                return `<li class="task-list-item" data-block-type="sq"><input type="checkbox"${checkedAttr}> ${text}</li>`;
+            });
+            
+            testDiv.innerHTML = '<ul>' + cleanHtml + '</ul>';
+            
+            resultDiv.textContent += 'After cleanHtml processing:\n' + cleanHtml + '\n\n';
+            
+            // Test if checkboxes are clickable
+            const checkboxes = testDiv.querySelectorAll('input[type="checkbox"]');
+            resultDiv.textContent += `Found ${checkboxes.length} checkboxes:\n`;
+            
+            checkboxes.forEach((checkbox, index) => {
+                const isDisabled = checkbox.disabled;
+                const isChecked = checkbox.checked;
+                resultDiv.textContent += `Checkbox ${index + 1}: disabled=${isDisabled}, checked=${isChecked}\n`;
+                
+                // Add click event to test interactivity
+                checkbox.addEventListener('change', () => {
+                    resultDiv.textContent += `Checkbox ${index + 1} was clicked! New state: ${checkbox.checked}\n`;
+                });
+                
+                if (isDisabled) {
+                    resultDiv.innerHTML += '<span class="error">ERROR: Checkbox is disabled and not interactive!</span>\n';
+                } else {
+                    resultDiv.innerHTML += '<span class="success">OK: Checkbox is interactive - try clicking it!</span>\n';
+                }
+            });
+        }
+
+        // Test the full parser flow
+        function testParserCleanHtml() {
+            const resultDiv = document.getElementById('parser-result');
+            const testDiv = document.getElementById('parser-test');
+            
+            // Test if Showdown's task list conflicts with custom preprocessing
+            const converter = new showdown.Converter({ 
+                tasklists: true
+            });
+            
+            // Original markdown
+            const originalMarkdown = `- [ ] First task
+- [x] Second task`;
+            
+            // After custom preprocessing
+            const preprocessed = originalMarkdown.replace(/^- \[([x ])\] (.+)$/gm, (match, checked, text) => {
+                const isChecked = checked === 'x';
+                return `<task-item data-checked="${isChecked}">${text}</task-item>`;
+            });
+            
+            // After Showdown
+            const showdownHtml = converter.makeHtml(preprocessed);
+            
+            // After cleanHtml
+            const cleanHtml = showdownHtml.replace(/<task-item data-checked="(true|false)">(.*?)<\/task-item>/g, (match, checked, text) => {
+                const checkedAttr = checked === 'true' ? ' checked' : '';
+                return `<li class="task-list-item" data-block-type="sq"><input type="checkbox"${checkedAttr}> ${text}</li>`;
+            });
+            
+            resultDiv.textContent = 'Original Markdown:\n' + originalMarkdown + '\n\n';
+            resultDiv.textContent += 'After Preprocessing:\n' + preprocessed + '\n\n';
+            resultDiv.textContent += 'After Showdown:\n' + showdownHtml + '\n\n';
+            resultDiv.textContent += 'After cleanHtml:\n' + cleanHtml + '\n\n';
+            
+            testDiv.innerHTML = cleanHtml;
+            
+            // Test resulting checkboxes
+            const checkboxes = testDiv.querySelectorAll('input[type="checkbox"]');
+            resultDiv.textContent += `Found ${checkboxes.length} checkboxes:\n`;
+            
+            checkboxes.forEach((checkbox, index) => {
+                const isDisabled = checkbox.disabled;
+                const isChecked = checkbox.checked;
+                resultDiv.textContent += `Checkbox ${index + 1}: disabled=${isDisabled}, checked=${isChecked}\n`;
+                
+                checkbox.addEventListener('change', () => {
+                    resultDiv.textContent += `Checkbox ${index + 1} clicked! New state: ${checkbox.checked}\n`;
+                });
+                
+                if (isDisabled) {
+                    resultDiv.innerHTML += '<span class="error">ERROR: Checkbox is disabled!</span>\n';
+                } else {
+                    resultDiv.innerHTML += '<span class="success">OK: Checkbox is interactive</span>\n';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

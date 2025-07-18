@@ -1,7 +1,5 @@
 # Issues, Features and Improvements Checklist
 
-Common instruction: Take one task of the checklists at a time. After the task is completed mark it as checked, update `SPECS.md` file. Update `README.md` if needed. Commit your changes. Get the next task. Prioritize tasks by their dependencies of other tasks and by difficulty: take easy tasks first.
-
 ## Bugs
 
 Take into consideration: the bugs can be repeated, indicating that the bug may have already been fixed and appeared again.
@@ -35,6 +33,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **TaskList focus management complexity**: createNewListItem() has complex focus handling with requestAnimationFrame that may not work correctly in all scenarios, especially when dealing with text nodes and cursor positioning. Simplified focus management to use proper text container elements.
 - [x] **TaskList markdown parsing edge cases**: The markdown parsing doesn't handle edge cases like capital X (`[X]`) or empty brackets (`[]`) consistently. Fixed regex patterns to handle all valid task list formats including `[X]`, `[x]`, `[ ]`, and `[]`.
 - [x] **TaskList content editing inconsistency**: The renderToElement() method creates a separate editable span for text, but other parts of the code expect the checkbox and text to be direct children of the block element. Fixed by creating consistent structure with editable text container.
+- [x] **TaskList checkbox interaction bug**: The Parser is using both Showdown's native task list support (which creates disabled checkboxes) and custom preprocessing. If Showdown's native task lists are processed instead of the custom <task-item> elements, the checkboxes become disabled and unclickable. Fixed by disabling Showdown's task list support (`tasklists: false`) and improving the custom preprocessing regex to handle all task list formats including uppercase X, empty brackets, different bullet styles, and indented tasks.
 - [ ] **Blocks conversion**: If a list inserted inside a `Paragraph` block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same way. This should be implemented as a common mechanism for converting a block from one type to another.
 
 ## Test Suite Issues
@@ -66,7 +65,6 @@ Test suite analysis revealed multiple critical issues that have been addressed:
 - [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute for holding timestamp value.
 
 ## Improvements
-Instruction: Improvements must be prioritized according by the list.
 
 - [x] **Block Architecture Refactoring**: Refactored the editor to use a modular block architecture where each block type is its own class with specific key press handling and behavior. This provides perfect extensibility for future block types.
 - [x] **Code Quality**: Enforce consistent code style using Prettier and ESLint. Refactor repetitive code in `Editor.js` and `ToolbarHandlers.js`. *(Partially completed with block architecture refactoring)*
