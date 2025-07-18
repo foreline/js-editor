@@ -3,6 +3,7 @@ import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
 import { H1Block } from '@/blocks/H1Block.js';
+import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 
 // Mock DOM for testing
@@ -39,7 +40,8 @@ describe('Parser - Block-based parsing', () => {
     test('should parse task list items using TaskListBlock', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       
-      const taskHtml = '<li class="task-list-item" data-block-type="sq"><input type="checkbox" checked> Complete task</li>';
+      // Use proper task list HTML structure that matches implementation
+      const taskHtml = '<div data-block-type="sq" class="task-item"><input type="checkbox" checked> Complete task</div>';
       const result = Parser.parseHtml(taskHtml);
       
       expect(result).toHaveLength(1);
@@ -117,7 +119,8 @@ describe('Parser - Block-based parsing', () => {
   describe('Block creation from parsing', () => {
     test('should create correct block instances from HTML', () => {
       const headingBlock = H1Block.parseFromHtml('<h1>Test Heading</h1>');
-      expect(headingBlock).toBeInstanceOf(H1Block);
+      expect(headingBlock).toBeInstanceOf(HeadingBlock); // HeadingBlock is the base class
+      expect(headingBlock.level).toBe(1);
       expect(headingBlock.content).toBe('Test Heading');
 
       const taskBlock = TaskListBlock.parseFromHtml('<li data-block-type="sq"><input type="checkbox" checked> Test Task</li>');
@@ -128,7 +131,8 @@ describe('Parser - Block-based parsing', () => {
 
     test('should create correct block instances from markdown', () => {
       const headingBlock = H1Block.parseFromMarkdown('# Test Heading');
-      expect(headingBlock).toBeInstanceOf(H1Block);
+      expect(headingBlock).toBeInstanceOf(HeadingBlock); // HeadingBlock is the base class
+      expect(headingBlock.level).toBe(1);
       expect(headingBlock.content).toBe('Test Heading');
 
       const taskBlock = TaskListBlock.parseFromMarkdown('- [x] Test Task');

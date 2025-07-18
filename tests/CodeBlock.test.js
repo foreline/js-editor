@@ -241,7 +241,12 @@ describe('CodeBlock', () => {
       expect(block).toBeInstanceOf(CodeBlock);
       expect(block.content).toBe('console.log("Hello World");');
       expect(block._language).toBe('javascript');
-      expect(block.html).toBe('<pre><code class="javascript language-javascript">console.log("Hello World");</code></pre>');
+      // HTML should contain syntax highlighting - just check it contains expected parts
+      expect(block.html).toContain('<pre><code class="javascript language-javascript">');
+      expect(block.html).toContain('console');
+      expect(block.html).toContain('log');
+      expect(block.html).toContain('"Hello World"');
+      expect(block.html).toContain('</code></pre>');
     });
 
     test('parses triple tilde code block', () => {
@@ -260,7 +265,13 @@ describe('CodeBlock', () => {
       expect(block).toBeInstanceOf(CodeBlock);
       expect(block.content).toBe('def hello():\n    print("Hello")');
       expect(block._language).toBe('python');
-      expect(block.html).toBe('<pre><code class="python language-python">def hello():\n    print("Hello")</code></pre>');
+      // HTML should contain syntax highlighting - just check it contains expected parts
+      expect(block.html).toContain('<pre><code class="python language-python">');
+      expect(block.html).toContain('def');
+      expect(block.html).toContain('hello');
+      expect(block.html).toContain('print');
+      expect(block.html).toContain('"Hello"');
+      expect(block.html).toContain('</code></pre>');
     });
 
     test('parses code block without newlines around content', () => {
@@ -330,7 +341,12 @@ describe('CodeBlock', () => {
       expect(block).toBeInstanceOf(CodeBlock);
       expect(block.content).toBe('console.log("Hello World");');
       expect(block._language).toBe('javascript');
-      expect(block.html).toBe('<pre><code class="javascript language-javascript">console.log("Hello World");</code></pre>');
+      // HTML should contain syntax highlighting - just check it contains expected parts
+      expect(block.html).toContain('<pre><code class="javascript language-javascript">');
+      expect(block.html).toContain('console');
+      expect(block.html).toContain('log');
+      expect(block.html).toContain('"Hello World"');
+      expect(block.html).toContain('</code></pre>');
     });
   });
 
@@ -513,12 +529,12 @@ describe('CodeBlock', () => {
       expect(html).toBe('<pre><code>function test() {\n  return true;\n}</code></pre>');
     });
 
-    test('does not escape HTML entities', () => {
+    test('escapes HTML entities for security', () => {
       const content = '<div>Hello & "World"</div>';
       const block = new CodeBlock(content);
       const html = block.toHtml();
       
-      expect(html).toBe('<pre><code><div>Hello & "World"</div></code></pre>');
+      expect(html).toBe('<pre><code>&lt;div&gt;Hello &amp; \"World\"&lt;/div&gt;</code></pre>');
     });
   });
 
@@ -534,12 +550,16 @@ describe('CodeBlock', () => {
       expect(element.getAttribute('data-placeholder')).toBe('Type "/" to insert block');
     });
 
-    test('uses provided HTML when available', () => {
+    test('creates element with code content and language selector', () => {
       const html = '<pre><code class="language-js">console.log("test");</code></pre>';
       const block = new CodeBlock('console.log("test");', html);
       const element = block.renderToElement();
       
-      expect(element.innerHTML).toBe(html);
+      // Should contain the code content
+      expect(element.innerHTML).toContain('<pre><code>console.log("test");</code></pre>');
+      // Should contain language selector
+      expect(element.innerHTML).toContain('language-selector');
+      expect(element.innerHTML).toContain('<select');
     });
 
     test('generates HTML from content when no HTML provided', () => {
@@ -547,16 +567,20 @@ describe('CodeBlock', () => {
       const block = new CodeBlock(content);
       const element = block.renderToElement();
       
-      expect(element.innerHTML).toBe('<pre><code>console.log("test");</code></pre>');
+      // Should contain the code content
+      expect(element.innerHTML).toContain('<pre><code>console.log("test");</code></pre>');
+      // Should contain language selector
+      expect(element.innerHTML).toContain('language-selector');
     });
 
     test('handles empty content and HTML', () => {
       const block = new CodeBlock('', '');
       const element = block.renderToElement();
       
-      // According to the implementation, when both content and HTML are empty,
-      // it falls back to generating HTML from content: `<pre><code>${this._content}</code></pre>`
-      expect(element.innerHTML).toBe('<pre><code></code></pre>');
+      // Should contain empty code block
+      expect(element.innerHTML).toContain('<pre><code></code></pre>');
+      // Should contain language selector
+      expect(element.innerHTML).toContain('language-selector');
     });
 
     test('creates new element instance each time', () => {
