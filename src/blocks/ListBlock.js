@@ -16,18 +16,37 @@ export class ListBlock extends BaseBlock
      */
     handleEnterKey(event) {
         // List blocks should create new list items or end the list if empty
-        const currentBlock = event.target.closest('.block');
-        if (!currentBlock) {
+        let currentBlock = event.target.closest('.block');
+        
+        // If no block is found but the target is a list item, get the current list item
+        let currentListItem = null;
+        if (!currentBlock && event.target.tagName === 'LI') {
+            currentListItem = event.target;
+            currentBlock = currentListItem.closest('ul, ol, div').closest('.block');
+        } else if (currentBlock && event.target.tagName === 'LI') {
+            currentListItem = event.target;
+        } else if (currentBlock) {
+            // Try to find the current list item within the block
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const element = range.startContainer.nodeType === Node.TEXT_NODE ? 
+                    range.startContainer.parentElement : range.startContainer;
+                currentListItem = element.closest('li');
+            }
+        }
+        
+        if (!currentBlock || !currentListItem) {
             return false;
         }
 
-        const text = currentBlock.textContent.trim();
+        const text = currentListItem.textContent.trim();
         
         // If the current list item is empty, end the list
         if (text === '') {
             // Remove the empty list item and create a new paragraph block
             event.preventDefault();
-            currentBlock.remove();
+            currentListItem.remove();
             Editor.addEmptyBlock();
             return true;
         }
@@ -36,12 +55,12 @@ export class ListBlock extends BaseBlock
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+            const isAtEnd = this.isCursorAtEndOfBlock(currentListItem, range);
             
             if (isAtEnd) {
                 // Create a new list item of the same type when cursor is at the end
                 event.preventDefault();
-                this.createNewListItem(currentBlock);
+                this.createNewListItem(currentListItem);
                 return true;
             }
         }

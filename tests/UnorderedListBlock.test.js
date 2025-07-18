@@ -125,7 +125,7 @@ describe('UnorderedListBlock', () => {
       const result = unorderedListBlock.createNewListItem(mockCurrentBlock);
       
       expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockNewListItem.classList.add).toHaveBeenCalledWith('block');
+      expect(mockNewListItem.classList.add).not.toHaveBeenCalledWith('block');
       expect(mockNewListItem.setAttribute).toHaveBeenCalledWith('data-block-type', 'ul');
       expect(mockNewListItem.contentEditable).toBe(true);
       expect(mockCurrentBlock.after).toHaveBeenCalledWith(mockNewListItem);

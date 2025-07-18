@@ -178,6 +178,12 @@ export class Editor
             }
 
             let block = e.target.closest('.block');
+            
+            // If no block is found but the target is a list item, look for the parent list block
+            if (!block && e.target.tagName === 'LI') {
+                block = e.target.closest('ul, ol, div').closest('.block');
+            }
+            
             if ( !block ) {
                 return;
             }
@@ -192,6 +198,12 @@ export class Editor
             }
 
             let block = e.target.closest('.block');
+            
+            // If no block is found but the target is a list item, look for the parent list block
+            if (!block && e.target.tagName === 'LI') {
+                block = e.target.closest('ul, ol, div').closest('.block');
+            }
+            
             if ( block ) {
                 Editor.setCurrentBlock(block);
             } else {
@@ -220,6 +232,13 @@ export class Editor
                 
                 // Find the closest block element
                 block = block.closest('.block');
+                
+                // If no block is found but the target is within a list item, look for the parent list block
+                if (!block && block?.closest('li')) {
+                    const listItem = block.closest('li');
+                    block = listItem.closest('ul, ol, div').closest('.block');
+                }
+                
                 if ( block ) {
                     Editor.setCurrentBlock(block);
                 }

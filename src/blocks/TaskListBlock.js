@@ -60,7 +60,6 @@ export class TaskListBlock extends ListBlock
      */
     createNewListItem(currentBlock) {
         const newListItem = document.createElement('li');
-        newListItem.classList.add('block');
         newListItem.setAttribute('data-block-type', 'sq');
         newListItem.contentEditable = true;
         

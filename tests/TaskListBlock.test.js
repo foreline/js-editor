@@ -194,7 +194,7 @@ describe('TaskListBlock', () => {
       
       expect(document.createElement).toHaveBeenCalledWith('li');
       expect(document.createElement).toHaveBeenCalledWith('input');
-      expect(mockListItem.classList.add).toHaveBeenCalledWith('block');
+      expect(mockListItem.classList.add).not.toHaveBeenCalledWith('block');
       expect(mockListItem.setAttribute).toHaveBeenCalledWith('data-block-type', 'sq');
       expect(mockListItem.contentEditable).toBe(true);
       expect(mockCheckbox.type).toBe('checkbox');

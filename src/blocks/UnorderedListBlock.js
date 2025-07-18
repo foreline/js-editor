@@ -39,7 +39,6 @@ export class UnorderedListBlock extends ListBlock
      */
     createNewListItem(currentBlock) {
         const newListItem = document.createElement('li');
-        newListItem.classList.add('block');
         newListItem.setAttribute('data-block-type', 'ul');
         newListItem.contentEditable = true;
         
@@ -104,14 +103,12 @@ export class UnorderedListBlock extends ListBlock
         if (items.length === 0) {
             const li = document.createElement('li');
             li.contentEditable = true;
-            li.classList.add('block');
             element.appendChild(li);
         } else {
             items.forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
                 li.contentEditable = true;
-                li.classList.add('block');
                 element.appendChild(li);
             });
         }

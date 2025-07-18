@@ -103,6 +103,7 @@ The project is organized into the following key directories:
 
 5. **Block Rendering and Classes**:
    - Each block type has a corresponding CSS class for proper styling: `block-p` for paragraphs, `block-h1` through `block-h6` for headers, `block-ul` for unordered lists, `block-ol` for ordered lists, `block-sq` for task lists, `block-code` for code blocks, `block-table` for tables, `block-image` for images, and `block-quote` for quotes.
+   - **List Item Element Handling**: Individual list items (`<li>` elements) within lists do NOT have the `block` class. Only the container elements (`<ul>`, `<ol>`, or `<div>` for task lists) have the `block` class. This ensures proper event handling where clicking on a list item focuses the parent list block.
    - Task blocks (`sq` type) are rendered as div elements with checkboxes rather than list items to avoid bullet points and ensure proper alignment.
    - All data-block-type attributes correctly match the actual block type for proper key handling and styling.
 
