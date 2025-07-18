@@ -26,6 +26,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **TaskBlock presentation**: The task block must not have `li` bullets in HTML representation. It must be rendered as `<input type="checkbox">` only. It should be aligned with proper margin from the left.
 - [x] **Block classes**: The list blocks have wrong class `block-p` instead of `block-ul`, `block-ol`. The `data-block-type` attribute value is also wrong. Other block must also be checked for this error.
 - [ ] **Blocks conversion**: If a list inserted inside a `Paragraph` block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same way. This should be implemented as a common mechanism for converting a block from one type to another.
+- [x] **Enter key focus**: When placing the cursor at the end of a block (i.e. a Header Block) and hitting Enter, the new default block is created but the cursor remains in the header block instead of moving to the newly created block. Fixed by improving focus handling in `Editor.addEmptyBlock()` and removing redundant `Editor.update()` calls.
 
 ## Features
 
@@ -38,7 +39,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Tables support**: A BlockType for working with basic markdown tables.
     - [x] The ability to add and remove table columns and table rows. The buttons should appear near the current table when it is in focus.
 - [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
-- [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-` attribute for holding timestamp value.
+- [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute for holding timestamp value.
 
 ## Improvements
 Instruction: Improvements must be prioritized according by the list.

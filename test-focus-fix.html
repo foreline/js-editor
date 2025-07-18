@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Focus Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .editor { border: 1px solid #ccc; min-height: 200px; padding: 10px; }
+        .block { margin-bottom: 10px; outline: none; }
+        .active-block { background-color: #f0f8ff; }
+        h1, h2, h3, h4, h5, h6 { margin: 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Focus Fix</h1>
+    <p>To test the fix:</p>
+    <ol>
+        <li>Click at the end of a heading block below</li>
+        <li>Press Enter</li>
+        <li>The cursor should move to the new paragraph block</li>
+    </ol>
+    
+    <div id="test-editor" class="editor" contenteditable="true">
+        <div class="block" data-block-type="h1" contenteditable="true">
+            <h1>Test Heading</h1>
+        </div>
+        <div class="block" data-block-type="p" contenteditable="true">
+            This is a test paragraph. Place cursor at the end of the heading above and press Enter.
+        </div>
+    </div>
+
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        import { KeyHandler } from './src/KeyHandler.js';
+        import { Toolbar } from './src/Toolbar.js';
+
+        // Initialize minimal editor
+        Editor.instance = document.getElementById('test-editor');
+        Editor.currentBlock = Editor.instance.querySelector('.block');
+        
+        // Add basic event listeners
+        Editor.instance.addEventListener('keydown', (e) => {
+            KeyHandler.handleSpecialKeys(e);
+        });
+
+        Editor.instance.addEventListener('click', (e) => {
+            const block = e.target.closest('.block');
+            if (block) {
+                Editor.setCurrentBlock(block);
+            }
+        });
+
+        console.log('Test editor initialized. Try placing cursor at end of heading and pressing Enter.');
+    </script>
+</body>
+</html>

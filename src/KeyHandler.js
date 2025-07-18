@@ -146,7 +146,7 @@ export class KeyHandler
             // Default behavior - add new empty block when cursor is at the end
             e.preventDefault();
             Editor.addEmptyBlock();
-            Editor.update();
+            // Note: addEmptyBlock() calls Editor.update() internally, no need to call it again
         }
         // If cursor is not at the end, let the browser handle default behavior (line break)
     }

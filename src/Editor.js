@@ -543,7 +543,7 @@ export class Editor
         
         if ( 0 === ticksCounter ) {
             this.addEmptyBlock();
-            this.focus();
+            // Note: addEmptyBlock() handles focus internally, no need to call focus again
             e.preventDefault();
         }
     }
@@ -572,7 +572,7 @@ export class Editor
     
         // Ensure the block is attached before focusing
         requestAnimationFrame(() => {
-            htmlBlock.focus();
+            Editor.focus(htmlBlock);
             Editor.update();
         });
         
