@@ -463,7 +463,7 @@ export class Editor
         }
         
         // Emit paste event
-        eventEmitter.emit(EVENTS.USER_PASTE, {
+        this.eventEmitter.emit(EVENTS.USER_PASTE, {
             text: text,
             html: htmlData,
             processedHtml: finalHtml,
@@ -525,7 +525,7 @@ export class Editor
                 block.setAttribute('data-last-content', content);
                 
                 // Emit block-specific content change event
-                eventEmitter.emit(EVENTS.BLOCK_CONTENT_CHANGED, {
+                this.eventEmitter.emit(EVENTS.BLOCK_CONTENT_CHANGED, {
                     blockId: block.getAttribute('data-block-id') || block.id,
                     blockType: block.getAttribute('data-block-type'),
                     content: content,

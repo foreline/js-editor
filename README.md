@@ -109,29 +109,31 @@ const htmlContent = Editor.getHtml();
 The editor provides an **instance-based event system** for monitoring content changes and user interactions. Each editor instance has its own isolated event emitter:
 
 ```javascript
+import { EVENTS } from './src/utils/eventEmitter.js';
+
 // Create editor instances
 const editor1 = new Editor({ id: 'editor1', debug: true });
 const editor2 = new Editor({ id: 'editor2', debug: true });
 
 // Each editor has isolated events - no cross-contamination
 editor1.on(EVENTS.CONTENT_CHANGED, (data) => {
-    console.log('Editor 1 content changed:', data.markdown);
+    console.log('Editor 1 content changed:', data.data.markdown);
     // Only triggered by editor1 changes
 });
 
 editor2.on(EVENTS.CONTENT_CHANGED, (data) => {
-    console.log('Editor 2 content changed:', data.markdown);
+    console.log('Editor 2 content changed:', data.data.markdown);
     // Only triggered by editor2 changes
 });
 
 // Listen for block focus changes
 editor1.on(EVENTS.BLOCK_FOCUSED, (data) => {
-    console.log('Editor 1 block focused:', data.blockType);
+    console.log('Editor 1 block focused:', data.data.blockType);
 });
 
 // Listen for user interactions with throttling
 editor1.on(EVENTS.USER_KEY_PRESS, (data) => {
-    console.log('User pressed:', data.key);
+    console.log('User pressed:', data.data.key);
 }, { throttle: 100 }); // Throttled for performance
 
 // One-time event subscription
@@ -141,7 +143,7 @@ editor1.once(EVENTS.BLOCK_CREATED, (data) => {
 
 // Unsubscribe from events
 const subscription = editor1.on(EVENTS.TOOLBAR_ACTION, (data) => {
-    console.log('Toolbar action:', data.action);
+    console.log('Toolbar action:', data.data.action);
 });
 
 // Later, unsubscribe
@@ -157,6 +159,12 @@ editor1.on(EVENTS.BLOCK_CREATED, (data) => {
 editor1.on(EVENTS.BLOCK_CREATED, (data) => {
     console.log('Low priority handler');
 }, { priority: 1 });
+
+// Manual event emission
+editor1.emit(EVENTS.CONTENT_CHANGED, { 
+    markdown: editor1.getMarkdown(),
+    html: editor1.getHtml()
+}, { debounce: 500 });
 ```
 
 #### Legacy Global Event Access
@@ -166,7 +174,7 @@ For backward compatibility, you can still access events globally (uses first edi
 ```javascript
 import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
 
-// This will use the first editor instance created
+// This will use the global instance
 eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
     console.log('Content changed:', eventData.data.markdown);
 });
@@ -183,6 +191,28 @@ Available event types:
 - `EVENTS.TOOLBAR_ACTION` - When toolbar buttons are clicked
 - `EVENTS.USER_PASTE` - When user pastes content
 - `EVENTS.USER_KEY_PRESS` - When user presses keys (throttled)
+- `EVENTS.EDITOR_INITIALIZED` - When the editor is fully initialized
+- `EVENTS.EDITOR_UPDATED` - When the editor content is updated
+
+#### Event Data Structure
+
+All events follow a consistent data structure:
+
+```javascript
+{
+    type: 'event.type',           // Event type identifier
+    timestamp: 1642684800000,     // Unix timestamp when event occurred
+    source: 'editor',             // Source that triggered the event
+    data: {                       // Event-specific data
+        // Varies by event type
+        blockId: 'block-123',
+        content: 'new content',
+        markdown: '# Title',
+        html: '<h1>Title</h1>',
+        // ... other event-specific properties
+    }
+}
+```
 
 ### Block System
 

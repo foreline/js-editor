@@ -1,16 +1,39 @@
 # Event System Documentation
 
-The JS Editor provides a comprehensive event management system that allows developers to monitor and respond to content changes, user interactions, and system events.
+The JS Editor provides a comprehensive event management system that allows developers to monitor and respond to content changes, user interactions, and system events. The system is **instance-based**, meaning each editor instance has its own isolated event emitter.
 
 ## Overview
 
 The event system is built around the `EditorEventEmitter` class, which provides:
+- **Instance isolation**: Each editor has its own event system to prevent cross-contamination
 - **Debouncing**: Delays event emission until after a specified time has passed since the last call
 - **Throttling**: Ensures events are emitted at most once per specified time period
 - **Prioritization**: Events can be handled in priority order
 - **One-time subscriptions**: Events that fire only once
 - **Structured event data**: Consistent event payload structure
 - **Memory management**: Automatic cleanup of invalid listeners
+
+## Instance-Based Architecture
+
+Each editor instance creates its own `EditorEventEmitter`:
+
+```javascript
+import { Editor } from './src/Editor.js';
+import { EVENTS } from './src/utils/eventEmitter.js';
+
+// Each editor instance has its own isolated event system
+const editor1 = new Editor({ id: 'editor1', debug: true });
+const editor2 = new Editor({ id: 'editor2', debug: true });
+
+// Events from editor1 don't affect editor2 and vice versa
+editor1.on(EVENTS.CONTENT_CHANGED, (data) => {
+    console.log('Editor 1 changed:', data.data.markdown);
+});
+
+editor2.on(EVENTS.CONTENT_CHANGED, (data) => {
+    console.log('Editor 2 changed:', data.data.markdown);
+});
+```
 
 ## Event Categories
 
@@ -45,10 +68,14 @@ Events are organized into logical categories:
 ### Basic Event Subscription
 
 ```javascript
-import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+import { Editor } from './src/Editor.js';
+import { EVENTS } from './src/utils/eventEmitter.js';
+
+// Create an editor instance
+const editor = new Editor({ id: 'my-editor', debug: true });
 
 // Subscribe to content changes for auto-save
-eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
     console.log('Content changed at:', eventData.timestamp);
     console.log('Markdown content:', eventData.data.markdown);
     console.log('HTML content:', eventData.data.html);
@@ -56,65 +83,136 @@ eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
     // Send to backend
     saveToBackend(eventData.data);
 });
+
+// Subscribe to block creation
+editor.on(EVENTS.BLOCK_CREATED, (eventData) => {
+    console.log('New block created:', eventData.data.blockType);
+    console.log('Block ID:', eventData.data.blockId);
+});
+```
+
+### Instance Methods for Events
+
+```javascript
+const editor = new Editor({ id: 'my-editor' });
+
+// Subscribe to events (returns subscription object)
+const subscription = editor.on(EVENTS.BLOCK_FOCUSED, (eventData) => {
+    console.log('Block focused:', eventData.data.blockType);
+});
+
+// One-time subscription
+editor.once(EVENTS.EDITOR_INITIALIZED, (eventData) => {
+    console.log('Editor is ready!');
+});
+
+// Unsubscribe using subscription object
+subscription.unsubscribe();
+
+// Or unsubscribe using the off method
+function myHandler(eventData) {
+    console.log('My handler');
+}
+editor.on(EVENTS.CONTENT_CHANGED, myHandler);
+editor.off(EVENTS.CONTENT_CHANGED, myHandler);
+
+// Emit custom events
+editor.emit('custom.event', { customData: 'value' }, { debounce: 300 });
 ```
 
 ### Event Options
 
 ```javascript
+const editor = new Editor({ id: 'my-editor' });
+
 // One-time subscription
-eventEmitter.subscribe(EVENTS.EDITOR_INITIALIZED, (eventData) => {
+editor.once(EVENTS.EDITOR_INITIALIZED, (eventData) => {
     console.log('Editor initialized');
-}, { once: true });
+});
 
 // High priority handler (executes first)
-eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+editor.on(EVENTS.BLOCK_CREATED, (eventData) => {
     console.log('High priority block creation handler');
 }, { priority: 10 });
 
 // Low priority handler (executes later)
-eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+editor.on(EVENTS.BLOCK_CREATED, (eventData) => {
     console.log('Low priority block creation handler');
 }, { priority: 1 });
+
+// Subscribe with throttling option (for high-frequency events)
+editor.on(EVENTS.USER_KEY_PRESS, (eventData) => {
+    console.log('Key pressed:', eventData.data.key);
+}, { throttle: 100 });
 ```
 
 ### Debounced and Throttled Events
 
 ```javascript
+const editor = new Editor({ id: 'my-editor' });
+
 // Content change events are automatically debounced (500ms default)
-eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
     // This will only fire 500ms after the last content change
     sendToBackend(eventData.data);
 });
 
 // User key press events are automatically throttled (50ms default)
-eventEmitter.subscribe(EVENTS.USER_KEY_PRESS, (eventData) => {
+editor.on(EVENTS.USER_KEY_PRESS, (eventData) => {
     // This will fire at most once every 50ms
     console.log('Key pressed:', eventData.data.key);
+});
+
+// Block focus events are throttled (50ms default)
+editor.on(EVENTS.BLOCK_FOCUSED, (eventData) => {
+    console.log('Block focused:', eventData.data.blockType);
 });
 ```
 
 ### Manual Event Emission
 
 ```javascript
+const editor = new Editor({ id: 'my-editor' });
+
 // Emit with debouncing
-eventEmitter.emit('custom.event', { data: 'value' }, { debounce: 300 });
+editor.emit('custom.event', { data: 'value' }, { debounce: 300 });
 
 // Emit with throttling  
-eventEmitter.emit('custom.event', { data: 'value' }, { throttle: 100 });
+editor.emit('custom.event', { data: 'value' }, { throttle: 100 });
 
 // Emit immediately
-eventEmitter.emit('custom.event', { data: 'value' });
+editor.emit('custom.event', { data: 'value' });
+
+// Emit with source identifier
+editor.emit(EVENTS.CONTENT_CHANGED, { 
+    markdown: editor.getMarkdown(),
+    html: editor.getHtml()
+}, { 
+    debounce: 500, 
+    source: 'manual.update'
+});
 ```
 
 ### Unsubscribing
 
 ```javascript
-const subscription = eventEmitter.subscribe(EVENTS.BLOCK_FOCUSED, (eventData) => {
+const editor = new Editor({ id: 'my-editor' });
+
+// Method 1: Using subscription object
+const subscription = editor.on(EVENTS.BLOCK_FOCUSED, (eventData) => {
     console.log('Block focused');
 });
-
-// Later, unsubscribe
 subscription.unsubscribe();
+
+// Method 2: Using off method with callback reference
+function myHandler(eventData) {
+    console.log('My handler');
+}
+editor.on(EVENTS.CONTENT_CHANGED, myHandler);
+editor.off(EVENTS.CONTENT_CHANGED, myHandler);
+
+// Method 3: Cleanup all events when destroying editor
+editor.destroy(); // This cleans up all events and DOM references
 ```
 
 ## Event Data Structure
@@ -174,28 +272,36 @@ The event system includes automatic cleanup:
 ### Auto-save Implementation
 
 ```javascript
-import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+import { Editor } from './src/Editor.js';
+import { EVENTS } from './src/utils/eventEmitter.js';
 
 class AutoSave {
-    constructor(saveEndpoint) {
+    constructor(editor, saveEndpoint) {
+        this.editor = editor;
         this.saveEndpoint = saveEndpoint;
         this.setupEventListeners();
     }
     
     setupEventListeners() {
         // Auto-save on content changes (debounced)
-        eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, async (eventData) => {
+        this.editor.on(EVENTS.CONTENT_CHANGED, async (eventData) => {
             try {
                 await this.saveContent(eventData.data);
                 console.log('Content auto-saved');
                 
                 // Emit save success event
-                eventEmitter.emit(EVENTS.CONTENT_SAVED, {
+                this.editor.emit(EVENTS.CONTENT_SAVED, {
                     timestamp: eventData.timestamp,
                     success: true
                 });
             } catch (error) {
                 console.error('Auto-save failed:', error);
+                
+                // Emit save failure event
+                this.editor.emit('content.save.failed', {
+                    timestamp: eventData.timestamp,
+                    error: error.message
+                });
             }
         });
     }
@@ -219,82 +325,150 @@ class AutoSave {
     }
 }
 
-// Initialize auto-save
-const autoSave = new AutoSave('/api/save-content');
+// Initialize auto-save for a specific editor
+const editor = new Editor({ id: 'my-editor' });
+const autoSave = new AutoSave(editor, '/api/save-content');
 ```
 
 ### Analytics Integration
 
 ```javascript
-import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+import { Editor } from './src/Editor.js';
+import { EVENTS } from './src/utils/eventEmitter.js';
 
 class EditorAnalytics {
-    constructor() {
+    constructor(editor, trackingId) {
+        this.editor = editor;
+        this.trackingId = trackingId;
         this.setupEventListeners();
     }
     
     setupEventListeners() {
         // Track user interactions
-        eventEmitter.subscribe(EVENTS.USER_KEY_PRESS, (eventData) => {
+        this.editor.on(EVENTS.USER_KEY_PRESS, (eventData) => {
             this.trackEvent('keypress', {
                 key: eventData.data.key,
-                blockType: eventData.data.blockType
+                blockType: eventData.data.blockType,
+                editorId: this.editor.instance.id
             });
         });
         
-        eventEmitter.subscribe(EVENTS.TOOLBAR_ACTION, (eventData) => {
+        this.editor.on(EVENTS.TOOLBAR_ACTION, (eventData) => {
             this.trackEvent('toolbar_action', {
-                action: eventData.data.action
+                action: eventData.data.action,
+                editorId: this.editor.instance.id
             });
         });
         
-        eventEmitter.subscribe(EVENTS.BLOCK_CREATED, (eventData) => {
+        this.editor.on(EVENTS.BLOCK_CREATED, (eventData) => {
             this.trackEvent('block_created', {
-                blockType: eventData.data.blockType
+                blockType: eventData.data.blockType,
+                editorId: this.editor.instance.id
+            });
+        });
+        
+        this.editor.on(EVENTS.USER_PASTE, (eventData) => {
+            this.trackEvent('user_paste', {
+                textLength: eventData.data.text?.length || 0,
+                hasHtml: !!eventData.data.html,
+                editorId: this.editor.instance.id
             });
         });
     }
     
     trackEvent(eventName, properties) {
         // Send to analytics service
-        console.log('Analytics:', eventName, properties);
+        console.log('Analytics:', eventName, {
+            ...properties,
+            trackingId: this.trackingId,
+            timestamp: Date.now()
+        });
     }
 }
 
-// Initialize analytics
-const analytics = new EditorAnalytics();
+// Initialize analytics for specific editors
+const editor1 = new Editor({ id: 'editor1' });
+const editor2 = new Editor({ id: 'editor2' });
+
+const analytics1 = new EditorAnalytics(editor1, 'track-editor-1');
+const analytics2 = new EditorAnalytics(editor2, 'track-editor-2');
 ```
 
 ## Migration from Legacy Events
 
-The new event system maintains backward compatibility:
+The new event system maintains backward compatibility. For legacy code, there's still a global `eventEmitter` available:
 
 ```javascript
-// Legacy usage (still works)
-eventEmitter.subscribe('EDITOR.UPDATED_EVENT', (eventData) => {
+import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+
+// Legacy usage (still works - uses global instance)
+eventEmitter.subscribe(EVENTS.EDITOR_UPDATED, (eventData) => {
     console.log('Legacy event handler');
 });
 
-// New usage (recommended)
-eventEmitter.subscribe(EVENTS.EDITOR_UPDATED, (eventData) => {
+// New usage (recommended - uses instance-specific events)
+const editor = new Editor({ id: 'my-editor' });
+editor.on(EVENTS.EDITOR_UPDATED, (eventData) => {
     console.log('New event handler');
     console.log('Structured data:', eventData.data);
 });
 ```
 
+### Migration Guide
+
+**Old way (global events):**
+```javascript
+import { eventEmitter, EVENTS } from './src/utils/eventEmitter.js';
+
+eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+    console.log(eventData.data.markdown);
+});
+```
+
+**New way (instance events):**
+```javascript
+import { Editor } from './src/Editor.js';
+import { EVENTS } from './src/utils/eventEmitter.js';
+
+const editor = new Editor({ id: 'my-editor' });
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
+    console.log(eventData.data.markdown);
+});
+```
+
+### Benefits of Instance-Based Events
+
+1. **Isolation**: Events from one editor don't affect another
+2. **Memory Management**: Events are cleaned up when editor is destroyed
+3. **Multiple Editors**: Support for multiple editor instances on the same page
+4. **Better Testing**: Each test can have its own isolated editor instance
+5. **Type Safety**: Better TypeScript support with instance-specific typing
+
 ## Error Handling
 
-The event system includes robust error handling:
+The event system includes robust error handling that prevents one faulty handler from breaking others:
 
 ```javascript
-eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
+const editor = new Editor({ id: 'my-editor' });
+
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
     // If this handler throws an error, it won't affect other handlers
     throw new Error('Handler error');
 });
 
-eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
-    // This handler will still execute
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
+    // This handler will still execute even if the previous one failed
     console.log('This still works');
+});
+
+// Error handling in async handlers
+editor.on(EVENTS.CONTENT_CHANGED, async (eventData) => {
+    try {
+        await saveToBackend(eventData.data);
+    } catch (error) {
+        console.error('Save failed:', error);
+        // Handle error gracefully without breaking other handlers
+    }
 });
 ```
 
@@ -303,11 +477,55 @@ eventEmitter.subscribe(EVENTS.CONTENT_CHANGED, (eventData) => {
 Enable debug mode to see all event emissions:
 
 ```javascript
-// Create emitter with debug enabled
-const debugEmitter = new EditorEventEmitter({ debug: true });
+// Enable debug mode when creating the editor
+const editor = new Editor({ 
+    id: 'my-editor', 
+    debug: true  // This enables debug logging for the instance event emitter
+});
 
-// Or enable debug on global instance
+// Or enable debug on the instance after creation
+editor.eventEmitter.debug = true;
+
+// For the global event emitter (legacy)
+import { eventEmitter } from './src/utils/eventEmitter.js';
 eventEmitter.debug = true;
 ```
 
-This will log all events to the console with their data.
+Debug output shows:
+- Event type and timestamp
+- Event data structure
+- Source that triggered the event
+- Color-coded console messages for easy identification
+
+### Performance Monitoring
+
+```javascript
+const editor = new Editor({ id: 'my-editor' });
+
+// Monitor event performance
+editor.on(EVENTS.CONTENT_CHANGED, (eventData) => {
+    const startTime = performance.now();
+    
+    // Your event handler code here
+    processContent(eventData.data);
+    
+    const endTime = performance.now();
+    console.log(`Content processing took ${endTime - startTime} ms`);
+});
+
+// Monitor listener counts
+console.log('Content change listeners:', 
+    editor.eventEmitter.getListenerCount(EVENTS.CONTENT_CHANGED));
+
+// Get all active event types
+console.log('Active events:', editor.eventEmitter.getEventTypes());
+```
+
+## Best Practices
+
+1. **Use instance methods**: Prefer `editor.on()` over global `eventEmitter.subscribe()`
+2. **Clean up subscriptions**: Use `subscription.unsubscribe()` or `editor.destroy()` to prevent memory leaks
+3. **Handle errors gracefully**: Wrap async operations in try-catch blocks
+4. **Use appropriate options**: Apply throttling/debouncing for high-frequency events
+5. **Instance isolation**: Create separate editor instances for different use cases
+6. **Testing**: Each test should create its own editor instance for isolation
