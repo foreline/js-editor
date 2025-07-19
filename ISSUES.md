@@ -37,7 +37,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **All blocks must wrapped in div tag**: All blocks should be wrapped in `<div>` tag. Currently we have issues with OrderedList, UnorderedList and TaskList blocks.
 - [x] **TaskList block presentation**: ✅ **FIXED in v0.0.14** - A TaskList block must me rendered as an ordinary unordered list `<ul>` with list items `<li>` representing each task of the list. The tasks inside a list item should be represented as `<input type="checkbox">` with task text near to the checkbox. The completed tasks must check the input (`checked="checked"`) and strikethrough the task text. The checked/unchecked task status must update input and task text dynamically.
 - [x] **Enter keypress at the last list item**: The `Enter` key press when we are at the end of the last item of ListBlocks should add a new list item to the current list. But instead the `Enter` keypress leads to creating a new default block. The lists should behave as a normal content editable lists. To create a new default block we should press enter at the last empty list item.
-- [ ] **Blocks conversion**: If a list inserted inside a `Paragraph` block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same way. This should be implemented as a common mechanism for converting a block from one type to another.
+- [ ] **Blocks conversion**: If a list inserted inside a `Paragraph` (default) block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same manner. This should be implemented as a common mechanism for converting a block from one type to another.
 
 ## Test Suite Issues
 
@@ -67,7 +67,7 @@ Test suite analysis revealed multiple critical issues that have been addressed:
 - [x] **Images support**: A BlockType for working with images. An ImageBlock must support drag and drop. An image can have an URL. An image inside an ImageBlock must be resizable.
 - [x] **Event listeners**: The support of events. A change in the editor content must trigger an event so that the whole content can be send to backend and stored. Such events can be debounced with custom interval to avoid too frequent updates.
 - [x] **Event system improvements**: Subscription to event through Editor instance. Events can be subscribed through `Editor` method `on`.
-- [ ] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute on Blocks for holding timestamp value.
+- [x] **Tracking blocks changes mechanism**: Use timestamp(content) for tracking changes in block's content. Use `data-timestamp` attribute on Blocks for holding timestamp value.
 
 ## Improvements
 
