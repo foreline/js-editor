@@ -93,25 +93,32 @@ export class UnorderedListBlock extends ListBlock
      * @returns {HTMLElement} - DOM element representation
      */
     renderToElement() {
-        let element = document.createElement('ul');
+        // Create div wrapper for the block
+        let element = document.createElement('div');
         element.classList.add('block');
         element.classList.add('block-ul');
         element.setAttribute('data-block-type', 'ul');
         element.setAttribute('data-placeholder', 'List item');
         
+        // Create the actual ul element
+        let ulElement = document.createElement('ul');
+        
         const items = this._content.split('\n').filter(item => item.trim());
         if (items.length === 0) {
             const li = document.createElement('li');
             li.contentEditable = true;
-            element.appendChild(li);
+            ulElement.appendChild(li);
         } else {
             items.forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
                 li.contentEditable = true;
-                element.appendChild(li);
+                ulElement.appendChild(li);
             });
         }
+        
+        // Append ul to the div wrapper
+        element.appendChild(ulElement);
         
         return element;
     }

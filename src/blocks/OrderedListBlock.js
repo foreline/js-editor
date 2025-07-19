@@ -93,25 +93,32 @@ export class OrderedListBlock extends ListBlock
      * @returns {HTMLElement} - DOM element representation
      */
     renderToElement() {
-        let element = document.createElement('ol');
+        // Create div wrapper for the block
+        let element = document.createElement('div');
         element.classList.add('block');
         element.classList.add('block-ol');
         element.setAttribute('data-block-type', 'ol');
         element.setAttribute('data-placeholder', 'List item');
         
+        // Create the actual ol element
+        let olElement = document.createElement('ol');
+        
         const items = this._content.split('\n').filter(item => item.trim());
         if (items.length === 0) {
             const li = document.createElement('li');
             li.contentEditable = true;
-            element.appendChild(li);
+            olElement.appendChild(li);
         } else {
             items.forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
                 li.contentEditable = true;
-                element.appendChild(li);
+                olElement.appendChild(li);
             });
         }
+        
+        // Append ol to the div wrapper
+        element.appendChild(olElement);
         
         return element;
     }

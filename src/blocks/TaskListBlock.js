@@ -202,15 +202,21 @@ export class TaskListBlock extends ListBlock
      * @returns {HTMLElement} - DOM element representation
      */
     renderToElement() {
-        let element = document.createElement('li');
-        element.classList.add('task-list-item');
+        // Create div wrapper for the block
+        let element = document.createElement('div');
+        element.classList.add('block');
+        element.classList.add('block-sq');
         element.setAttribute('data-block-type', 'sq');
         element.setAttribute('data-placeholder', 'Task item');
-        element.style.listStyle = 'none';
-        element.style.marginLeft = '0';
-        element.style.paddingLeft = '0';
-        element.style.display = 'flex';
-        element.style.alignItems = 'flex-start';
+        
+        // Create the actual li element
+        let listItem = document.createElement('li');
+        listItem.classList.add('task-list-item');
+        listItem.style.listStyle = 'none';
+        listItem.style.marginLeft = '0';
+        listItem.style.paddingLeft = '0';
+        listItem.style.display = 'flex';
+        listItem.style.alignItems = 'flex-start';
         
         // Create checkbox
         const checkbox = document.createElement('input');
@@ -237,8 +243,11 @@ export class TaskListBlock extends ListBlock
             }
         });
         
-        element.appendChild(checkbox);
-        element.appendChild(textContainer);
+        listItem.appendChild(checkbox);
+        listItem.appendChild(textContainer);
+        
+        // Append li to the div wrapper
+        element.appendChild(listItem);
         
         return element;
     }
