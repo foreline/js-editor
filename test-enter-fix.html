@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Enter Fix</title>
+    <link rel="stylesheet" href="dist/js-editor.css">
+</head>
+<body>
+    <h1>Testing Enter Key Fix in Lists</h1>
+    <div id="editor"></div>
+    
+    <div style="margin-top: 20px;">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Create a list (click the list button in toolbar or type "- " or "1. " at start of line)</li>
+            <li>Add a few list items</li>
+            <li>Place cursor at the end of the last list item</li>
+            <li>Press Enter</li>
+            <li>Should create a new list item instead of a paragraph block</li>
+        </ol>
+    </div>
+
+    <script src="dist/js-editor.js"></script>
+    <script>
+        const editor = new Editor('#editor', {
+            initialContent: '# Test Enter Key in Lists\n\nClick here and create a list to test the Enter key fix.'
+        });
+    </script>
+</body>
+</html>

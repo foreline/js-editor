@@ -137,14 +137,6 @@ export class KeyHandler
             }
         }
 
-        // Check if cursor is at the end of the block for default behavior
-        const selection = window.getSelection();
-        if (!selection.rangeCount) {
-            return;
-        }
-        const range = selection.getRangeAt(0);
-        const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
-        
         // Let the current block type handle the Enter key first
         if (currentBlock.dataset && currentBlock.dataset.blockType) {
             const blockType = currentBlock.dataset.blockType;
@@ -155,6 +147,14 @@ export class KeyHandler
                 return;
             }
         }
+        
+        // If block didn't handle the Enter key, check if cursor is at the end for default behavior
+        const selection = window.getSelection();
+        if (!selection.rangeCount) {
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
         
         if (isAtEnd) {
             // Default behavior - add new empty block when cursor is at the end
