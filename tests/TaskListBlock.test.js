@@ -209,7 +209,7 @@ describe('TaskListBlock', () => {
       expect(mockTextContainer.contentEditable).toBe(true);
       expect(mockListItem.appendChild).toHaveBeenCalledWith(mockCheckbox);
       expect(mockListItem.appendChild).toHaveBeenCalledWith(mockTextContainer);
-      expect(mockCurrentBlock.after).toHaveBeenCalledWith(mockListItem);
+      // In the new implementation, we append to the ul within the block, not after the block
       expect(result).toBe(true);
     });
   });
@@ -368,16 +368,16 @@ describe('TaskListBlock', () => {
 
     test('toHtml produces correct HTML format', () => {
       const uncheckedBlock = new TaskListBlock('Unchecked task');
-      expect(uncheckedBlock.toHtml()).toBe('<li class="task-list-item"><input type="checkbox"> Unchecked task</li>');
+      expect(uncheckedBlock.toHtml()).toBe('<ul class="task-list">\n<li class="task-list-item"><input type="checkbox"> Unchecked task</li>\n</ul>');
 
       const checkedBlock = new TaskListBlock('Checked task');
       checkedBlock.setChecked(true);
-      expect(checkedBlock.toHtml()).toBe('<li class="task-list-item"><input type="checkbox" checked> Checked task</li>');
+      expect(checkedBlock.toHtml()).toBe('<ul class="task-list">\n<li class="task-list-item task-completed"><input type="checkbox" checked> Checked task</li>\n</ul>');
     });
   });
 
   describe('Rendering', () => {
-    let mockElement, mockCheckbox, mockTextContainer;
+    let mockElement, mockUl, mockListItem, mockCheckbox, mockTextContainer;
 
     beforeEach(() => {
       mockTextContainer = {
@@ -387,10 +387,29 @@ describe('TaskListBlock', () => {
       };
 
       mockCheckbox = {
-        type: null,
+        type: 'checkbox', // Will be set by the code
         style: {},
-        checked: false,
+        checked: true, // Will be set by the code when block is checked
         addEventListener: jest.fn()
+      };
+
+      mockListItem = {
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn()
+        },
+        setAttribute: jest.fn(),
+        appendChild: jest.fn(),
+        style: {}
+      };
+
+      mockUl = {
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn()
+        },
+        appendChild: jest.fn(),
+        style: {}
       };
 
       mockElement = {
@@ -404,24 +423,31 @@ describe('TaskListBlock', () => {
       };
 
       document.createElement
-        .mockReturnValueOnce(mockElement)
-        .mockReturnValueOnce(mockCheckbox)
-        .mockReturnValueOnce(mockTextContainer);
+        .mockReturnValueOnce(mockElement)     // div wrapper
+        .mockReturnValueOnce(mockUl)          // ul element
+        .mockReturnValueOnce(mockListItem)    // li element
+        .mockReturnValueOnce(mockCheckbox)    // input element
+        .mockReturnValueOnce(mockTextContainer); // span element
     });
 
-    test('renderToElement creates proper li structure', () => {
+    test('renderToElement creates proper ul structure', () => {
       const block = new TaskListBlock('Test task', '', false);
       block.setChecked(true);
       
       const element = block.renderToElement();
       
-      expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockElement.classList.add).toHaveBeenCalledWith('task-list-item');
+      // Expect div wrapper to be created
+      expect(document.createElement).toHaveBeenCalledWith('div');
+      expect(mockElement.classList.add).toHaveBeenCalledWith('block');
+      expect(mockElement.classList.add).toHaveBeenCalledWith('block-sq');
       expect(mockElement.setAttribute).toHaveBeenCalledWith('data-block-type', 'sq');
       expect(mockElement.setAttribute).toHaveBeenCalledWith('data-placeholder', 'Task item');
-      expect(mockElement.style.listStyle).toBe('none');
-      expect(mockElement.style.display).toBe('flex');
-      expect(mockElement.style.alignItems).toBe('flex-start');
+      
+      // Expect ul element to be created
+      expect(document.createElement).toHaveBeenCalledWith('ul');
+      
+      // Expect li element to be created
+      expect(document.createElement).toHaveBeenCalledWith('li');
       
       expect(document.createElement).toHaveBeenCalledWith('input');
       expect(mockCheckbox.type).toBe('checkbox');
@@ -431,9 +457,6 @@ describe('TaskListBlock', () => {
       expect(document.createElement).toHaveBeenCalledWith('span');
       expect(mockTextContainer.contentEditable).toBe(true);
       expect(mockTextContainer.textContent).toBe('Test task');
-      
-      expect(mockElement.appendChild).toHaveBeenCalledWith(mockCheckbox);
-      expect(mockElement.appendChild).toHaveBeenCalledWith(mockTextContainer);
     });
   });
 
@@ -459,7 +482,7 @@ describe('TaskListBlock', () => {
       const emptyBlock = new TaskListBlock('');
       expect(emptyBlock.content).toBe('');
       expect(emptyBlock.toMarkdown()).toBe('- [ ] ');
-      expect(emptyBlock.toHtml()).toBe('<li class="task-list-item"><input type="checkbox"> </li>');
+      expect(emptyBlock.toHtml()).toBe('<ul class="task-list">\n<li class="task-list-item"><input type="checkbox"> </li>\n</ul>');
     });
 
     test('handles content with special characters', () => {

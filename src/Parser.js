@@ -206,16 +206,43 @@ export class Parser
      * @returns {string} - Cleaned HTML
      */
     static cleanHtml(html) {
-        return html
+        let cleaned = html
             .replace(/~~(.*?)~~/g, '<del>$1</del>')
             .replace(/<blockquote>\s*<p>(.*?)<\/p>\s*<\/blockquote>/gs, '<blockquote>$1</blockquote>')
             .replace(/<p><code>(.*?)<\/code><\/p>/g, '<code>$1</code>')
             .replace(/<task-item data-checked="(true|false)">(.*?)<\/task-item>/g, (match, checked, text) => {
                 const checkedAttr = checked === 'true' ? ' checked' : '';
-                return `<li class="task-list-item" data-block-type="sq"><input type="checkbox"${checkedAttr}> ${text}</li>`;
+                const completedClass = checked === 'true' ? ' task-completed' : '';
+                return `<li class="task-list-item${completedClass}" data-block-type="sq"><input type="checkbox"${checkedAttr}> ${text}</li>`;
             })
             .replace(/(<\/(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code)>)\s*(<(?:h[1-6]|div|del|p|ol|ul|blockquote|pre|code))/g, '$1\n$2')
             .replace(/<h[1-6]\s+id="[^"]+"/g, match => match.replace(/\s+id="[^"]+"/, ''));
+
+        // Group consecutive task list items into ul containers
+        cleaned = this.groupTaskListItems(cleaned);
+        
+        return cleaned;
+    }
+
+    /**
+     * Group consecutive task list items into proper ul containers
+     * @param {string} html
+     * @returns {string} - HTML with grouped task lists
+     */
+    static groupTaskListItems(html) {
+        // Find consecutive task list items and wrap them in ul
+        return html.replace(
+            /(<li class="task-list-item[^"]*"[^>]*>.*?<\/li>)(\s*<li class="task-list-item[^"]*"[^>]*>.*?<\/li>)*/g,
+            (match) => {
+                // Extract individual li elements
+                const liElements = match.match(/<li class="task-list-item[^"]*"[^>]*>.*?<\/li>/g) || [];
+                
+                if (liElements.length === 0) return match;
+                
+                // Wrap in ul with task-list class
+                return `<ul class="task-list">\n${liElements.join('\n')}\n</ul>`;
+            }
+        );
     }
 
     /**

@@ -5,7 +5,23 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.0.14]
+
+### Fixed
+- **TaskList Block Presentation**: Completely refactored TaskList blocks to render as proper semantic unordered lists
+  - TaskList blocks now render as `<div class="block block-sq">` containing `<ul class="task-list">` with proper `<li class="task-list-item">` elements
+  - Each task item contains `<input type="checkbox">` and editable `<span>` for task text
+  - Completed tasks display with `checked="checked"` attribute and strikethrough text styling
+  - Checkbox state changes update both input state and text appearance dynamically
+  - Updated `toHtml()` method to generate proper `<ul>` structure instead of individual `<li>` elements
+  - Enhanced `toMarkdown()` method to handle multiple tasks within a single block
+  - Updated Parser to group consecutive task list items into proper `<ul>` containers
+  - Improved CSS styling to target the new semantic structure
+  - Updated all test cases to match the new implementation architecture
+  - Fixed HTML parsing to handle both legacy and new task list formats
+  - Enhanced focus management and checkbox interaction for better user experience
+
+## [v0.0.13]
 
 ### Fixed
 - **Block Structure Consistency**: Fixed all blocks to be wrapped in `<div>` tags for consistent block architecture
