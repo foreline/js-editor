@@ -42,13 +42,23 @@ export class ListBlock extends BaseBlock
 
         const text = currentListItem.textContent.trim();
         
-        // If the current list item is empty, end the list
-        if (text === '') {
+        // Check if this is the last list item in the list
+        const listContainer = currentListItem.parentElement; // ul or ol
+        const allItems = listContainer ? listContainer.querySelectorAll('li') : [];
+        const isLastItem = allItems.length > 0 && allItems[allItems.length - 1] === currentListItem;
+        
+        // If the current list item is empty AND it's the last item, end the list
+        if (text === '' && isLastItem) {
             // Remove the empty list item and create a new paragraph block
             event.preventDefault();
             currentListItem.remove();
             Editor.addEmptyBlock();
             return true;
+        }
+        
+        // If the current list item is empty but NOT the last item, let browser handle (remove empty item behavior)
+        if (text === '') {
+            return false;
         }
         
         // Check if cursor is at the end of the list item
@@ -57,21 +67,11 @@ export class ListBlock extends BaseBlock
             const range = selection.getRangeAt(0);
             const isAtEnd = this.isAtEnd(currentBlock, range);
             
-            if (isAtEnd) {
-                // Check if this is the last list item in the list
-                const listContainer = currentListItem.parentElement; // ul or ol
-                const allItems = listContainer ? listContainer.querySelectorAll('li') : [];
-                const isLastItem = allItems.length > 0 && allItems[allItems.length - 1] === currentListItem;
-                
-                if (isLastItem) {
-                    // Create a new list item in the same list when at the last item
-                    event.preventDefault();
-                    this.createNewListItem(currentBlock, currentListItem);
-                    return true;
-                } else {
-                    // For non-last items, let browser handle default behavior (split the item)
-                    return false;
-                }
+            if (isAtEnd && isLastItem) {
+                // Create a new list item in the same list when at the end of the last non-empty item
+                event.preventDefault();
+                this.createNewListItem(currentBlock, currentListItem);
+                return true;
             }
         }
         

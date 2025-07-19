@@ -20,12 +20,37 @@
         
         <h2>Test Instructions:</h2>
         <ol>
-            <li>Create a list (click the list button in toolbar or type "- " or "1. " at start of line)</li>
-            <li>Add a few list items (press Enter to create new items normally)</li>
-            <li>Place cursor at the end of the last list item</li>
-            <li>Press Enter - should create a new list item instead of a paragraph block</li>
-            <li>Try pressing Enter at the end of middle list items - should split the item normally</li>
+            <li><strong>Create a list:</strong> Click the list button in toolbar or type "- " or "1. " at start of line</li>
+            <li><strong>Add a few list items</strong> with some content</li>
+            <li><strong>Test Scenario 1 - Non-empty last item:</strong>
+                <ul>
+                    <li>Place cursor at the end of the last list item (with content)</li>
+                    <li>Press Enter</li>
+                    <li>✅ Should create a new empty list item in the same list</li>
+                </ul>
+            </li>
+            <li><strong>Test Scenario 2 - Empty last item:</strong>
+                <ul>
+                    <li>Create a new list item (it will be empty)</li>
+                    <li>Press Enter while in the empty last list item</li>
+                    <li>✅ Should end the list and create a new paragraph block</li>
+                </ul>
+            </li>
+            <li><strong>Test Scenario 3 - Middle items:</strong>
+                <ul>
+                    <li>Place cursor at the end of a middle list item (not the last one)</li>
+                    <li>Press Enter</li>
+                    <li>✅ Should split the item and create a new list item below it</li>
+                </ul>
+            </li>
         </ol>
+        
+        <h3>Expected Behavior Summary:</h3>
+        <ul>
+            <li><strong>Enter at end of last non-empty item</strong> → New list item</li>
+            <li><strong>Enter at last empty item</strong> → End list, create paragraph</li>
+            <li><strong>Enter at middle items</strong> → Split item (normal behavior)</li>
+        </ul>
         
         <h2>Architecture Improvement:</h2>
         <p>The issue was that KeyHandler.js was using generic cursor-at-end detection that didn't understand the structure of different block types. Now each block can implement its own <code>isAtEnd()</code> method with block-specific logic.</p>
