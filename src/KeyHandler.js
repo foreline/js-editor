@@ -39,19 +39,14 @@ export class KeyHandler
         const innerHtml = editorInstance.currentBlock.innerHTML;
         const text = Utils.stripTags(innerHtml);
 
-        // Try to find a block type that matches the current text as a markdown trigger
-        const matchingBlockClass = BlockFactory.findBlockClassForTrigger(text);
-        
-        if (matchingBlockClass) {
-            // Clear the current block content and apply the transformation
-            editorInstance.currentBlock.innerHTML = '';
-            const blockInstance = new matchingBlockClass();
-            blockInstance.applyTransformation();
+        // Check if the current block should be converted to a different type
+        if (editorInstance.checkAndConvertBlock(editorInstance.currentBlock)) {
+            // Block was converted, update and return
             editorInstance.update();
             return;
         }
 
-        // If no markdown trigger matched, let the current block handle the key press
+        // If no block conversion occurred, let the current block handle the key press
         const currentBlock = Editor.currentBlock;
         if (currentBlock && currentBlock.dataset && currentBlock.dataset.blockType) {
             const blockType = currentBlock.dataset.blockType;

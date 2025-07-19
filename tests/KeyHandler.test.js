@@ -32,7 +32,8 @@ describe('KeyHandler', () => {
             eventEmitter: {
                 emit: jest.fn()
             },
-            update: jest.fn()
+            update: jest.fn(),
+            checkAndConvertBlock: jest.fn().mockReturnValue(false)
         };
 
         // Setup mock event
@@ -95,22 +96,13 @@ describe('KeyHandler', () => {
             expect(mockEditorInstance.update).not.toHaveBeenCalled();
         });
 
-        it('should handle markdown trigger transformation', () => {
-            const mockBlockClass = jest.fn();
-            const mockBlockInstance = {
-                applyTransformation: jest.fn()
-            };
-            
-            BlockFactory.findBlockClassForTrigger.mockReturnValue(mockBlockClass);
-            mockBlockClass.mockImplementation(() => mockBlockInstance);
-            
+        it('should handle block conversion through checkAndConvertBlock', () => {
+            mockEditorInstance.checkAndConvertBlock.mockReturnValue(true);
             Utils.stripTags.mockReturnValue('# ');
 
             KeyHandler.handleKeyPress(mockEvent, mockEditorInstance);
 
-            expect(BlockFactory.findBlockClassForTrigger).toHaveBeenCalledWith('# ');
-            expect(mockEditorInstance.currentBlock.innerHTML).toBe('');
-            expect(mockBlockInstance.applyTransformation).toHaveBeenCalled();
+            expect(mockEditorInstance.checkAndConvertBlock).toHaveBeenCalledWith(mockCurrentBlock);
             expect(mockEditorInstance.update).toHaveBeenCalled();
         });
 

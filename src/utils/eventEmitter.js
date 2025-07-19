@@ -25,6 +25,7 @@ export const EVENTS = {
     BLOCK_FOCUSED: 'block.focused',
     BLOCK_CONTENT_CHANGED: 'block.content.changed',
     BLOCK_TYPE_CHANGED: 'block.type.changed',
+    BLOCK_CONVERTED: 'block.converted',
     
     // Editor Events
     EDITOR_INITIALIZED: 'editor.initialized',

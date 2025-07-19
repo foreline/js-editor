@@ -5,6 +5,22 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.16]
+
+### Added
+- **Blocks Conversion**: Implemented automatic block type conversion based on markdown triggers
+  - Added `checkAndConvertBlock()` method to Editor class for detecting when a block should be converted to a different type
+  - Added `convertBlockType()` method to handle the actual conversion process
+  - Added `findEditableElementInBlock()` method to locate the correct element to edit within converted blocks
+  - Added `placeCursorAtEnd()` method for proper cursor positioning after conversion
+  - Added `BLOCK_CONVERTED` event to track conversion operations
+  - Integrated conversion logic into `KeyHandler.handleKeyPress()` for real-time conversion as user types
+  - Added input event listener to catch content changes from paste operations and other sources
+  - When typing markdown triggers (e.g., `# `, `- `, `* `, `1. `, `- [ ]`) in a paragraph block, the block automatically converts to the appropriate type (heading, list, task list, etc.)
+  - Conversion only occurs from paragraph blocks to other types to prevent unwanted conversions
+  - Remaining content after the trigger is preserved and properly positioned in the new block structure
+  - Static method `Editor.checkAndConvertBlock()` added for backward compatibility
+
 ## [v0.0.15]
 
 ### Fixed

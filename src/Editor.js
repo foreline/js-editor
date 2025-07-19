@@ -581,6 +581,32 @@ export class Editor
             e.preventDefault();
         });
         
+        // INPUT Event handler - catch content changes for block conversion
+        this.instance.addEventListener('input', (e) => {
+            // Only handle input events for this editor instance
+            if (!e.target.closest(`#${this.instance.id}`)) {
+                return;
+            }
+            
+            // Find the block that contains the input target
+            let block = e.target.closest('.block');
+            
+            // If no block is found but the target is a list item, look for the parent list block
+            if (!block && e.target.tagName === 'LI') {
+                block = e.target.closest('ul, ol, div').closest('.block');
+            }
+            
+            if (block) {
+                // Check if this block should be converted to a different type
+                // Use a small timeout to let the DOM update first
+                setTimeout(() => {
+                    if (this.checkAndConvertBlock(block)) {
+                        this.update();
+                    }
+                }, 10);
+            }
+        });
+        
         // mask focused block as currentBlock
         document.addEventListener('click', (e) => {
             // Only handle clicks for this editor instance
@@ -1338,6 +1364,193 @@ export class Editor
             return '';
         }
     }
+
+    /**
+     * Check if a block should be converted to a different type based on its content
+     * @param {HTMLElement} blockElement - The block element to check
+     * @returns {boolean} - true if block was converted, false otherwise
+     */
+    checkAndConvertBlock(blockElement) {
+        log('checkAndConvertBlock()', 'Editor.');
+        
+        if (!blockElement || !blockElement.hasAttribute('data-block-type')) {
+            return false;
+        }
+
+        const currentBlockType = blockElement.getAttribute('data-block-type');
+        const textContent = Utils.stripTags(blockElement.innerHTML).trim();
+        
+        // Don't convert if content is empty
+        if (!textContent) {
+            return false;
+        }
+
+        // Find matching block class for the current text content
+        const matchingBlockClass = BlockFactory.findBlockClassForTrigger(textContent);
+        
+        if (!matchingBlockClass) {
+            return false;
+        }
+
+        // Get the block type that should be created
+        const targetBlockType = new matchingBlockClass().getType();
+        
+        // Don't convert if it's already the correct type
+        if (currentBlockType === targetBlockType) {
+            return false;
+        }
+
+        // Don't convert non-paragraph blocks (to avoid conflicts)
+        if (currentBlockType !== BlockType.PARAGRAPH) {
+            return false;
+        }
+
+        // Perform the conversion
+        return this.convertBlockType(blockElement, targetBlockType, textContent);
+    }
+
+    /**
+     * Convert a block from one type to another
+     * @param {HTMLElement} blockElement - The block element to convert
+     * @param {string} targetBlockType - The target block type
+     * @param {string} triggerText - The text that triggered the conversion
+     * @returns {boolean} - true if conversion was successful, false otherwise
+     */
+    convertBlockType(blockElement, targetBlockType, triggerText) {
+        log('convertBlockType()', 'Editor.');
+        
+        try {
+            // Create new block instance
+            const newBlock = BlockFactory.createBlock(targetBlockType);
+            
+            if (!newBlock) {
+                return false;
+            }
+
+            // Clear the trigger text from the block element
+            // For list triggers like "- " or "* ", we want to remove the trigger and keep any additional content
+            const triggers = newBlock.constructor.getMarkdownTriggers();
+            let remainingContent = triggerText;
+            
+            // Find and remove the matching trigger
+            for (const trigger of triggers) {
+                if (triggerText.startsWith(trigger)) {
+                    remainingContent = triggerText.substring(trigger.length);
+                    break;
+                }
+            }
+
+            // Clear the current block content
+            blockElement.innerHTML = '';
+            
+            // Set the cursor position before applying transformation
+            const wasFocused = blockElement === this.currentBlock;
+            
+            // Apply the transformation (this will call the appropriate Toolbar method)
+            newBlock.applyTransformation();
+            
+            // If there was remaining content after the trigger, add it to the new block structure
+            if (remainingContent.trim()) {
+                // Find the appropriate element to add the content to
+                const editableElement = this.findEditableElementInBlock(blockElement);
+                if (editableElement) {
+                    editableElement.textContent = remainingContent.trim();
+                    
+                    // Position cursor at the end of the content
+                    if (wasFocused) {
+                        requestAnimationFrame(() => {
+                            editableElement.focus();
+                            this.placeCursorAtEnd(editableElement);
+                        });
+                    }
+                }
+            } else {
+                // No remaining content, just focus the appropriate element
+                if (wasFocused) {
+                    requestAnimationFrame(() => {
+                        const editableElement = this.findEditableElementInBlock(blockElement);
+                        if (editableElement) {
+                            editableElement.focus();
+                        }
+                    });
+                }
+            }
+            
+            // Emit block conversion event
+            this.eventEmitter.emit(EVENTS.BLOCK_CONVERTED, {
+                blockId: blockElement.getAttribute('data-block-id') || blockElement.id,
+                fromType: blockElement.getAttribute('data-block-type'),
+                toType: targetBlockType,
+                triggerText: triggerText,
+                remainingContent: remainingContent,
+                timestamp: Date.now()
+            });
+            
+            return true;
+            
+        } catch (error) {
+            logWarning('Error converting block type: ' + error.message, 'Editor.convertBlockType()');
+            return false;
+        }
+    }
+
+    /**
+     * Find the editable element within a block (for lists, this might be an <li>, for others the block itself)
+     * @param {HTMLElement} blockElement - The block element to search in
+     * @returns {HTMLElement|null} - The editable element or null if not found
+     */
+    findEditableElementInBlock(blockElement) {
+        // For list blocks, find the first list item
+        const firstListItem = blockElement.querySelector('li');
+        if (firstListItem) {
+            return firstListItem;
+        }
+        
+        // For other blocks, the block itself is editable
+        if (blockElement.hasAttribute('contenteditable') || 
+            blockElement.getAttribute('contenteditable') !== 'false') {
+            return blockElement;
+        }
+        
+        // Look for any contenteditable child
+        const editableChild = blockElement.querySelector('[contenteditable="true"]');
+        if (editableChild) {
+            return editableChild;
+        }
+        
+        return blockElement;
+    }
+
+    /**
+     * Place cursor at the end of the given element
+     * @param {HTMLElement} element - The element to place cursor in
+     */
+    placeCursorAtEnd(element) {
+        if (!element) return;
+        
+        try {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            
+            // If element has text content, place cursor at the end
+            if (element.childNodes.length > 0) {
+                const lastChild = element.childNodes[element.childNodes.length - 1];
+                if (lastChild.nodeType === Node.TEXT_NODE) {
+                    range.setStart(lastChild, lastChild.textContent.length);
+                } else {
+                    range.setStart(element, element.childNodes.length);
+                }
+            } else {
+                range.setStart(element, 0);
+            }
+            
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } catch (error) {
+            // Silently fail for cursor positioning
+        }
+    }
     
     // Static backward compatibility methods - these delegate to the first editor instance
     static getMarkdown() {
@@ -1456,6 +1669,14 @@ export class Editor
         if (firstInstance) {
             firstInstance.keybuffer = value;
         }
+    }
+    
+    static checkAndConvertBlock(blockElement) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            return firstInstance.checkAndConvertBlock(blockElement);
+        }
+        return false;
     }
     
     static get blocks() {
