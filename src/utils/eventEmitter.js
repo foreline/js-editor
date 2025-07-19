@@ -22,6 +22,7 @@ export const EVENTS = {
     // Block Events
     BLOCK_CREATED: 'block.created',
     BLOCK_DELETED: 'block.deleted',
+    BLOCK_DESTROYED: 'block.destroyed',
     BLOCK_FOCUSED: 'block.focused',
     BLOCK_CONTENT_CHANGED: 'block.content.changed',
     BLOCK_TYPE_CHANGED: 'block.type.changed',

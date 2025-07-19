@@ -596,6 +596,16 @@ export class Editor
                 block = e.target.closest('ul, ol, div').closest('.block');
             }
             
+            // Check if editor is effectively empty after content deletion
+            const allBlocks = this.instance.querySelectorAll('.block');
+            if (this.isEditorEmpty(allBlocks)) {
+                // Editor is empty, ensure at least one default block exists
+                this.detachBlockEvents(allBlocks);
+                this.instance.innerHTML = '';
+                this.addEmptyBlock();
+                return;
+            }
+            
             if (block) {
                 // Only check for conversion on paragraph blocks to avoid performance issues
                 const blockType = block.getAttribute('data-block-type');
@@ -863,7 +873,11 @@ export class Editor
         // Update timestamps for all blocks
         this.updateBlockTimestamps();
         
-        if ( 0 === this.instance.querySelectorAll('.block').length ) {
+        // Check if editor has no blocks or all blocks are empty
+        const blocks = this.instance.querySelectorAll('.block');
+        if (blocks.length === 0 || this.isEditorEmpty(blocks)) {
+            // Detach events from existing blocks before cleanup
+            this.detachBlockEvents(blocks);
             this.instance.innerHTML = '';
             this.addEmptyBlock();
         }
@@ -922,6 +936,57 @@ export class Editor
             }
         });
     }
+
+    /**
+     * Check if the editor is effectively empty (all blocks contain no meaningful content)
+     * @param {NodeList} blocks - Collection of block elements
+     * @returns {boolean}
+     */
+    isEditorEmpty(blocks) {
+        log('isEditorEmpty()', 'Editor.');
+        
+        if (blocks.length === 0) {
+            return true;
+        }
+        
+        // Check if all blocks are empty (contain only whitespace or no content)
+        for (let block of blocks) {
+            const textContent = Utils.stripTags(block.innerHTML).trim();
+            if (textContent.length > 0) {
+                return false; // Found non-empty block
+            }
+        }
+        
+        return true; // All blocks are empty
+    }
+
+    /**
+     * Detach events from blocks before removing them
+     * @param {NodeList} blocks - Collection of block elements to clean up
+     */
+    detachBlockEvents(blocks) {
+        log('detachBlockEvents()', 'Editor.');
+        
+        blocks.forEach(block => {
+            // Clone the block to remove all event listeners
+            const clonedBlock = block.cloneNode(true);
+            
+            // Emit a block destroy event for any cleanup needed
+            if (block.getAttribute('data-block-id')) {
+                this.eventEmitter.emit(EVENTS.BLOCK_DESTROYED, {
+                    blockId: block.getAttribute('data-block-id'),
+                    blockType: block.getAttribute('data-block-type'),
+                    timestamp: Date.now()
+                }, { source: 'editor.cleanup' });
+            }
+            
+            // Replace the block with its clone (removes all event listeners)
+            if (block.parentNode) {
+                block.parentNode.replaceChild(clonedBlock, block);
+            }
+        });
+    }
+
       /**
      *
      * @param {string} html

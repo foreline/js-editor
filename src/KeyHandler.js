@@ -93,6 +93,10 @@ export class KeyHandler
             return this.handleBackspaceKey(e, editorInstance);
         }
         
+        if ('Delete' === e.key) {
+            return this.handleDeleteKey(e, editorInstance);
+        }
+        
         if ('Tab' === e.key) {
             // Let individual block types handle tab
             const currentBlock = editorInstance.currentBlock;
@@ -275,6 +279,68 @@ export class KeyHandler
             const block = BlockFactory.createBlock(blockType);
             
             if (block.handleBackspaceKey && block.handleBackspaceKey(e)) {
+                Editor.update();
+                return;
+            }
+        }
+    }
+
+    /**
+     * Handle Delete key press
+     * @param {KeyboardEvent} e
+     * @param {Editor} editorInstance - The editor instance
+     */
+    static handleDeleteKey(e, editorInstance) 
+    {
+        log('handleDeleteKey()', 'KeyHandler.');
+
+        const currentBlock = editorInstance.currentBlock;
+        if (!currentBlock) {
+            return;
+        }
+
+        // Check if current block is empty (only whitespace or no content)
+        const text = Utils.stripTags(currentBlock.innerHTML).trim();
+        
+        // Only handle delete for empty blocks
+        if (text === '') {
+            // Find the next block
+            const nextBlock = currentBlock.nextElementSibling;
+            
+            // Don't remove the last remaining block
+            const allBlocks = editorInstance.instance.querySelectorAll('.block');
+            if (allBlocks.length <= 1) {
+                return;
+            }
+            
+            // Remove the empty block and focus on next block
+            if (nextBlock && nextBlock.classList.contains('block')) {
+                Editor.setCurrentBlock(nextBlock);
+                currentBlock.remove();
+                Editor.focus(nextBlock);
+                Editor.update();
+                e.preventDefault();
+                return;
+            } else {
+                // If no next block, focus on previous block (if exists)
+                const previousBlock = currentBlock.previousElementSibling;
+                if (previousBlock && previousBlock.classList.contains('block')) {
+                    Editor.setCurrentBlock(previousBlock);
+                    currentBlock.remove();
+                    Editor.focus(previousBlock);
+                    Editor.update();
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+
+        // Let the current block type handle the delete key if not handled above
+        if (currentBlock.dataset && currentBlock.dataset.blockType) {
+            const blockType = currentBlock.dataset.blockType;
+            const block = BlockFactory.createBlock(blockType);
+            
+            if (block.handleDeleteKey && block.handleDeleteKey(e)) {
                 Editor.update();
                 return;
             }

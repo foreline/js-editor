@@ -5,6 +5,19 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.19]
+
+### Fixed
+- **Empty Editor Edge Case**: Fixed critical bug where selecting all text and pressing Backspace or Delete could remove all blocks, leaving the editor unusable
+  - Added `isEditorEmpty()` method to check if all blocks are effectively empty (contain only whitespace or no content)
+  - Added `detachBlockEvents()` method to properly clean up event listeners before removing blocks, emitting `BLOCK_DESTROYED` events
+  - Enhanced `_performUpdate()` method to detect empty editor state and automatically add a default block
+  - Enhanced input event handler to catch content deletion scenarios and maintain at least one block
+  - Added Delete key handling in KeyHandler (previously only Backspace was handled)
+  - **Event System**: Added new `BLOCK_DESTROYED` event to track block cleanup operations
+  - **Comprehensive Testing**: Added EmptyEditorEdgeCase.test.js with 11 test cases covering all edge cases
+  - **Protection Logic**: Editor now ensures at least one default paragraph block remains at all times, preventing unusable states
+
 ## [v0.0.18]
 
 ### Fixed
