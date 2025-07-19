@@ -96,6 +96,38 @@ export class BaseBlock
     }
 
     /**
+     * Check if cursor is at the end of this block
+     * Default implementation for simple blocks
+     * @param {HTMLElement} blockElement - the DOM element of the block
+     * @param {Range} range - the current selection range
+     * @returns {boolean} - true if cursor is at the end
+     */
+    isAtEnd(blockElement, range) {
+        if (!range || !blockElement) {
+            return false;
+        }
+
+        // Check if the range is collapsed (cursor position, not selection)
+        if (!range.collapsed) {
+            return false;
+        }
+
+        // Get the text content length of the block
+        const textContent = blockElement.textContent || '';
+        const textLength = textContent.length;
+        
+        // Calculate the current cursor position within the block
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(blockElement);
+        preRange.setEnd(range.endContainer, range.endOffset);
+        const cursorPosition = preRange.toString().length;
+        
+        // Consider cursor at end if it's within 2 characters of the end
+        // (accounts for trailing spaces or formatting)
+        return cursorPosition >= textLength - 2;
+    }
+
+    /**
      * Get the markdown triggers that convert to this block type
      * @returns {string[]} - array of trigger strings
      */

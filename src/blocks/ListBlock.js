@@ -55,7 +55,7 @@ export class ListBlock extends BaseBlock
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const isAtEnd = this.isCursorAtEndOfBlock(currentListItem, range);
+            const isAtEnd = this.isAtEnd(currentBlock, range);
             
             if (isAtEnd) {
                 // Check if this is the last list item in the list
@@ -80,13 +80,14 @@ export class ListBlock extends BaseBlock
     }
 
     /**
-     * Check if cursor is at the end of the current block
-     * @param {HTMLElement} block
-     * @param {Range} range
-     * @returns {boolean}
+     * Check if cursor is at the end of the last list item
+     * List-specific implementation that considers the structure of lists
+     * @param {HTMLElement} blockElement - The block containing the list
+     * @param {Range} range - The current selection range
+     * @returns {boolean} - true if cursor is at the end of the last list item
      */
-    isCursorAtEndOfBlock(block, range) {
-        if (!range || !block) {
+    isAtEnd(blockElement, range) {
+        if (!range || !blockElement) {
             return false;
         }
 
@@ -95,13 +96,31 @@ export class ListBlock extends BaseBlock
             return false;
         }
 
-        // Get the text content length of the block
-        const textContent = block.textContent || '';
+        // Find the current list item based on cursor position
+        const element = range.startContainer.nodeType === Node.TEXT_NODE ? 
+            range.startContainer.parentElement : range.startContainer;
+        const currentListItem = element.closest('li');
+        
+        if (!currentListItem) {
+            return false;
+        }
+
+        // Check if this is the last list item
+        const listContainer = currentListItem.parentElement; // ul or ol
+        const allItems = listContainer ? listContainer.querySelectorAll('li') : [];
+        const isLastItem = allItems.length > 0 && allItems[allItems.length - 1] === currentListItem;
+        
+        if (!isLastItem) {
+            return false;
+        }
+
+        // Check if cursor is at the end of this last list item
+        const textContent = currentListItem.textContent || '';
         const textLength = textContent.length;
         
-        // Calculate the current cursor position within the block
+        // Calculate the current cursor position within the list item
         const preRange = range.cloneRange();
-        preRange.selectNodeContents(block);
+        preRange.selectNodeContents(currentListItem);
         preRange.setEnd(range.endContainer, range.endOffset);
         const cursorPosition = preRange.toString().length;
         

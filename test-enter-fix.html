@@ -3,28 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Enter Fix</title>
+    <title>Test Enter Fix - New isAtEnd Architecture</title>
     <link rel="stylesheet" href="dist/js-editor.css">
 </head>
 <body>
-    <h1>Testing Enter Key Fix in Lists</h1>
+    <h1>Testing Enter Key Fix with New isAtEnd Architecture</h1>
     <div id="editor"></div>
     
     <div style="margin-top: 20px;">
-        <h2>Instructions:</h2>
+        <h2>What's New:</h2>
+        <ul>
+            <li><strong>Extracted isAtEnd logic to Block classes</strong> - Each block type can now define its own logic for determining when the cursor is at the end</li>
+            <li><strong>List-specific isAtEnd implementation</strong> - Lists now properly detect when cursor is at the end of the LAST list item</li>
+            <li><strong>Better separation of concerns</strong> - KeyHandler delegates end-detection to blocks instead of using generic logic</li>
+        </ul>
+        
+        <h2>Test Instructions:</h2>
         <ol>
             <li>Create a list (click the list button in toolbar or type "- " or "1. " at start of line)</li>
-            <li>Add a few list items</li>
+            <li>Add a few list items (press Enter to create new items normally)</li>
             <li>Place cursor at the end of the last list item</li>
-            <li>Press Enter</li>
-            <li>Should create a new list item instead of a paragraph block</li>
+            <li>Press Enter - should create a new list item instead of a paragraph block</li>
+            <li>Try pressing Enter at the end of middle list items - should split the item normally</li>
         </ol>
+        
+        <h2>Architecture Improvement:</h2>
+        <p>The issue was that KeyHandler.js was using generic cursor-at-end detection that didn't understand the structure of different block types. Now each block can implement its own <code>isAtEnd()</code> method with block-specific logic.</p>
     </div>
 
     <script src="dist/js-editor.js"></script>
     <script>
         const editor = new Editor('#editor', {
-            initialContent: '# Test Enter Key in Lists\n\nClick here and create a list to test the Enter key fix.'
+            initialContent: '# Test Enter Key in Lists\n\nClick here and create a list to test the Enter key fix.\n\n- This is a sample list\n- Add more items\n- Test the Enter key at the end of this last item'
         });
     </script>
 </body>

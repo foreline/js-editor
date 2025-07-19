@@ -154,7 +154,21 @@ export class KeyHandler
             return;
         }
         const range = selection.getRangeAt(0);
-        const isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+        
+        // Use the block's isAtEnd method if available, otherwise use the generic method
+        let isAtEnd = false;
+        if (currentBlock.dataset && currentBlock.dataset.blockType) {
+            const blockType = currentBlock.dataset.blockType;
+            const block = BlockFactory.createBlock(blockType);
+            
+            if (block.isAtEnd && typeof block.isAtEnd === 'function') {
+                isAtEnd = block.isAtEnd(currentBlock, range);
+            } else {
+                isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+            }
+        } else {
+            isAtEnd = this.isCursorAtEndOfBlock(currentBlock, range);
+        }
         
         if (isAtEnd) {
             // Default behavior - add new empty block when cursor is at the end
