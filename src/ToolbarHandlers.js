@@ -261,6 +261,17 @@ export const ToolbarHandlers = {
             btn.addEventListener('click', handler);
             ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
         });
+
+    /*
+    * DEBUG MODE TOGGLE
+    */
+    document
+        .querySelectorAll('.editor-toolbar-debug')
+        .forEach(btn => {
+            const handler = ToolbarHandlers.createToolbarHandler('debug', Toolbar.debug);
+            btn.addEventListener('click', handler);
+            ToolbarHandlers.eventListeners.set(btn, { event: 'click', handler });
+        });
   },
 
   /**

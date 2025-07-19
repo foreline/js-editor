@@ -20,8 +20,12 @@ export const Toolbar = {
     init: (options) =>
     {
         log('init()', 'Toolbar.'); console.log({options});
-        const { container, config } = options;
-        Toolbar.createToolbar(container, config);
+        const { container, config, debug, editorInstance } = options;
+        
+        // Store editor instance reference for debug functionality
+        Toolbar.editorInstance = editorInstance;
+        
+        Toolbar.createToolbar(container, config, debug);
         ToolbarHandlers.init();
         
         // Emit toolbar initialization event
@@ -360,6 +364,31 @@ export const Toolbar = {
     },
 
     /**
+     * Toggle debug mode
+     */
+    debug: () =>
+    {
+        log('debug()', 'Toolbar.');
+        
+        if (Toolbar.editorInstance) {
+            Toolbar.editorInstance.toggleDebugMode();
+            
+            // Update button state
+            const debugBtn = document.querySelector('.editor-toolbar-debug');
+            if (debugBtn) {
+                const isActive = Toolbar.editorInstance.debugMode;
+                if (isActive) {
+                    debugBtn.classList.add('active');
+                    debugBtn.title = 'отключить режим отладки';
+                } else {
+                    debugBtn.classList.remove('active');
+                    debugBtn.title = 'включить режим отладки';
+                }
+            }
+        }
+    },
+
+    /**
      * @fixme refactor name
      */
     after: () =>
@@ -373,10 +402,11 @@ export const Toolbar = {
      * Create a toolbar
      * @param {*} container 
      * @param {*} config 
+     * @param {boolean} debug - Whether debug mode is enabled
      */
-    createToolbar: (container, config) =>
+    createToolbar: (container, config, debug = false) =>
     {
-        log('createToolbar()', 'Toolbar.'); console.log({container, config});
+        log('createToolbar()', 'Toolbar.'); console.log({container, config, debug});
 
         const toolbar = document.createElement('div');
         toolbar.className = 'editor-toolbar';
@@ -426,6 +456,21 @@ export const Toolbar = {
             }
             toolbar.appendChild(group);
         });
+        
+        // Add debug button if debug mode is enabled
+        if (debug) {
+            const debugGroup = document.createElement('div');
+            debugGroup.className = 'editor-toolbar-group';
+            
+            const debugButton = document.createElement('button');
+            debugButton.className = 'editor-toolbar-debug active';
+            debugButton.innerHTML = '<i class="fa fa-bug"></i>';
+            debugButton.title = 'отключить режим отладки';
+            
+            debugGroup.appendChild(debugButton);
+            toolbar.appendChild(debugGroup);
+        }
+        
         container.insertBefore(toolbar, container.firstChild);
     },
 };

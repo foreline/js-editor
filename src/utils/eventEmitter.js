@@ -31,6 +31,8 @@ export const EVENTS = {
     EDITOR_FOCUSED: 'editor.focused',
     EDITOR_BLURRED: 'editor.blurred',
     EDITOR_UPDATED: 'editor.updated', // Legacy compatibility
+    EDITOR_DESTROYED: 'editor.destroyed',
+    DEBUG_MODE_CHANGED: 'editor.debug.mode.changed',
     
     // Toolbar Events
     TOOLBAR_ACTION: 'toolbar.action',
