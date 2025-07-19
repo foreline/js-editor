@@ -39,9 +39,11 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Enter keypress at the last list item**: The `Enter` key press when we are at the end of the last item of ListBlocks should add a new list item to the current list. But instead the `Enter` keypress leads to creating a new default block. The lists should behave as a normal content editable lists. To create a new default block we should press enter at the last empty list item.
 - [x] **Blocks conversion**: If a list inserted inside a `Paragraph` (default) block the block should become a List block. Now it stays a paragraph block (has block-p) class on it. The other types of block must be converted in the same manner. This should be implemented as a common mechanism for converting a block from one type to another.
 - [x] **Block conversion using toolbar buttons**: If a user adds a default (paragraph) block and hits a `editor-toolbar-ul` button (which inserts an unordered list), the current block should be converted to UnorderedList Block. This behaviour should be typical for other blocks as well.
+- [x] **Remaining static methods**. Due to design decision we moved to instance base approach for the Editor, which was the best suiting architecture. However there may be some code pieces related to previous static architecter, which should be removed with related tests.
 - [ ] **Block conversion performance**: If a user converts the default (paragraph) block to UnorderedList Block they faces some serious performance issues. The multiple calls of `Editor.update` and `Editor.html2md` methods are observed. The conversion is not always completed. The conversion workflow must be invested. The console output should be investigated.
 - [ ] **Block conversion using special key sequences not working**. When user creates a new default (paragraph) block and hits the special key sequences i.e. `# `, `- `, `* `, `1 `, `1. ` which should convert the paragrash block to H1, UnOrderedList, OrderedList Blocks, that behaviour is not observed, but expected. 
 - [x] **Empty Editor edge case**. When user selects all text in Editor and hits `backspace` or `del` key all blocks are removed. But there must be at least one default block left. All events should be detached from blocks before deleting. All blocks should implement some kind of before destroy handler.
+- [ ] **Empty Editor case**. Appeared again. When user selects all text in Editor and hits `backspace` or `del` key all blocks are removed. The infinite console warning `Editor.focus()Cannot focus on non-existent or detached element` occures. But there ALWAYS must be at least one default block in Editor. All events should be detached from blocks before deleting. All blocks should implement some kind of before destroy handler.
 
 ## Test Suite Issues
 
@@ -56,7 +58,6 @@ Test suite analysis revealed multiple critical issues that have been addressed:
 - [x] **Block instance type checking**: Updated tests to expect correct parent classes due to current inheritance structure.
 - [x] **HTML sanitization tests**: Fixed Utils tests with correct HTML entity escape expectations and stripTagsAttributes behavior.
 - [x] **Missing test environment setup**: Removed/replaced tests that required complex setup. Created simpler, more focused tests that work reliably.
-- [x] **Test suite cleanup**: Removed 8 problematic test files that were incompatible with current architecture and fixed remaining tests. Final result: 29 test suites, 428 tests, 0 failures.
 
 ## Features
 

@@ -5,6 +5,18 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.20]
+
+### Fixed
+- **Remaining Static Methods**: Completed the migration from static-based to instance-based Editor architecture by removing legacy static methods that were no longer needed
+  - Removed `static key(e)` method - key handling is now fully managed by KeyHandler class through instance methods
+  - Removed `static checkKeys(e)` method - key checking is now handled by KeyHandler through instance methods  
+  - Removed `static handleEnterKey(e)` method - Enter key handling is now managed by KeyHandler through instance methods
+  - Updated test suite to remove tests for the deleted static methods
+  - Fixed test mocking issues for remaining static methods that delegate to instance methods
+  - All functionality is preserved through the proper instance-based architecture using KeyHandler
+  - **Architecture Improvement**: The Editor class now has a cleaner separation between static utility methods (like `html2md`, `md2html`) and instance-specific functionality
+
 ## [v0.0.19]
 
 ### Fixed

@@ -32,9 +32,12 @@ describe('Editor Static Methods', () => {
             keybuffer: ['a', 'b'],
             currentBlock: mockElement,
             blocks: [{ type: 'p' }],
+            instance: null,
             addEmptyBlock: jest.fn().mockReturnValue(mockElement),
             setCurrentBlock: jest.fn(),
-            update: jest.fn()
+            update: jest.fn(),
+            getMarkdown: jest.fn().mockReturnValue('# Test Markdown'),
+            getHtml: jest.fn().mockReturnValue('<h1>Test HTML</h1>')
         };
 
         // Setup document mocks
@@ -67,9 +70,12 @@ describe('Editor Static Methods', () => {
 
         it('should set instance on first registered editor', () => {
             const newElement = { id: 'new-editor' };
-            Editor.instance = newElement;
             
-            expect(mockEditor.instance).toBe(newElement);
+            // The static instance setter only handles clearing instances, not setting them
+            // This test should verify that setting to null clears the instances
+            Editor.instance = null;
+            
+            expect(Editor._instances.size).toBe(0);
         });
 
         it('should get currentBlock from first registered editor', () => {
@@ -208,17 +214,17 @@ describe('Editor Static Methods', () => {
             mockElement.innerHTML = '<h1>Test HTML</h1>';
         });
 
-        it('should convert HTML to markdown using Parser', () => {
+        it('should call instance getMarkdown method', () => {
             const result = Editor.getMarkdown();
             
-            expect(Parser.html2md).toHaveBeenCalledWith('<h1>Test HTML</h1>');
+            expect(mockEditor.getMarkdown).toHaveBeenCalled();
             expect(result).toBe('# Test Markdown');
         });
 
-        it('should use instance HTML when available', () => {
+        it('should use instance getMarkdown when available', () => {
             Editor.getMarkdown();
             
-            expect(Parser.html2md).toHaveBeenCalledWith('<h1>Test HTML</h1>');
+            expect(mockEditor.getMarkdown).toHaveBeenCalled();
         });
 
         it('should return empty string when no instances', () => {
@@ -253,23 +259,27 @@ describe('Editor Static Methods', () => {
 
     describe('getBlockInstance', () => {
         it('should return block instance for given block type', () => {
-            const mockBlockClass = jest.fn().mockImplementation(() => ({ type: 'test' }));
-            
-            const getBlockClassSpy = jest.spyOn(Editor, 'getBlockClass').mockReturnValue(mockBlockClass);
+            // Mock the BlockFactory.createBlock method
+            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
+            const mockBlockInstance = { type: 'test' };
+            BlockFactory.createBlock = jest.fn().mockReturnValue(mockBlockInstance);
             
             const result = Editor.getBlockInstance('test-block');
             
-            expect(getBlockClassSpy).toHaveBeenCalledWith('test-block');
-            expect(mockBlockClass).toHaveBeenCalled();
+            expect(BlockFactory.createBlock).toHaveBeenCalledWith('test-block', '', '', false);
             expect(result).toEqual({ type: 'test' });
         });
 
         it('should return null when block class not found', () => {
-            const getBlockClassSpy = jest.spyOn(Editor, 'getBlockClass').mockReturnValue(null);
+            // Mock the BlockFactory.createBlock method to throw an error
+            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
+            BlockFactory.createBlock = jest.fn().mockImplementation(() => {
+                throw new Error('Block not found');
+            });
             
             const result = Editor.getBlockInstance('unknown-block');
             
-            expect(getBlockClassSpy).toHaveBeenCalledWith('unknown-block');
+            expect(BlockFactory.createBlock).toHaveBeenCalledWith('unknown-block', '', '', false);
             expect(result).toBeNull();
         });
     });
@@ -294,194 +304,6 @@ describe('Editor Static Methods', () => {
             
             expect(BlockFactory.getBlockClass).toHaveBeenCalledWith('unknown');
             expect(result).toBeNull();
-        });
-    });
-
-    describe('legacy static methods (deprecated)', () => {
-        beforeEach(() => {
-            Editor._instances.set(mockElement, mockEditor);
-            
-            // Mock Toolbar for legacy methods
-            const Toolbar = require('../src/Toolbar.js').Toolbar;
-            Toolbar.ul = jest.fn();
-            Toolbar.ol = jest.fn();
-            Toolbar.sq = jest.fn();
-            Toolbar.h1 = jest.fn();
-            Toolbar.h2 = jest.fn();
-            Toolbar.h3 = jest.fn();
-            Toolbar.h4 = jest.fn();
-            Toolbar.h5 = jest.fn();
-            Toolbar.h6 = jest.fn();
-            Toolbar.code = jest.fn();
-            
-            // Mock Utils
-            const Utils = require('../src/Utils.js').Utils;
-            Utils.stripTags = jest.fn().mockReturnValue('test content');
-        });
-
-        describe('key method', () => {
-            it('should handle unordered list trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('* ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '* ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.ul).toHaveBeenCalled();
-                expect(Editor.currentBlock.innerHTML).toBe('');
-            });
-
-            it('should handle ordered list trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('1 ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '1 ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.ol).toHaveBeenCalled();
-            });
-
-            it('should handle task list trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('[] ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '[] ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.sq).toHaveBeenCalled();
-            });
-
-            it('should handle h1 trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('# ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '# ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.h1).toHaveBeenCalled();
-            });
-
-            it('should handle h2 trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('## ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '## ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.h2).toHaveBeenCalled();
-            });
-
-            it('should handle h6 trigger', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                const Utils = require('../src/Utils.js').Utils;
-                Utils.stripTags.mockReturnValue('###### ');
-                
-                const mockEvent = { key: ' ' };
-                Editor.currentBlock = { innerHTML: '###### ' };
-                
-                Editor.key(mockEvent);
-                
-                expect(Toolbar.h6).toHaveBeenCalled();
-            });
-
-            it('should call update after processing', () => {
-                const mockEvent = { key: 'a' };
-                
-                Editor.key(mockEvent);
-                
-                expect(mockEditor.update).toHaveBeenCalled();
-            });
-        });
-
-        describe('checkKeys method', () => {
-            it('should handle Enter key', () => {
-                const mockEvent = { key: 'Enter', shiftKey: false };
-                const handleEnterKeySpy = jest.spyOn(Editor, 'handleEnterKey').mockImplementation();
-                
-                Editor.checkKeys(mockEvent);
-                
-                expect(handleEnterKeySpy).toHaveBeenCalledWith(mockEvent);
-            });
-
-            it('should not handle Enter with shift key', () => {
-                const mockEvent = { key: 'Enter', shiftKey: true };
-                const handleEnterKeySpy = jest.spyOn(Editor, 'handleEnterKey').mockImplementation();
-                
-                Editor.checkKeys(mockEvent);
-                
-                expect(handleEnterKeySpy).not.toHaveBeenCalled();
-            });
-        });
-
-        describe('handleEnterKey method', () => {
-            beforeEach(() => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                Toolbar.code = jest.fn();
-            });
-
-            it('should create code block when triple backticks detected', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                Editor.keybuffer = ['`', '`', '`'];
-                
-                const mockEvent = { key: 'Enter' };
-                
-                Editor.handleEnterKey(mockEvent);
-                
-                expect(Toolbar.code).toHaveBeenCalled();
-            });
-
-            it('should add empty block when no backticks', () => {
-                Editor.keybuffer = [];
-                
-                const mockEvent = { 
-                    key: 'Enter',
-                    preventDefault: jest.fn()
-                };
-                
-                Editor.handleEnterKey(mockEvent);
-                
-                expect(mockEditor.addEmptyBlock).toHaveBeenCalled();
-                expect(mockEvent.preventDefault).toHaveBeenCalled();
-            });
-
-            it('should handle mixed keybuffer with backticks', () => {
-                const Toolbar = require('../src/Toolbar.js').Toolbar;
-                Editor.keybuffer = ['a', '`', '`', '`', 'b'];
-                
-                const mockEvent = { key: 'Enter' };
-                
-                Editor.handleEnterKey(mockEvent);
-                
-                expect(Toolbar.code).toHaveBeenCalled();
-            });
-
-            it('should stop counting at Enter key', () => {
-                Editor.keybuffer = ['`', '`', 'Enter', '`'];
-                
-                const mockEvent = { 
-                    key: 'Enter',
-                    preventDefault: jest.fn()
-                };
-                
-                Editor.handleEnterKey(mockEvent);
-                
-                expect(mockEditor.addEmptyBlock).toHaveBeenCalled();
-            });
         });
     });
 });
