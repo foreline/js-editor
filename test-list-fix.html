@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Enter Key Fix Test</title>
+    <style>
+        .editor-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .note-text {
+            min-height: 300px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .test-instructions {
+            background: #f0f8ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="editor-container">
+    <div class="test-instructions">
+        <h3>Test Instructions: Enter keypress at the last list item</h3>
+        <ol>
+            <li>Create an unordered list by typing <code>* Item 1</code> and pressing Enter</li>
+            <li>Add a second item by typing <code>Item 2</code> and pressing Enter</li>
+            <li>Add a third item by typing <code>Item 3</code></li>
+            <li>Position cursor at the end of the last item (Item 3) and press Enter</li>
+            <li><strong>Expected:</strong> A new empty list item should be created within the same list</li>
+            <li><strong>Before fix:</strong> A new default paragraph block would be created instead</li>
+        </ol>
+        <p><strong>Also test:</strong> Press Enter on an empty list item should exit the list and create a new paragraph block.</p>
+    </div>
+    
+    <div id="editor" class="editor"></div>
+</div>
+
+<script type="module">
+    import './src/css/editor.css';
+    import './src/css/prism-theme.css';
+    import '@popperjs/core';
+    import 'bootstrap';
+    import 'bootstrap/dist/css/bootstrap.min.css';
+    import '@fortawesome/fontawesome-free/css/all.min.css';
+    import { Editor } from './src/Editor.js';
+    import { EVENTS } from './src/utils/eventEmitter.js';
+
+    // Toolbar config for dynamic generation
+    const toolbarConfig = [
+        {
+            group: [
+                { class: 'editor-toolbar-ul', icon: 'fa-list', title: 'Bullet List' },
+                { class: 'editor-toolbar-ol', icon: 'fa-list-ol', title: 'Numbered List' },
+                { class: 'editor-toolbar-sq', icon: 'fa-check-square', title: 'Task List' }
+            ]
+        }
+    ];
+
+    const editor = new Editor({
+        // HTML container for WYSIWYG editing
+        holder: 'editor',
+        
+        // Toolbar configuration
+        toolbar: {
+            container: 'editor',
+            config: toolbarConfig
+        },
+        
+        // Initial content
+        content: '<p>Start typing here. Use * to create a bullet list, 1. for numbered list...</p>'
+    });
+
+    // Log events for debugging
+    editor.on(EVENTS.CONTENT_CHANGED, (content) => {
+        console.log('Content changed:', content);
+    });
+
+    editor.on(EVENTS.BLOCK_FOCUSED, (block) => {
+        console.log('Block focused:', block.dataset.blockType);
+    });
+</script>
+
+</body>
+</html>

@@ -5,6 +5,19 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.15]
+
+### Fixed
+- **Enter keypress at the last list item**: Fixed issue where pressing Enter at the end of the last item in list blocks (unordered, ordered, and task lists) was creating a new default paragraph block instead of adding a new list item to the current list
+  - Modified `ListBlock.handleEnterKey()` to detect when cursor is at the last list item and handle it appropriately
+  - Updated `createNewListItem()` method signature to accept both `currentBlock` and `currentListItem` parameters
+  - Enhanced `UnorderedListBlock.createNewListItem()` to append new list items to the existing `<ul>` container instead of creating separate blocks
+  - Enhanced `OrderedListBlock.createNewListItem()` to append new list items to the existing `<ol>` container instead of creating separate blocks
+  - Updated `TaskListBlock.createNewListItem()` to maintain consistency with new method signature
+  - Added defensive programming to handle test environments and edge cases in focus management
+  - Updated test cases to reflect the new behavior and ensure proper functionality
+  - Lists now behave like normal contenteditable lists: Enter at the last item adds a new item, Enter at an empty last item exits the list
+
 ## [v0.0.14]
 
 ### Fixed

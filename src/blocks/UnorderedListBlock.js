@@ -35,22 +35,46 @@ export class UnorderedListBlock extends ListBlock
 
     /**
      * Create a new unordered list item
-     * @param {HTMLElement} currentBlock
+     * @param {HTMLElement} currentBlock - The block containing the list
+     * @param {HTMLElement} currentListItem - The current list item
      */
-    createNewListItem(currentBlock) {
+    createNewListItem(currentBlock, currentListItem) {
+        // Find the ul element within the block
+        const ulElement = currentBlock && typeof currentBlock.querySelector === 'function' 
+            ? currentBlock.querySelector('ul') 
+            : null;
+        
+        if (!ulElement) {
+            return false;
+        }
+        
+        // Create new list item
         const newListItem = document.createElement('li');
-        newListItem.setAttribute('data-block-type', 'ul');
         newListItem.contentEditable = true;
         
-        // Insert after current block
-        currentBlock.after(newListItem);
+        // Append to the ul element
+        ulElement.appendChild(newListItem);
         
         // Focus on the new list item
-        Editor.setCurrentBlock(newListItem);
+        Editor.setCurrentBlock(currentBlock); // Keep the same block
         
         // Use requestAnimationFrame to ensure DOM is updated before focusing
         requestAnimationFrame(() => {
             newListItem.focus();
+            
+            // Place cursor at the beginning of the new list item
+            if (window.getSelection && newListItem.nodeType === Node.ELEMENT_NODE) {
+                try {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.setStart(newListItem, 0);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } catch (e) {
+                    // Silently fail for cursor positioning if it fails (e.g., in tests)
+                }
+            }
         });
         
         return true;

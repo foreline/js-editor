@@ -106,9 +106,15 @@ describe('UnorderedListBlock', () => {
 
   describe('createNewListItem', () => {
     test('creates new list item element with correct properties', () => {
-      const mockCurrentBlock = {
-        after: jest.fn()
+      const mockUlElement = {
+        appendChild: jest.fn()
       };
+      
+      const mockCurrentBlock = {
+        querySelector: jest.fn().mockReturnValue(mockUlElement)
+      };
+      
+      const mockCurrentListItem = {}; // Mock current list item parameter
       
       const mockNewListItem = {
         classList: {
@@ -122,21 +128,25 @@ describe('UnorderedListBlock', () => {
       
       document.createElement.mockReturnValueOnce(mockNewListItem);
       
-      const result = unorderedListBlock.createNewListItem(mockCurrentBlock);
+      const result = unorderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
       
       expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockNewListItem.classList.add).not.toHaveBeenCalledWith('block');
-      expect(mockNewListItem.setAttribute).toHaveBeenCalledWith('data-block-type', 'ul');
       expect(mockNewListItem.contentEditable).toBe(true);
-      expect(mockCurrentBlock.after).toHaveBeenCalledWith(mockNewListItem);
-      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockNewListItem);
+      expect(mockUlElement.appendChild).toHaveBeenCalledWith(mockNewListItem);
+      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockCurrentBlock);
       expect(result).toBe(true);
     });
 
     test('focuses on new list item after animation frame', (done) => {
-      const mockCurrentBlock = {
-        after: jest.fn()
+      const mockUlElement = {
+        appendChild: jest.fn()
       };
+      
+      const mockCurrentBlock = {
+        querySelector: jest.fn().mockReturnValue(mockUlElement)
+      };
+      
+      const mockCurrentListItem = {}; // Mock current list item parameter
       
       const mockNewListItem = {
         classList: {
@@ -157,7 +167,7 @@ describe('UnorderedListBlock', () => {
         done();
       });
       
-      unorderedListBlock.createNewListItem(mockCurrentBlock);
+      unorderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
     });
   });
 

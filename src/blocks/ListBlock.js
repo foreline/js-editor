@@ -58,10 +58,20 @@ export class ListBlock extends BaseBlock
             const isAtEnd = this.isCursorAtEndOfBlock(currentListItem, range);
             
             if (isAtEnd) {
-                // Create a new list item of the same type when cursor is at the end
-                event.preventDefault();
-                this.createNewListItem(currentListItem);
-                return true;
+                // Check if this is the last list item in the list
+                const listContainer = currentListItem.parentElement; // ul or ol
+                const allItems = listContainer ? listContainer.querySelectorAll('li') : [];
+                const isLastItem = allItems.length > 0 && allItems[allItems.length - 1] === currentListItem;
+                
+                if (isLastItem) {
+                    // Create a new list item in the same list when at the last item
+                    event.preventDefault();
+                    this.createNewListItem(currentBlock, currentListItem);
+                    return true;
+                } else {
+                    // For non-last items, let browser handle default behavior (split the item)
+                    return false;
+                }
             }
         }
         
@@ -102,9 +112,10 @@ export class ListBlock extends BaseBlock
 
     /**
      * Create a new list item of the same type
-     * @param {HTMLElement} currentBlock
+     * @param {HTMLElement} currentBlock - The block containing the list
+     * @param {HTMLElement} currentListItem - The current list item
      */
-    createNewListItem(currentBlock) {
+    createNewListItem(currentBlock, currentListItem) {
         // This will be implemented by subclasses
         return false;
     }

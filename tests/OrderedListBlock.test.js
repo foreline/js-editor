@@ -106,9 +106,15 @@ describe('OrderedListBlock', () => {
 
   describe('createNewListItem', () => {
     test('creates new list item element with correct properties', () => {
-      const mockCurrentBlock = {
-        after: jest.fn()
+      const mockOlElement = {
+        appendChild: jest.fn()
       };
+      
+      const mockCurrentBlock = {
+        querySelector: jest.fn().mockReturnValue(mockOlElement)
+      };
+      
+      const mockCurrentListItem = {}; // Mock current list item parameter
       
       const mockNewListItem = {
         classList: {
@@ -122,21 +128,25 @@ describe('OrderedListBlock', () => {
       
       document.createElement.mockReturnValueOnce(mockNewListItem);
       
-      const result = orderedListBlock.createNewListItem(mockCurrentBlock);
+      const result = orderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
       
       expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockNewListItem.classList.add).not.toHaveBeenCalledWith('block');
-      expect(mockNewListItem.setAttribute).toHaveBeenCalledWith('data-block-type', 'ol');
       expect(mockNewListItem.contentEditable).toBe(true);
-      expect(mockCurrentBlock.after).toHaveBeenCalledWith(mockNewListItem);
-      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockNewListItem);
+      expect(mockOlElement.appendChild).toHaveBeenCalledWith(mockNewListItem);
+      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockCurrentBlock);
       expect(result).toBe(true);
     });
 
     test('focuses on new list item after animation frame', (done) => {
-      const mockCurrentBlock = {
-        after: jest.fn()
+      const mockOlElement = {
+        appendChild: jest.fn()
       };
+      
+      const mockCurrentBlock = {
+        querySelector: jest.fn().mockReturnValue(mockOlElement)
+      };
+      
+      const mockCurrentListItem = {}; // Mock current list item parameter
       
       const mockNewListItem = {
         classList: {
@@ -157,7 +167,7 @@ describe('OrderedListBlock', () => {
         done();
       });
       
-      orderedListBlock.createNewListItem(mockCurrentBlock);
+      orderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
     });
   });
 

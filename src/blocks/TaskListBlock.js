@@ -110,9 +110,10 @@ export class TaskListBlock extends ListBlock
 
     /**
      * Create a new task list item
-     * @param {HTMLElement} currentBlock
+     * @param {HTMLElement} currentBlock - The block containing the list
+     * @param {HTMLElement} currentListItem - The current list item
      */
-    createNewListItem(currentBlock) {
+    createNewListItem(currentBlock, currentListItem) {
         // Find the ul element within the current block
         let ulElement = null;
         
