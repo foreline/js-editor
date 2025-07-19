@@ -39,27 +39,42 @@ export class KeyHandler
         const innerHtml = editorInstance.currentBlock.innerHTML;
         const text = Utils.stripTags(innerHtml);
 
-        // Check if the current block should be converted to a different type
-        if (editorInstance.checkAndConvertBlock(editorInstance.currentBlock)) {
-            // Block was converted, update and return
-            editorInstance.update();
-            return;
-        }
+        // Note: Block conversion is now primarily handled by the input event listener
+        // to avoid performance issues with excessive checking on every keystroke.
+        // This keypress handler focuses on special key behaviors.
 
-        // If no block conversion occurred, let the current block handle the key press
+        // Let the current block handle the key press immediately (for other behaviors)
         const currentBlock = Editor.currentBlock;
         if (currentBlock && currentBlock.dataset && currentBlock.dataset.blockType) {
             const blockType = currentBlock.dataset.blockType;
             const block = BlockFactory.createBlock(blockType);
             
             if (block.handleKeyPress(e, text)) {
-                Editor.update();
+                // Block handled the key press, update immediately
+                editorInstance.update();
                 return;
             }
         }
 
-        // Default behavior
-        Editor.update();
+        // For space key in paragraph blocks, check for potential conversion triggers
+        if (e.key === ' ' && editorInstance.currentBlock) {
+            const blockType = editorInstance.currentBlock.getAttribute('data-block-type');
+            if (blockType === 'p') {
+                // Use a timeout to allow the space character to be inserted first
+                setTimeout(() => {
+                    if (editorInstance.checkAndConvertBlock(editorInstance.currentBlock)) {
+                        editorInstance.update();
+                    } else {
+                        // Only update if no conversion occurred
+                        editorInstance.update();
+                    }
+                }, 50);
+                return;
+            }
+        }
+
+        // Default behavior - update immediately for other keys
+        editorInstance.update();
     }
 
     /**

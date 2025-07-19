@@ -202,6 +202,15 @@ export class EditorEventEmitter {
     }
 
     /**
+     * Check if there are any listeners for a specific event type
+     * @param {string} eventType - The event type
+     * @returns {boolean} True if there are listeners
+     */
+    hasListeners(eventType) {
+        return this.getListenerCount(eventType) > 0;
+    }
+
+    /**
      * Get all registered event types
      * @returns {Array<string>} Array of event types
      */

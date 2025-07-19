@@ -142,7 +142,7 @@ export class BaseBlock
      */
     static matchesMarkdownTrigger(text) {
         const triggers = this.getMarkdownTriggers();
-        return triggers.some(trigger => text === trigger);
+        return triggers.some(trigger => text.startsWith(trigger));
     }
 
     /**

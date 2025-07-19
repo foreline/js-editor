@@ -597,13 +597,23 @@ export class Editor
             }
             
             if (block) {
-                // Check if this block should be converted to a different type
-                // Use a small timeout to let the DOM update first
-                setTimeout(() => {
-                    if (this.checkAndConvertBlock(block)) {
-                        this.update();
+                // Only check for conversion on paragraph blocks to avoid performance issues
+                const blockType = block.getAttribute('data-block-type');
+                if (blockType === 'p' || blockType === 'paragraph') {
+                    // Get current text content
+                    const textContent = Utils.stripTags(block.innerHTML).trim();
+                    
+                    // Only check for conversion if text contains potential triggers
+                    if (textContent.match(/^(#{1,6}\s|[\*\-]\s|[\*\-]\s*\[[x\s]\]\s*|\d+\.?\s|>\s|```|~~~)/)) {
+                        // Check if this block should be converted to a different type
+                        // Use a small timeout to let the DOM update first
+                        setTimeout(() => {
+                            if (this.checkAndConvertBlock(block)) {
+                                this.update();
+                            }
+                        }, 50);
                     }
-                }, 10);
+                }
             }
         });
         
@@ -825,8 +835,30 @@ export class Editor
     {
         log('update()', 'Editor.');
         
+        // Cancel any pending update to avoid multiple rapid calls
+        if (this._updateTimeout) {
+            clearTimeout(this._updateTimeout);
+        }
+        
+        // Debounce the actual update to improve performance
+        this._updateTimeout = setTimeout(() => {
+            this._performUpdate();
+        }, 50);
+    }
+
+    /**
+     * Perform the actual update operation (private method)
+     * @private
+     */
+    _performUpdate() {
         let editorHtml = this.instance.innerHTML;
-        const markdownContent = Editor.html2md(editorHtml);
+        
+        // Only compute markdown if it's actually needed (performance optimization)
+        let markdownContent = '';
+        if (this.eventEmitter.hasListeners(EVENTS.EDITOR_UPDATED) || 
+            this.eventEmitter.hasListeners(EVENTS.CONTENT_CHANGED)) {
+            markdownContent = Editor.html2md(editorHtml);
+        }
         
         // Update timestamps for all blocks
         this.updateBlockTimestamps();
@@ -854,7 +886,7 @@ export class Editor
         // Update debug tooltips if debug mode is active
         if (this.debugMode) {
             // Use a slight delay to ensure DOM updates are complete
-            setTimeout(() => this.updateActiveBlockTooltip(), 50);
+            setTimeout(() => this.updateActiveBlockTooltip(), 10);
         }
     }
 
@@ -1393,7 +1425,7 @@ export class Editor
         }
 
         // Get the block type that should be created
-        const targetBlockType = new matchingBlockClass().getType();
+        const targetBlockType = new matchingBlockClass().type;
         
         // Don't convert if it's already the correct type
         if (currentBlockType === targetBlockType) {
@@ -1401,7 +1433,8 @@ export class Editor
         }
 
         // Don't convert non-paragraph blocks (to avoid conflicts)
-        if (currentBlockType !== BlockType.PARAGRAPH) {
+        // Handle both 'p' (legacy/HTML) and 'paragraph' (current) formats
+        if (currentBlockType !== 'p' && currentBlockType !== 'paragraph') {
             return false;
         }
 

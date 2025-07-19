@@ -151,29 +151,7 @@ export class BlockFactory
         }
     }
 
-    /**
-     * Get all registered block classes
-     * @returns {Array} - Array of block classes
-     */
-    static getAllBlockClasses() {
-        return [
-            ParagraphBlock,
-            H1Block,
-            H2Block,
-            H3Block,
-            H4Block,
-            H5Block,
-            H6Block,
-            UnorderedListBlock,
-            OrderedListBlock,
-            TaskListBlock,
-            CodeBlock,
-            QuoteBlock,
-            DelimiterBlock,
-            TableBlock,
-            ImageBlock
-        ];
-    }
+
 
     /**
      * Find block class that matches markdown trigger
@@ -182,14 +160,23 @@ export class BlockFactory
      */
     static findBlockClassForTrigger(text) {
         const blockClasses = this.getAllBlockClasses();
+        let bestMatch = null;
+        let longestTrigger = '';
         
         for (const blockClass of blockClasses) {
             if (blockClass.matchesMarkdownTrigger && blockClass.matchesMarkdownTrigger(text)) {
-                return blockClass;
+                // Get the matching trigger from this block class
+                const triggers = blockClass.getMarkdownTriggers ? blockClass.getMarkdownTriggers() : [];
+                for (const trigger of triggers) {
+                    if (text.startsWith(trigger) && trigger.length > longestTrigger.length) {
+                        longestTrigger = trigger;
+                        bestMatch = blockClass;
+                    }
+                }
             }
         }
         
-        return null;
+        return bestMatch;
     }
 
     /**
