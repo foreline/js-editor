@@ -33,9 +33,16 @@ describe('Block Conversion Feature', () => {
         // Setup Utils mock
         Utils.stripTags = jest.fn().mockReturnValue('test content');
 
-        // Setup BlockFactory mocks
+        // Setup comprehensive BlockFactory mocks
         BlockFactory.findBlockClassForTrigger = jest.fn();
-        BlockFactory.createBlock = jest.fn();
+        BlockFactory.createBlock = jest.fn().mockReturnValue({
+            _type: 'p',
+            _content: '',
+            _html: '',
+            _nested: false
+        });
+        BlockFactory.getAllBlockClasses = jest.fn().mockReturnValue([]);
+        BlockFactory.getBlockClass = jest.fn();
 
         // Create editor instance
         editor = new Editor({ id: 'test-editor' });

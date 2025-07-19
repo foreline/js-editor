@@ -53,7 +53,24 @@ describe('Editor Instance Methods', () => {
         document.createElement = jest.fn().mockReturnValue({
             id: '',
             className: '',
-            appendChild: jest.fn()
+            classList: { 
+                add: jest.fn(), 
+                remove: jest.fn(), 
+                toggle: jest.fn(), 
+                contains: jest.fn().mockReturnValue(false) 
+            },
+            appendChild: jest.fn(),
+            innerHTML: '',
+            textContent: '',
+            setAttribute: jest.fn(),
+            getAttribute: jest.fn(),
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+            focus: jest.fn(),
+            blur: jest.fn(),
+            parentNode: null,
+            children: [],
+            style: {}
         });
         document.querySelector = jest.fn().mockReturnValue(mockContainer);
         document.addEventListener = jest.fn();

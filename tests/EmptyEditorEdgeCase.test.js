@@ -30,6 +30,38 @@ describe('Empty Editor Edge Case Fix', () => {
         
         // Create mock editor instance
         const editorElement = document.getElementById('test-editor');
+        
+        // Create mock block elements for testing
+        const mockBlocks = [
+            {
+                innerHTML: 'First block content',
+                textContent: 'First block content',
+                setAttribute: jest.fn(),
+                getAttribute: jest.fn().mockReturnValue(null),
+                classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn() },
+                cloneNode: jest.fn().mockReturnValue({})
+            },
+            {
+                innerHTML: 'Second block content', 
+                textContent: 'Second block content',
+                setAttribute: jest.fn(),
+                getAttribute: jest.fn().mockReturnValue(null),
+                classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn() },
+                cloneNode: jest.fn().mockReturnValue({})
+            },
+            {
+                innerHTML: 'Third block content',
+                textContent: 'Third block content', 
+                setAttribute: jest.fn(),
+                getAttribute: jest.fn().mockReturnValue(null),
+                classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn() },
+                cloneNode: jest.fn().mockReturnValue({})
+            }
+        ];
+        
+        // Mock querySelectorAll to return our mock blocks
+        editorElement.querySelectorAll = jest.fn().mockReturnValue(mockBlocks);
+        
         mockEditor = {
             instance: editorElement,
             eventEmitter: mockEventEmitter,

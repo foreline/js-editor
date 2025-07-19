@@ -22,11 +22,47 @@ describe('Toolbar', () => {
         // Mock DOM methods
         document.createElement = jest.fn().mockReturnValue({
             className: '',
+            classList: { 
+                add: jest.fn(), 
+                remove: jest.fn(), 
+                toggle: jest.fn(), 
+                contains: jest.fn().mockReturnValue(false) 
+            },
             appendChild: jest.fn(),
-            addEventListener: jest.fn()
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+            setAttribute: jest.fn(),
+            getAttribute: jest.fn(),
+            innerHTML: '',
+            textContent: '',
+            style: {},
+            focus: jest.fn(),
+            blur: jest.fn(),
+            parentNode: null,
+            children: []
         });
         
-        document.querySelector = jest.fn();
+        document.querySelector = jest.fn().mockReturnValue({
+            classList: { 
+                add: jest.fn(), 
+                remove: jest.fn(), 
+                toggle: jest.fn(), 
+                contains: jest.fn().mockReturnValue(false) 
+            },
+            className: '',
+            appendChild: jest.fn(),
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+            setAttribute: jest.fn(),
+            getAttribute: jest.fn(),
+            innerHTML: '',
+            textContent: '',
+            style: {},
+            focus: jest.fn(),
+            blur: jest.fn(),
+            parentNode: null,
+            children: []
+        });
         document.querySelectorAll = jest.fn().mockReturnValue([]);
         
         // Mock Toolbar.after method to avoid circular calls
