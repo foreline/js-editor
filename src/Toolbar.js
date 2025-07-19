@@ -59,42 +59,72 @@ export const Toolbar = {
     h1: () =>
     {
         log('h1()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h1>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h1')) {
+            document.execCommand('formatBlock', false, '<h1>');
+        }
+        
         Toolbar.after();
     },
     
     h2: () =>
     {
         log('h2()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h2>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h2')) {
+            document.execCommand('formatBlock', false, '<h2>');
+        }
+        
         Toolbar.after();
     },
     
     h3: () =>
     {
         log('h3()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h3>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h3')) {
+            document.execCommand('formatBlock', false, '<h3>');
+        }
+        
         Toolbar.after();
     },
     
     h4: () =>
     {
         log('h4()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h4>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h4')) {
+            document.execCommand('formatBlock', false, '<h4>');
+        }
+        
         Toolbar.after();
     },
     
     h5: () =>
     {
         log('h5()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h5>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h5')) {
+            document.execCommand('formatBlock', false, '<h5>');
+        }
+        
         Toolbar.after();
     },
     
     h6: () =>
     {
         log('h6()', 'Toolbar.');
-        document.execCommand('formatBlock', false, '<h6>');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('h6')) {
+            document.execCommand('formatBlock', false, '<h6>');
+        }
+        
         Toolbar.after();
     },
     
@@ -143,7 +173,12 @@ export const Toolbar = {
     ul: () =>
     {
         log('ul()', 'Toolbar.');
-        document.execCommand('insertUnorderedList');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('ul')) {
+            document.execCommand('insertUnorderedList');
+        }
+        
         Toolbar.after();
     },
     
@@ -153,7 +188,12 @@ export const Toolbar = {
     ol: () =>
     {
         log('ol()', 'Toolbar.');
-        document.execCommand('insertOrderedList');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('ol')) {
+            document.execCommand('insertOrderedList');
+        }
+        
         Toolbar.after();
     },
     
@@ -164,12 +204,15 @@ export const Toolbar = {
     {
         log('sq()', 'Toolbar.');
         
-        const currentBlock = Editor.currentBlock;
-        if (!currentBlock) return;
-        
-        // Create task list block using BlockFactory
-        const taskBlock = BlockFactory.createBlock('sq');
-        taskBlock.applyTransformation();
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('sq')) {
+            const currentBlock = Editor.currentBlock;
+            if (!currentBlock) return;
+            
+            // Create task list block using BlockFactory
+            const taskBlock = BlockFactory.createBlock('sq');
+            taskBlock.applyTransformation();
+        }
         
         Toolbar.after();
     },
@@ -180,17 +223,20 @@ export const Toolbar = {
     code: () =>
     {
         log('code()', 'Toolbar.');
-    
-        const range = window.getSelection().getRangeAt(0);
-        const selectedText = range.toString();
         
-        if ( 1 || selectedText ) {
-            document.execCommand('formatBlock', false, '<pre>');
-        } else {
-            document.execCommand('insertHTML', false, '<pre></pre><p></p>');
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('code')) {
+            const range = window.getSelection().getRangeAt(0);
+            const selectedText = range.toString();
+            
+            if ( 1 || selectedText ) {
+                document.execCommand('formatBlock', false, '<pre>');
+            } else {
+                document.execCommand('insertHTML', false, '<pre></pre><p></p>');
+            }
+            
+            Toolbar.br();
         }
-        
-        Toolbar.br();
         
         Toolbar.after();
     },
@@ -214,12 +260,15 @@ export const Toolbar = {
     {
         log('table()', 'Toolbar.');
         
-        const currentBlock = Editor.currentBlock;
-        if (!currentBlock) return;
-        
-        // Create table block and apply transformation
-        const tableBlock = BlockFactory.createBlock('table');
-        tableBlock.applyTransformation();
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('table')) {
+            const currentBlock = Editor.currentBlock;
+            if (!currentBlock) return;
+            
+            // Create table block and apply transformation
+            const tableBlock = BlockFactory.createBlock('table');
+            tableBlock.applyTransformation();
+        }
         
         Toolbar.after();
     },
@@ -231,12 +280,35 @@ export const Toolbar = {
     {
         log('image()', 'Toolbar.');
         
-        const currentBlock = Editor.currentBlock;
-        if (!currentBlock) return;
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('image')) {
+            const currentBlock = Editor.currentBlock;
+            if (!currentBlock) return;
+            
+            // Create image block and apply transformation
+            const imageBlock = BlockFactory.createBlock('image');
+            imageBlock.applyTransformation();
+        }
         
-        // Create image block and apply transformation
-        const imageBlock = BlockFactory.createBlock('image');
-        imageBlock.applyTransformation();
+        Toolbar.after();
+    },
+
+    /**
+     * Inserts quote block
+     */
+    quote: () =>
+    {
+        log('quote()', 'Toolbar.');
+        
+        // Try to convert current block, fallback to legacy behavior
+        if (!Editor.convertCurrentBlockOrCreate('quote')) {
+            const currentBlock = Editor.currentBlock;
+            if (!currentBlock) return;
+            
+            // Create quote block and apply transformation
+            const quoteBlock = BlockFactory.createBlock('quote');
+            quoteBlock.applyTransformation();
+        }
         
         Toolbar.after();
     },

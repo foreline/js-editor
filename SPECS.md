@@ -101,7 +101,7 @@ The JS Editor project is a web-based rich text editor designed to provide users 
    - Export methods return clean content without metadata or editor-specific markup.
    - Handle edge cases like empty content and malformed blocks gracefully.
 
-7. **Block Architecture**:
+## Block Architecture
    - Implement BlockInterface contract for consistent block behavior.
    - All blocks implement required methods: `handleKeyPress()`, `handleEnterKey()`, `toMarkdown()`, `toHtml()`, `applyTransformation()`.
    - All blocks provide static methods: `getMarkdownTriggers()`, `getToolbarConfig()`, `getDisabledButtons()`.

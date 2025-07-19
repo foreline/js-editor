@@ -1551,6 +1551,90 @@ export class Editor
             // Silently fail for cursor positioning
         }
     }
+
+    /**
+     * Convert current block to target type or create new block if conversion is not possible
+     * @param {string} targetBlockType - The target block type to convert to
+     * @param {Object} options - Optional parameters for block creation
+     * @returns {boolean} - true if conversion or creation was successful
+     */
+    convertCurrentBlockOrCreate(targetBlockType, options = {}) {
+        log('convertCurrentBlockOrCreate()', 'Editor.');
+        
+        const currentBlock = this.currentBlock;
+        if (!currentBlock) {
+            // No current block, create a new one
+            return this.createNewBlock(targetBlockType, options);
+        }
+
+        const currentBlockType = currentBlock.getAttribute('data-block-type');
+        
+        // If current block is a paragraph with content, convert it
+        if (currentBlockType === BlockType.PARAGRAPH) {
+            // Get current content
+            const textContent = currentBlock.textContent || '';
+            
+            // For conversion, we simulate a trigger that matches the target type
+            const triggerText = this.generateTriggerForBlockType(targetBlockType, textContent);
+            
+            // Use existing conversion logic
+            return this.convertBlockType(currentBlock, targetBlockType, triggerText);
+        }
+        
+        // For non-paragraph blocks or empty paragraphs, create a new block after current
+        return this.createNewBlock(targetBlockType, options);
+    }
+
+    /**
+     * Generate appropriate trigger text for a given block type
+     * @param {string} blockType - The block type to generate trigger for
+     * @param {string} existingContent - Existing content to preserve
+     * @returns {string} - The trigger text with existing content
+     */
+    generateTriggerForBlockType(blockType, existingContent = '') {
+        const blockClass = BlockFactory.getBlockClass(blockType);
+        if (!blockClass || typeof blockClass.getMarkdownTriggers !== 'function') {
+            return existingContent;
+        }
+        
+        const triggers = blockClass.getMarkdownTriggers();
+        if (triggers.length === 0) {
+            return existingContent;
+        }
+        
+        // Use the first trigger and append existing content
+        return triggers[0] + existingContent;
+    }
+
+    /**
+     * Create a new block of the specified type
+     * @param {string} blockType - The type of block to create
+     * @param {Object} options - Optional parameters for block creation
+     * @returns {boolean} - true if creation was successful
+     */
+    createNewBlock(blockType, options = {}) {
+        try {
+            const newBlock = BlockFactory.createBlock(blockType);
+            if (!newBlock) {
+                return false;
+            }
+            
+            // Apply the transformation to create the block
+            newBlock.applyTransformation();
+            
+            // Emit block creation event
+            this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+                blockType: blockType,
+                options: options,
+                timestamp: Date.now()
+            });
+            
+            return true;
+        } catch (error) {
+            logWarning('Error creating new block: ' + error.message, 'Editor.createNewBlock()');
+            return false;
+        }
+    }
     
     // Static backward compatibility methods - these delegate to the first editor instance
     static getMarkdown() {
@@ -1675,6 +1759,14 @@ export class Editor
         const firstInstance = Array.from(Editor._instances.values())[0];
         if (firstInstance) {
             return firstInstance.checkAndConvertBlock(blockElement);
+        }
+        return false;
+    }
+    
+    static convertCurrentBlockOrCreate(targetBlockType, options = {}) {
+        const firstInstance = Array.from(Editor._instances.values())[0];
+        if (firstInstance) {
+            return firstInstance.convertCurrentBlockOrCreate(targetBlockType, options);
         }
         return false;
     }

@@ -5,6 +5,27 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.17]
+
+### Added
+- **Block Conversion using Toolbar Buttons**: Implemented comprehensive block conversion functionality for all toolbar buttons
+  - Added `convertCurrentBlockOrCreate()` method to Editor class that intelligently converts current paragraph blocks or creates new blocks when conversion isn't possible
+  - Added `generateTriggerForBlockType()` method to generate appropriate markdown triggers for different block types during conversion
+  - Added `createNewBlock()` method as a unified interface for creating new blocks with proper event emission
+  - Added static wrapper `Editor.convertCurrentBlockOrCreate()` for backward compatibility
+  - **Updated Toolbar Methods**: All block-creating toolbar buttons now use the conversion logic:
+    - `h1()`, `h2()`, `h3()`, `h4()`, `h5()`, `h6()` - Convert paragraphs to headers or create new header blocks
+    - `ul()`, `ol()` - Convert paragraphs to lists or create new list blocks
+    - `sq()` - Convert paragraphs to task lists or create new task list blocks
+    - `code()` - Convert paragraphs to code blocks or create new code blocks
+    - `table()` - Convert paragraphs to tables or create new table blocks
+    - `image()` - Convert paragraphs to image blocks or create new image blocks
+    - `quote()` - Added new quote toolbar method with conversion support
+  - **Content Preservation**: When converting blocks, all existing content is preserved and properly positioned in the new block structure
+  - **Smart Behavior**: Conversion only occurs from paragraph blocks to other types; other block types trigger creation of new blocks
+  - **Event Consistency**: Both `BLOCK_CONVERTED` and `BLOCK_CREATED` events are emitted appropriately depending on the action taken
+  - **Fallback Compatibility**: All methods maintain backward compatibility with legacy `document.execCommand` behavior when conversion fails
+
 ## [v0.0.16]
 
 ### Added
