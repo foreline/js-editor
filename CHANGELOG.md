@@ -5,6 +5,11 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.18]
+
+### Fixed
+- **Block conversion using special key sequences**: Fixed issue where typing markdown sequences like `# `, `- `, `* `, `1 `, `1. ` followed by a space would not convert paragraph blocks to corresponding block types (headers, lists, etc.). The KeyHandler was only checking for block type 'p' but ParagraphBlock renders with data-block-type 'paragraph'. Updated KeyHandler.js to check for both 'p' and 'paragraph' block types.
+
 ## [v0.0.17]
 
 ### Added

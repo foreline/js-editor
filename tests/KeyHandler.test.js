@@ -22,7 +22,7 @@ describe('KeyHandler', () => {
         mockCurrentBlock = {
             innerHTML: '<p>test content</p>',
             dataset: { blockType: 'p' },
-            getAttribute: jest.fn(),
+            getAttribute: jest.fn((attr) => attr === 'data-block-type' ? 'p' : null),
             id: 'block-1'
         };
 
@@ -97,13 +97,20 @@ describe('KeyHandler', () => {
         });
 
         it('should handle block conversion through checkAndConvertBlock', () => {
+            jest.useFakeTimers();
             mockEditorInstance.checkAndConvertBlock.mockReturnValue(true);
             Utils.stripTags.mockReturnValue('# ');
+            mockEvent.key = ' '; // Space key is required to trigger block conversion
 
             KeyHandler.handleKeyPress(mockEvent, mockEditorInstance);
 
+            // Fast-forward time to trigger the setTimeout
+            jest.advanceTimersByTime(50);
+
             expect(mockEditorInstance.checkAndConvertBlock).toHaveBeenCalledWith(mockCurrentBlock);
             expect(mockEditorInstance.update).toHaveBeenCalled();
+            
+            jest.useRealTimers();
         });
 
         it('should delegate to current block handleKeyPress', () => {

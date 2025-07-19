@@ -59,7 +59,7 @@ export class KeyHandler
         // For space key in paragraph blocks, check for potential conversion triggers
         if (e.key === ' ' && editorInstance.currentBlock) {
             const blockType = editorInstance.currentBlock.getAttribute('data-block-type');
-            if (blockType === 'p') {
+            if (blockType === 'p' || blockType === 'paragraph') {
                 // Use a timeout to allow the space character to be inserted first
                 setTimeout(() => {
                     if (editorInstance.checkAndConvertBlock(editorInstance.currentBlock)) {
