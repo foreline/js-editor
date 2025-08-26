@@ -67,15 +67,96 @@ const editor = new Editor({
     readonly: false,          // Make editor read-only
     minHeight: '200px',       // Minimum height
     maxHeight: '500px',       // Maximum height
-    toolbar: {                // Toolbar configuration
-        groups: ['basic', 'blocks', 'lists'],
-        sticky: true,
-        hideOnFocus: false
-    },
+    toolbar: true,            // Enable default toolbar (true/false or config object)
     markdown: '# Hello World', // Initial markdown content
     html: '<h1>Hello World</h1>' // Initial HTML content
 });
 ```
+
+### Toolbar Configuration
+
+The toolbar can be configured in several ways:
+
+```javascript
+// 1. Default toolbar (recommended)
+const editor = new Editor({
+    id: 'my-editor',
+    toolbar: true  // or omit this property
+});
+
+// 2. Disable toolbar
+const editor = new Editor({
+    id: 'my-editor',
+    toolbar: false
+});
+
+// 3. Custom toolbar as array
+const editor = new Editor({
+    id: 'my-editor',
+    toolbar: [
+        {
+            group: [
+                { class: 'editor-toolbar-bold', icon: 'fa-bold', title: 'Bold' },
+                { class: 'editor-toolbar-italic', icon: 'fa-italic', title: 'Italic' }
+            ]
+        },
+        {
+            group: [
+                { class: 'editor-toolbar-ul', icon: 'fa-list', title: 'List' },
+                { class: 'editor-toolbar-code', icon: 'fa-code', title: 'Code' }
+            ]
+        }
+    ]
+});
+
+// 4. Custom toolbar as config object
+const editor = new Editor({
+    id: 'my-editor',
+    toolbar: {
+        config: [
+            {
+                group: [
+                    { class: 'editor-toolbar-bold', icon: 'fa-bold', title: 'Bold' },
+                    { class: 'editor-toolbar-italic', icon: 'fa-italic', title: 'Italic' }
+                ]
+            }
+        ]
+    }
+});
+```
+
+#### Available Toolbar Buttons
+
+The following toolbar buttons are available:
+
+**History:**
+- `editor-toolbar-undo` - Undo action
+- `editor-toolbar-redo` - Redo action
+
+**Headers (typically in dropdown):**
+- `editor-toolbar-header1` to `editor-toolbar-header6` - Headers H1-H6
+- `editor-toolbar-paragraph` - Paragraph text
+
+**Text Formatting:**
+- `editor-toolbar-bold` - Bold text
+- `editor-toolbar-italic` - Italic text
+- `editor-toolbar-underline` - Underlined text
+- `editor-toolbar-strikethrough` - Strikethrough text
+
+**Lists:**
+- `editor-toolbar-ul` - Unordered list
+- `editor-toolbar-ol` - Ordered list
+- `editor-toolbar-sq` - Task list (checkboxes)
+
+**Blocks:**
+- `editor-toolbar-code` - Code block
+- `editor-toolbar-table` - Table
+- `editor-toolbar-image` - Image
+
+**View modes:**
+- `editor-toolbar-text` - Text view
+- `editor-toolbar-markdown` - Markdown view
+- `editor-toolbar-html` - HTML view
 
 ## API Reference
 

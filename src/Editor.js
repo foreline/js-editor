@@ -59,20 +59,96 @@ export class Editor
         // Create instance-specific event emitter
         this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
         
-        // Initialize toolbar
-        const toolbarOptions = {
-            id: options.toolbarId ?? null,
-            container: document.querySelector('.editor-container'),
-            config: options.toolbar,
-            debug: this.debug,
-            editorInstance: this
-        };
-        Toolbar.init(toolbarOptions);
-
+        // Initialize the editor first
         this.init(options);
+        
+        // Now initialize toolbar after instance is created
+        this.initializeToolbar(options);
         
         // Register this instance
         Editor._instances.set(this.instance, this);
+    }
+    
+    /**
+     * Initialize toolbar after editor instance is created
+     * @param {object} options 
+     */
+    initializeToolbar(options) {
+        // Initialize toolbar - use the editor instance element's parent as container
+        const toolbarContainer = this.instance.parentElement || this.instance;
+        const defaultToolbarConfig = [
+            {
+                group: [
+                    { class: 'editor-toolbar-undo', icon: 'fa-undo', title: 'undo' },
+                    { class: 'editor-toolbar-redo', icon: 'fa-redo', title: 'redo' }
+                ]
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-header1', label: 'Header 1' },
+                    { class: 'editor-toolbar-header2', label: 'Header 2' },
+                    { class: 'editor-toolbar-header3', label: 'Header 3' },
+                    { class: 'editor-toolbar-header4', label: 'Header 4' },
+                    { class: 'editor-toolbar-header5', label: 'Header 5' },
+                    { class: 'editor-toolbar-header6', label: 'Header 6' },
+                    { class: 'editor-toolbar-paragraph', label: 'Paragraph' }
+                ],
+                dropdown: true,
+                icon: 'fa-heading',
+                id: 'dropdownMenuHeader'
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-bold', icon: 'fa-bold', title: 'bold' },
+                    { class: 'editor-toolbar-italic', icon: 'fa-italic', title: 'italic' },
+                    { class: 'editor-toolbar-underline', icon: 'fa-underline', title: 'underline' },
+                    { class: 'editor-toolbar-strikethrough', icon: 'fa-strikethrough', title: 'strikethrough' }
+                ]
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-ul', icon: 'fa-list', title: 'unordered list' },
+                    { class: 'editor-toolbar-ol', icon: 'fa-list-ol', title: 'ordered list' },
+                    { class: 'editor-toolbar-sq', icon: 'fa-list-check', title: 'task list' }
+                ]
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-table', icon: 'fa-table', title: 'insert table' },
+                    { class: 'editor-toolbar-image', icon: 'fa-image', title: 'insert image' }
+                ]
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-code', icon: 'fa-code', title: 'code block' }
+                ]
+            },
+            {
+                group: [
+                    { class: 'editor-toolbar-text', icon: 'fa-paragraph', title: 'text view', disabled: true },
+                    { class: 'editor-toolbar-markdown', icon: 'fa-brands fa-markdown', title: 'markdown view' },
+                    { class: 'editor-toolbar-html', icon: 'fa-brands fa-html5', title: 'html view' }
+                ]
+            }
+        ];
+        
+        // Use provided toolbar config or default, only initialize if toolbar is not disabled
+        const toolbarConfig = options.toolbar === false ? null : (
+            typeof options.toolbar === 'object' && options.toolbar.config ? options.toolbar.config :
+            typeof options.toolbar === 'object' && Array.isArray(options.toolbar) ? options.toolbar :
+            defaultToolbarConfig
+        );
+        
+        if (toolbarConfig) {
+            const toolbarOptions = {
+                id: options.toolbarId ?? null,
+                container: toolbarContainer,
+                config: toolbarConfig,
+                debug: this.debug,
+                editorInstance: this
+            };
+            Toolbar.init(toolbarOptions);
+        }
     }
     
     /**
