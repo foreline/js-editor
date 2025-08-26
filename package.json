@@ -1,18 +1,56 @@
 {
   "name": "js-editor",
   "version": "0.0.1",
-  "description": "JavaScript WYSIWYG editor",
-  "main": "index.html",
+  "type": "module",
+  "description": "A modern JavaScript WYSIWYG editor with block-based architecture",
+  "main": "dist/js-editor.cjs.js",
+  "module": "dist/js-editor.es.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/js-editor.es.js",
+      "require": "./dist/js-editor.cjs.js"
+    },
+    "./css": "./dist/style.css",
+    "./css/editor": "./dist/editor.css",
+    "./css/prism": "./dist/prism-theme.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:lib": "vite build --mode library && node scripts/post-build.js",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "verify": "node scripts/verify-package.js",
+    "prepublishOnly": "npm run test && npm run build:lib && npm run verify"
   },
   "author": "",
   "license": "MIT",
+  "keywords": [
+    "editor",
+    "wysiwyg",
+    "javascript",
+    "markdown",
+    "blocks",
+    "rich-text"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/js-editor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/js-editor/issues"
+  },
+  "homepage": "https://github.com/your-username/js-editor#readme",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.5.1",
     "@popperjs/core": "^2.11.8",

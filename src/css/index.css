@@ -1,0 +1,10 @@
+/**
+ * JS Editor - Main Stylesheet
+ * Import this file to get all editor styles
+ */
+
+/* Core editor styles */
+@import './editor.css';
+
+/* Syntax highlighting theme */
+@import './prism-theme.css';

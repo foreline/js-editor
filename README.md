@@ -2,6 +2,10 @@
 
 WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and block-based content management system.
 
+**Available as a Universal Library!** Install via npm: `npm install js-editor`
+
+📖 **[Library Documentation](./LIBRARY.md)** - Learn how to use JS Editor as a library in your projects.
+
 ## Features
 
 - **Block-based architecture**: Modular content management with individual block types.
@@ -15,8 +19,28 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 - **Interactive checklists**: Task lists with clickable checkboxes supporting markdown syntax `- [ ]` and `- [x]`.
 - **Table support**: Markdown tables with Tab navigation, cell editing, and dynamic row creation.
 - **Image support**: Drag & drop image upload, URL insertion, and resizable images with markdown syntax `![alt](src)`.
+- **Universal library**: Available as CommonJS and ES modules for easy integration.
 
-## Setup
+## Library Usage
+
+### Quick Start
+
+```bash
+npm install js-editor
+```
+
+```javascript
+import Editor from 'js-editor';
+import 'js-editor/css';
+
+const editor = new Editor({
+    id: 'my-editor'
+});
+```
+
+See [LIBRARY.md](./LIBRARY.md) for complete documentation.
+
+## Development Setup
 
 Install dependencies:
 
