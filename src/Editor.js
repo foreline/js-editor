@@ -1071,10 +1071,8 @@ export class Editor
             // Create and add a new default block
             const newBlock = this.addEmptyBlock();
             
-            // Update the editor to ensure everything is in sync
-            setTimeout(() => {
-                this.update();
-            }, 10);
+            // No need to call update() here as this method is already called from within the update cycle
+            // The newly created block will be processed by the current update cycle
             
             return newBlock;
         }
@@ -1666,14 +1664,19 @@ export class Editor
      */
     convertCurrentBlockOrCreate(targetBlockType, options = {}) {
         log('convertCurrentBlockOrCreate()', 'Editor.');
+        console.log('convertCurrentBlockOrCreate called with:', targetBlockType);
         
         const currentBlock = this.currentBlock;
+        console.log('Current block:', currentBlock);
+        
         if (!currentBlock) {
             // No current block, create a new one
+            console.log('No current block, calling createNewBlock');
             return this.createNewBlock(targetBlockType, options);
         }
 
         const currentBlockType = currentBlock.getAttribute('data-block-type');
+        console.log('Current block type:', currentBlockType);
         
         // If current block is a paragraph with content, convert it
         if (currentBlockType === BlockType.PARAGRAPH) {
@@ -1688,6 +1691,7 @@ export class Editor
         }
         
         // For non-paragraph blocks or empty paragraphs, create a new block after current
+        console.log('Creating new block after current');
         return this.createNewBlock(targetBlockType, options);
     }
 
@@ -1720,23 +1724,69 @@ export class Editor
      */
     createNewBlock(blockType, options = {}) {
         try {
+            console.log('createNewBlock called with:', blockType);
+            
+            // Ensure there's a current block context
+            if (!this.currentBlock) {
+                console.log('No current block, ensuring default block');
+                this.ensureDefaultBlock();
+            }
+            
+            // Create the block object
             const newBlock = BlockFactory.createBlock(blockType);
+            console.log('Created block object:', newBlock);
             if (!newBlock) {
+                console.log('BlockFactory.createBlock returned null');
                 return false;
             }
             
-            // Apply the transformation to create the block
-            newBlock.applyTransformation();
+            // Convert block to HTML element
+            const htmlBlock = Parser.html(newBlock);
+            console.log('Converted to HTML block:', htmlBlock);
+            if (!htmlBlock) {
+                console.log('Parser.html returned null');
+                return false;
+            }
+            
+            // Generate unique block ID
+            const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            htmlBlock.setAttribute('data-block-id', blockId);
+            htmlBlock.setAttribute('data-timestamp', Date.now().toString());
+            
+            // Add the block to the DOM
+            const currentBlock = this.currentBlock;
+            if (!currentBlock) {
+                console.log('Appending to instance');
+                this.instance.appendChild(htmlBlock);
+            } else {
+                console.log('Adding after current block');
+                currentBlock.after(htmlBlock);
+            }
+            
+            // Update current block reference
+            this.setCurrentBlock(htmlBlock);
+            
+            // For list blocks, focus on the first list item
+            if (blockType === 'ul' || blockType === 'ol') {
+                const listItem = htmlBlock.querySelector('li');
+                if (listItem) {
+                    listItem.focus();
+                }
+            }
             
             // Emit block creation event
             this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+                blockId: blockId,
                 blockType: blockType,
                 options: options,
+                position: Array.from(this.instance.querySelectorAll('.block')).indexOf(htmlBlock),
                 timestamp: Date.now()
-            });
+            }, { source: 'editor.create' });
             
+            console.log('Block creation successful');
             return true;
         } catch (error) {
+            console.error('Error in createNewBlock:', error);
             logWarning('Error creating new block: ' + error.message, 'Editor.createNewBlock()');
             return false;
         }

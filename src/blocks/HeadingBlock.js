@@ -3,6 +3,7 @@
 import {BaseBlock} from "@/blocks/BaseBlock";
 import {BlockType} from "@/BlockType";
 import {Toolbar} from "@/Toolbar";
+import {Editor} from "@/Editor";
 
 /**
  * Heading block types (H1-H6)
@@ -40,13 +41,41 @@ export class HeadingBlock extends BaseBlock
      * Apply heading transformation via toolbar
      */
     applyTransformation() {
-        switch(this.level) {
-            case 1: Toolbar.h1(); break;
-            case 2: Toolbar.h2(); break;
-            case 3: Toolbar.h3(); break;
-            case 4: Toolbar.h4(); break;
-            case 5: Toolbar.h5(); break;
-            case 6: Toolbar.h6(); break;
+        // Get the current block and convert it to a heading
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Update block attributes
+        currentBlock.setAttribute('data-block-type', `h${this.level}`);
+        currentBlock.className = `block block-h${this.level}`;
+        
+        // Get existing content
+        const existingContent = currentBlock.textContent || '';
+        
+        // Create heading element
+        const headingElement = document.createElement(`h${this.level}`);
+        headingElement.textContent = existingContent;
+        
+        // Replace content with heading
+        currentBlock.innerHTML = '';
+        currentBlock.appendChild(headingElement);
+        
+        // Make the heading element editable
+        headingElement.setAttribute('contenteditable', 'true');
+        
+        // Focus the heading element if the block was focused
+        if (document.activeElement === currentBlock || 
+            currentBlock.contains(document.activeElement)) {
+            requestAnimationFrame(() => {
+                headingElement.focus();
+                // Place cursor at end
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(headingElement);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
         }
     }
 

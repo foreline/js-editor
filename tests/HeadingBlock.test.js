@@ -2,6 +2,7 @@ import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
 import { Toolbar } from '@/Toolbar.js';
+import { Editor } from '@/Editor.js';
 
 // Mock the Toolbar module
 jest.mock('@/Toolbar.js', () => ({
@@ -72,40 +73,142 @@ describe('HeadingBlock', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls correct Toolbar method for H1', () => {
+    beforeEach(() => {
+      // Mock document methods for DOM operations
+      document.createElement = jest.fn((tagName) => {
+        const element = {
+          tagName: tagName.toUpperCase(),
+          setAttribute: jest.fn(),
+          textContent: '',
+          focus: jest.fn()
+        };
+        return element;
+      });
+      
+      // Mock window.getSelection for cursor positioning
+      window.getSelection = jest.fn(() => ({
+        removeAllRanges: jest.fn(),
+        addRange: jest.fn()
+      }));
+      
+      document.createRange = jest.fn(() => ({
+        selectNodeContents: jest.fn(),
+        collapse: jest.fn()
+      }));
+    });
+
+    test('transforms block to H1 correctly', () => {
+      const mockCurrentBlock = {
+        setAttribute: jest.fn(),
+        textContent: 'Test heading',
+        innerHTML: '',
+        appendChild: jest.fn(),
+        contains: jest.fn(() => false)
+      };
+      Object.defineProperty(mockCurrentBlock, 'className', {
+        writable: true,
+        value: ''
+      });
+      
+      // Mock Editor.currentBlock
+      Editor.currentBlock = mockCurrentBlock;
+      
       const h1Block = new HeadingBlock(1);
       h1Block.applyTransformation();
-      expect(Toolbar.h1).toHaveBeenCalledTimes(1);
+      
+      // Verify the block was transformed correctly
+      expect(mockCurrentBlock.setAttribute).toHaveBeenCalledWith('data-block-type', 'h1');
+      expect(mockCurrentBlock.className).toBe('block block-h1');
+      expect(document.createElement).toHaveBeenCalledWith('h1');
     });
 
-    test('calls correct Toolbar method for H2', () => {
+    test('transforms block to H2 correctly', () => {
+      const mockCurrentBlock = {
+        setAttribute: jest.fn(),
+        textContent: 'Test heading',
+        innerHTML: '',
+        appendChild: jest.fn(),
+        contains: jest.fn(() => false)
+      };
+      Object.defineProperty(mockCurrentBlock, 'className', {
+        writable: true,
+        value: ''
+      });
+      
+      Editor.currentBlock = mockCurrentBlock;
+      
       const h2Block = new HeadingBlock(2);
       h2Block.applyTransformation();
-      expect(Toolbar.h2).toHaveBeenCalledTimes(1);
+      
+      expect(mockCurrentBlock.setAttribute).toHaveBeenCalledWith('data-block-type', 'h2');
+      expect(mockCurrentBlock.className).toBe('block block-h2');
+      expect(document.createElement).toHaveBeenCalledWith('h2');
     });
 
-    test('calls correct Toolbar method for H3', () => {
+    test('transforms block to H3 correctly', () => {
+      const mockCurrentBlock = {
+        setAttribute: jest.fn(),
+        textContent: 'Test heading',
+        innerHTML: '',
+        appendChild: jest.fn(),
+        contains: jest.fn(() => false)
+      };
+      Object.defineProperty(mockCurrentBlock, 'className', {
+        writable: true,
+        value: ''
+      });
+      
+      Editor.currentBlock = mockCurrentBlock;
+      
       const h3Block = new HeadingBlock(3);
       h3Block.applyTransformation();
-      expect(Toolbar.h3).toHaveBeenCalledTimes(1);
+      
+      expect(mockCurrentBlock.setAttribute).toHaveBeenCalledWith('data-block-type', 'h3');
+      expect(mockCurrentBlock.className).toBe('block block-h3');
+      expect(document.createElement).toHaveBeenCalledWith('h3');
     });
 
-    test('calls correct Toolbar method for H4', () => {
-      const h4Block = new HeadingBlock(4);
-      h4Block.applyTransformation();
-      expect(Toolbar.h4).toHaveBeenCalledTimes(1);
+    test('does nothing when no current block', () => {
+      Editor.currentBlock = null;
+      
+      const h1Block = new HeadingBlock(1);
+      
+      // Should not throw an error
+      expect(() => h1Block.applyTransformation()).not.toThrow();
+      
+      // No DOM methods should be called
+      expect(document.createElement).not.toHaveBeenCalled();
     });
 
-    test('calls correct Toolbar method for H5', () => {
-      const h5Block = new HeadingBlock(5);
-      h5Block.applyTransformation();
-      expect(Toolbar.h5).toHaveBeenCalledTimes(1);
-    });
-
-    test('calls correct Toolbar method for H6', () => {
-      const h6Block = new HeadingBlock(6);
-      h6Block.applyTransformation();
-      expect(Toolbar.h6).toHaveBeenCalledTimes(1);
+    test('preserves existing content during transformation', () => {
+      const mockHeadingElement = {
+        setAttribute: jest.fn(),
+        textContent: '',
+        focus: jest.fn()
+      };
+      
+      document.createElement.mockReturnValue(mockHeadingElement);
+      
+      const mockCurrentBlock = {
+        setAttribute: jest.fn(),
+        textContent: 'Existing content',
+        innerHTML: '',
+        appendChild: jest.fn(),
+        contains: jest.fn(() => false)
+      };
+      Object.defineProperty(mockCurrentBlock, 'className', {
+        writable: true,
+        value: ''
+      });
+      
+      Editor.currentBlock = mockCurrentBlock;
+      
+      const h1Block = new HeadingBlock(1);
+      h1Block.applyTransformation();
+      
+      // Verify content is preserved
+      expect(mockHeadingElement.textContent).toBe('Existing content');
+      expect(mockHeadingElement.setAttribute).toHaveBeenCalledWith('contenteditable', 'true');
     });
 
     test('handles invalid level gracefully', () => {

@@ -30,7 +30,10 @@ export class UnorderedListBlock extends ListBlock
     }
 
     applyTransformation() {
-        Toolbar.ul();
+        // No need to do anything special here - the block creation
+        // is handled by Editor.createNewBlock() which converts the block
+        // to HTML and adds it to the DOM properly.
+        // This prevents the circular dependency issue.
     }
 
     /**

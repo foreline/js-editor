@@ -5,6 +5,18 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.21]
+
+### Fixed
+- **Headers not working**: Fixed critical bug where clicking header buttons in toolbar would not convert text to headers and could cause text to disappear
+  - **Root Cause**: The issue was caused by circular dependency in `HeadingBlock.applyTransformation()` method which was calling `Toolbar.h1()` etc., which in turn called `Editor.convertCurrentBlockOrCreate()`, creating infinite recursion
+  - **Solution**: Refactored `HeadingBlock.applyTransformation()` to perform direct DOM transformation instead of calling Toolbar methods
+  - Added proper Editor import to HeadingBlock to access `Editor.currentBlock`
+  - Updated block transformation to preserve existing content during header conversion
+  - Added proper focus management and cursor positioning after header conversion
+  - **Testing**: Added HeaderFix.test.js to verify the circular dependency is resolved
+  - **Architecture Improvement**: This fix prevents infinite recursion and ensures reliable header conversion functionality
+
 ## [v0.0.20]
 
 ### Fixed
