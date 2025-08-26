@@ -600,9 +600,7 @@ export class Editor
             const allBlocks = this.instance.querySelectorAll('.block');
             if (this.isEditorEmpty(allBlocks)) {
                 // Editor is empty, ensure at least one default block exists
-                this.detachBlockEvents(allBlocks);
-                this.instance.innerHTML = '';
-                this.addEmptyBlock();
+                this.ensureDefaultBlock();
                 return;
             }
             
@@ -722,19 +720,32 @@ export class Editor
             logWarning('Cannot focus on non-existent or detached element', 'Editor.focus()');
             
             // Fallback mechanism: focus on editor instance or first available block
-            if ( Editor.instance ) {
-                const firstBlock = Editor.instance.querySelector('.block');
-                if ( firstBlock ) {
-                    // Focus on the first available block
-                    Editor.setCurrentBlock(firstBlock);
-                    Editor.focus(firstBlock);
-                    return;
-                } else {
-                    // No blocks available, focus on editor instance itself
-                    Editor.instance.focus();
-                    return;
+            // Use instance method instead of static to avoid recursion
+            const firstBlock = this.instance.querySelector('.block');
+            if ( firstBlock && firstBlock.isConnected ) {
+                // Set current block and try to focus again, but prevent infinite recursion
+                this.setCurrentBlock(firstBlock);
+                // Direct focus without recursive call
+                this.focusElement(firstBlock);
+                return;
+            } else {
+                // No blocks available, focus on editor instance itself
+                if (this.instance && this.instance.isConnected) {
+                    this.instance.focus();
                 }
+                return;
             }
+        }
+        
+        this.focusElement(element);
+    }
+
+    /**
+     * Helper method to focus on an element without recursion
+     * @param {HTMLElement} element - The element to focus on
+     */
+    focusElement(element) {
+        if (!element || !element.isConnected) {
             return;
         }
         
@@ -876,10 +887,8 @@ export class Editor
         // Check if editor has no blocks or all blocks are empty
         const blocks = this.instance.querySelectorAll('.block');
         if (blocks.length === 0 || this.isEditorEmpty(blocks)) {
-            // Detach events from existing blocks before cleanup
-            this.detachBlockEvents(blocks);
-            this.instance.innerHTML = '';
-            this.addEmptyBlock();
+            // Use the safe method to ensure default block
+            this.ensureDefaultBlock();
         }
 
         // Emit both legacy and new events
@@ -958,6 +967,43 @@ export class Editor
         }
         
         return true; // All blocks are empty
+    }
+
+    /**
+     * Ensures the editor has at least one default block
+     * Handles the empty editor edge case safely
+     */
+    ensureDefaultBlock() {
+        log('ensureDefaultBlock()', 'Editor.');
+        
+        // Get all current blocks
+        const allBlocks = this.instance.querySelectorAll('.block');
+        
+        // If editor is empty, create a default block
+        if (allBlocks.length === 0 || this.isEditorEmpty(allBlocks)) {
+            // Detach events from existing blocks first
+            if (allBlocks.length > 0) {
+                this.detachBlockEvents(allBlocks);
+            }
+            
+            // Clear the editor content
+            this.instance.innerHTML = '';
+            
+            // Reset current block reference to prevent focus issues
+            this.currentBlock = null;
+            
+            // Create and add a new default block
+            const newBlock = this.addEmptyBlock();
+            
+            // Update the editor to ensure everything is in sync
+            setTimeout(() => {
+                this.update();
+            }, 10);
+            
+            return newBlock;
+        }
+        
+        return null;
     }
 
     /**
@@ -1080,9 +1126,13 @@ export class Editor
         }, { source: 'editor.create' });
     
         // Ensure the block is attached before focusing
+        // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
-            this.focus(htmlBlock);
-            this.update();
+            requestAnimationFrame(() => {
+                if (htmlBlock.isConnected) {
+                    this.focus(htmlBlock);
+                }
+            });
         });
         
         return htmlBlock;
