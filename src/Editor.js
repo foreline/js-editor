@@ -685,8 +685,10 @@ export class Editor
                 const blockType = block.getAttribute('data-block-type');
                 if (blockType === 'p' || blockType === 'paragraph') {
                     // Get current text content, preserve trailing space for triggers like "# "
+                    // and normalize non-breaking spaces from contenteditable
                     const raw = Utils.stripTags(block.innerHTML);
-                    const textContent = raw.replace(/^\s+/, '');
+                    const normalized = raw.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
+                    const textContent = normalized.replace(/^\s+/, '');
                     
                     // Only check for conversion if text contains potential triggers
                     if (textContent.match(/^(#{1,6}\s|[\*\-]\s|[\*\-]\s*\[[x\s]\]\s*|\d+\.?\s|>\s|```|~~~)/)) {
@@ -1481,11 +1483,15 @@ export class Editor
             return false;
         }
 
-    const currentBlockType = blockElement.getAttribute('data-block-type');
-    // Preserve trailing space to allow triggers like "# " to match
-    // but ignore leading whitespace so triggers at the start still detect
+        const currentBlockType = blockElement.getAttribute('data-block-type');
+        // Preserve trailing space to allow triggers like "# " to match
+        // but ignore leading whitespace so triggers at the start still detect
     const rawText = Utils.stripTags(blockElement.innerHTML);
-    const textContent = rawText.replace(/^\s+/, '');
+    console.warn({rawText});
+    // Normalize non-breaking spaces (&nbsp; and \u00A0) to regular spaces before checking triggers
+    const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
+    const textContent = normalizedText.replace(/^\s+/, '');
+        console.warn({textContent});
         
         // Don't convert if content is empty
         if (!textContent) {
@@ -1494,6 +1500,8 @@ export class Editor
 
         // Find matching block class for the current text content
         const matchingBlockClass = BlockFactory.findBlockClassForTrigger(textContent);
+
+        console.warn({matchingBlockClass});
         
         if (!matchingBlockClass) {
             return false;

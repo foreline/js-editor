@@ -92,4 +92,39 @@ describe('Header Markdown Trigger Conversion', () => {
     expect(paragraphBlock.className).toBe('block block-h1');
     expect(document.createElement).toHaveBeenCalledWith('h1');
   });
+
+  test('converts paragraph starting with "#\u00A0" (NBSP) to H1 block', () => {
+    // Reset mocks and set NBSP content
+    jest.restoreAllMocks();
+
+    // Recreate minimal mocks used in this test
+    jest.spyOn(Utils, 'stripTags').mockReturnValue('#\u00A0Title');
+
+    class H1Mock {
+      constructor() { this.type = 'h1'; }
+      static getMarkdownTriggers() { return ['# ']; }
+      static matchesMarkdownTrigger() { return true; }
+    }
+    BlockFactory.findBlockClassForTrigger = jest.fn().mockReturnValue(H1Mock);
+    BlockFactory.createBlock = jest.fn(() => ({
+      constructor: { getMarkdownTriggers: () => ['# '] },
+      applyTransformation: jest.fn(() => {
+        const current = Editor.currentBlock;
+        if (!current) return;
+        current.setAttribute('data-block-type', 'h1');
+        current.className = 'block block-h1';
+        const h = document.createElement('h1');
+        current.innerHTML = '';
+        current.appendChild(h);
+        h.setAttribute('contenteditable', 'true');
+      })
+    }));
+
+    // Set current block and run conversion
+    editor.setCurrentBlock(paragraphBlock);
+    const converted = editor.checkAndConvertBlock(paragraphBlock);
+
+    expect(converted).toBe(true);
+    expect(paragraphBlock.className).toBe('block block-h1');
+  });
 });
