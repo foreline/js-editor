@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Duplication Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { margin: 20px 0; }
+        .log-container { 
+            background: #f5f5f5; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            max-height: 300px; 
+            overflow-y: auto;
+        }
+        .log-entry { margin: 2px 0; font-family: monospace; font-size: 12px; }
+        .log-warning { color: orange; }
+        .log-error { color: red; }
+        #test-editor { 
+            border: 1px solid #ccc; 
+            min-height: 200px; 
+            padding: 10px; 
+        }
+        button { margin: 5px; padding: 8px 16px; }
+    </style>
+</head>
+<body>
+    <h1>Focus Duplication Fix Test</h1>
+    
+    <div class="test-container">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Click on an empty block in the editor below</li>
+            <li>Watch the console output below</li>
+            <li>Before the fix: You would see duplicate method calls (setCurrentBlock, updateToolbarButtonStates, etc.)</li>
+            <li>After the fix: You should see single calls only</li>
+        </ol>
+    </div>
+
+    <div class="test-container">
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="addEmptyBlock()">Add Empty Block</button>
+        <button onclick="testFocusClick()">Test Focus Click</button>
+    </div>
+
+    <div class="test-container">
+        <h3>Editor:</h3>
+        <div id="test-editor"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Console Logs:</h3>
+        <div id="log-container" class="log-container"></div>
+    </div>
+
+    <script src="demo-dist/assets/index-Bh76QLyh.js"></script>
+    <script>
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        const logContainer = document.getElementById('log-container');
+        
+        function captureLog(message, type = 'log') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            captureLog(args.join(' '), 'log');
+            originalLog.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            captureLog(args.join(' '), 'warning');
+            originalWarn.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            captureLog(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        // Initialize editor
+        let editor;
+        try {
+            editor = new Editor({
+                holder: 'test-editor',
+                data: [
+                    { type: 'paragraph', content: 'Click on this block to test focus' },
+                    { type: 'paragraph', content: '' }, // Empty block for testing
+                    { type: 'paragraph', content: 'Another block for testing' }
+                ]
+            });
+        } catch (error) {
+            console.error('Failed to initialize editor:', error);
+        }
+        
+        function clearLogs() {
+            logContainer.innerHTML = '';
+        }
+        
+        function addEmptyBlock() {
+            if (editor) {
+                try {
+                    editor.addEmptyBlock();
+                    console.log('Empty block added');
+                } catch (error) {
+                    console.error('Failed to add empty block:', error);
+                }
+            }
+        }
+        
+        function testFocusClick() {
+            console.log('=== TESTING FOCUS CLICK ===');
+            const blocks = document.querySelectorAll('.block');
+            if (blocks.length > 1) {
+                const emptyBlock = blocks[1]; // Second block should be empty
+                console.log('Simulating click on empty block...');
+                
+                // Simulate a real user click
+                const mouseEvent = new MouseEvent('mouseup', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                
+                emptyBlock.dispatchEvent(mouseEvent);
+                emptyBlock.focus();
+                
+                setTimeout(() => {
+                    console.log('=== FOCUS TEST COMPLETE ===');
+                }, 100);
+            } else {
+                console.error('No blocks found for testing');
+            }
+        }
+        
+        // Auto-run test after page loads
+        setTimeout(() => {
+            console.log('Page loaded, editor initialized');
+            console.log('Click on blocks to test focus duplication fix');
+        }, 1000);
+    </script>
+</body>
+</html>

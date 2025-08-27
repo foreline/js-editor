@@ -5,6 +5,15 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.23] - 2025-08-27
+
+### Fixed
+- **Empty block focus causes methods call duplication**: Fixed issue where clicking on empty blocks caused duplicate method calls
+  - **Root Cause**: Both `focusin` and `mouseup` event listeners were calling `setCurrentBlock()` for the same user action
+  - **Solution**: Added duplicate check in `setCurrentBlock()` to prevent setting the same block as current if it's already current
+  - Removed redundant logging call in `updateToolbarButtonStates()` to eliminate duplicate console output
+  - This eliminates the rapid-fire calls pattern seen in console logs when focusing empty blocks
+
 ## [v0.0.21]
 
 ## [v0.0.22]

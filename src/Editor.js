@@ -1220,8 +1220,6 @@ export class Editor
      */
     updateToolbarButtonStates()
     {
-        log('updateToolbarButtonStates()', 'Editor.');
-
         if (!this.currentBlock) {
             return;
         }
@@ -1318,6 +1316,11 @@ export class Editor
     setCurrentBlock(block)
     {
         log('setCurrentBlock()', 'Editor.', { block });
+
+        // Prevent duplicate calls for the same block
+        if (this.currentBlock === block) {
+            return;
+        }
 
         const previousBlock = this.currentBlock;
         
