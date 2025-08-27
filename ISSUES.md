@@ -49,6 +49,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [ ] **Unordered list rendering in empty editor**. When an unordered list is created in an empty editor, it should be rendered correctly as a list item. Currently, it may not render as expected (the list appears and then disappears, leaving the editor empty).
 - [x] **Headers not working**. When selecting a text in editor and pushing a header button on toolbar the text does not converts to header and disapears. ✅ **FIXED** - The issue was caused by circular dependency in `HeadingBlock.applyTransformation()` method which was calling `Toolbar.h1()` etc., which in turn called `Editor.convertCurrentBlockOrCreate()`, creating infinite recursion. Fixed by implementing direct DOM transformation in `applyTransformation()` method instead of calling Toolbar methods.
 - [x] **Lists enter keypress issue**. When pressing `Enter` key inside a **last** list item, it should create a new list item below the current one. Fixed by strengthening list-item detection in `ListBlock.handleEnterKey()` (robust `li` lookup via `closest` and selection fallback) and adding a guard in `KeyHandler.handleEnterKey()` to create a new list item instead of a paragraph when at end-of-item within lists.
+- [ ] **Markdown trigger for headers block not working** When hitting a markdown trigger for headers block, i.e. `# ` for H1 block nothing happens.
 
 ## Test Suite Issues
 
