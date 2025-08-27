@@ -1486,11 +1486,11 @@ export class Editor
         const currentBlockType = blockElement.getAttribute('data-block-type');
         // Preserve trailing space to allow triggers like "# " to match
         // but ignore leading whitespace so triggers at the start still detect
-    const rawText = Utils.stripTags(blockElement.innerHTML);
-    console.warn({rawText});
-    // Normalize non-breaking spaces (&nbsp; and \u00A0) to regular spaces before checking triggers
-    const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
-    const textContent = normalizedText.replace(/^\s+/, '');
+        const rawText = Utils.stripTags(blockElement.innerHTML);
+        console.warn({rawText});
+        // Normalize non-breaking spaces (&nbsp; and \u00A0) to regular spaces before checking triggers
+        const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
+        const textContent = normalizedText.replace(/^\s+/, '');
         console.warn({textContent});
         
         // Don't convert if content is empty
@@ -1538,6 +1538,8 @@ export class Editor
         try {
             // Create new block instance
             const newBlock = BlockFactory.createBlock(targetBlockType);
+
+            console.warn({newBlock});
             
             if (!newBlock) {
                 return false;
