@@ -684,8 +684,9 @@ export class Editor
                 // Only check for conversion on paragraph blocks to avoid performance issues
                 const blockType = block.getAttribute('data-block-type');
                 if (blockType === 'p' || blockType === 'paragraph') {
-                    // Get current text content
-                    const textContent = Utils.stripTags(block.innerHTML).trim();
+                    // Get current text content, preserve trailing space for triggers like "# "
+                    const raw = Utils.stripTags(block.innerHTML);
+                    const textContent = raw.replace(/^\s+/, '');
                     
                     // Only check for conversion if text contains potential triggers
                     if (textContent.match(/^(#{1,6}\s|[\*\-]\s|[\*\-]\s*\[[x\s]\]\s*|\d+\.?\s|>\s|```|~~~)/)) {
@@ -1480,8 +1481,11 @@ export class Editor
             return false;
         }
 
-        const currentBlockType = blockElement.getAttribute('data-block-type');
-        const textContent = Utils.stripTags(blockElement.innerHTML).trim();
+    const currentBlockType = blockElement.getAttribute('data-block-type');
+    // Preserve trailing space to allow triggers like "# " to match
+    // but ignore leading whitespace so triggers at the start still detect
+    const rawText = Utils.stripTags(blockElement.innerHTML);
+    const textContent = rawText.replace(/^\s+/, '');
         
         // Don't convert if content is empty
         if (!textContent) {

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.0.21]
 
+## [v0.0.22]
+
+### Fixed
+- **Markdown header triggers not working**: Header triggers like `# `, `## `, ... were not detected because trailing spaces were trimmed before matching. Updated `Editor.checkAndConvertBlock()` and input handler to preserve trailing space while trimming only leading whitespace. This enables live conversion of paragraph blocks to heading blocks when typing markdown triggers.
+
 ### Fixed
 - **Headers not working**: Fixed critical bug where clicking header buttons in toolbar would not convert text to headers and could cause text to disappear
   - **Root Cause**: The issue was caused by circular dependency in `HeadingBlock.applyTransformation()` method which was calling `Toolbar.h1()` etc., which in turn called `Editor.convertCurrentBlockOrCreate()`, creating infinite recursion
