@@ -16,26 +16,37 @@ export class ListBlock extends BaseBlock
      */
     handleEnterKey(event) {
         // List blocks should create new list items or end the list if empty
-        let currentBlock = event.target.closest('.block');
-        
-        // If no block is found but the target is a list item, get the current list item
+        let currentBlock = event.target && typeof event.target.closest === 'function'
+            ? event.target.closest('.block')
+            : null;
+
+        // Resolve current list item in a robust way (target may be LI or a child like SPAN)
         let currentListItem = null;
-        if (!currentBlock && event.target.tagName === 'LI') {
-            currentListItem = event.target;
-            currentBlock = currentListItem.closest('ul, ol, div').closest('.block');
-        } else if (currentBlock && event.target.tagName === 'LI') {
-            currentListItem = event.target;
-        } else if (currentBlock) {
-            // Try to find the current list item within the block
+        if (event.target && typeof event.target.closest === 'function') {
+            currentListItem = event.target.closest('li');
+        }
+
+        // Fallback: derive from current selection
+        if (!currentListItem && typeof window !== 'undefined' && window.getSelection) {
             const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
+            if (selection && selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
-                const element = range.startContainer.nodeType === Node.TEXT_NODE ? 
+                const element = range.startContainer && range.startContainer.nodeType === Node.TEXT_NODE ?
                     range.startContainer.parentElement : range.startContainer;
-                currentListItem = element.closest('li');
+                if (element && typeof element.closest === 'function') {
+                    currentListItem = element.closest('li');
+                    if (!currentBlock) {
+                        currentBlock = element.closest('.block');
+                    }
+                }
             }
         }
-        
+
+        // As a last resort, if we have an LI, resolve the block from it
+        if (!currentBlock && currentListItem && typeof currentListItem.closest === 'function') {
+            currentBlock = currentListItem.closest('.block');
+        }
+
         if (!currentBlock || !currentListItem) {
             return false;
         }
@@ -62,7 +73,7 @@ export class ListBlock extends BaseBlock
         }
         
         // Check if cursor is at the end of the list item
-        const selection = window.getSelection();
+    const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const isAtEnd = this.isAtEnd(currentBlock, range);

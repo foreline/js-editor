@@ -185,6 +185,20 @@ export class KeyHandler
         }
         
         if (isAtEnd) {
+            // If we are inside a list item and at the end, but the block handler
+            // didn't consume the event for some reason, create a new list item instead
+            const li = (range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer)?.closest?.('li');
+            if (li) {
+                const blockType = currentBlock.dataset && currentBlock.dataset.blockType;
+                const block = BlockFactory.createBlock(blockType);
+                if (block && typeof block.createNewListItem === 'function') {
+                    e.preventDefault();
+                    block.createNewListItem(currentBlock, li);
+                    Editor.update();
+                    return;
+                }
+            }
+
             // Default behavior - add new empty block when cursor is at the end
             e.preventDefault();
             Editor.addEmptyBlock();
