@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Empty Block Check</title>
+</head>
+<body>
+
+<script type="module">
+    // Simulate the text processing logic from checkAndConvertBlock
+    function testTextProcessing(input) {
+        console.log(`\n=== Testing input: "${input}" ===`);
+        
+        // Simulate Utils.stripTags (just return input for now)
+        const rawText = input;
+        console.log('rawText:', `"${rawText}"`);
+        
+        // Normalize non-breaking spaces
+        const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
+        console.log('normalizedText:', `"${normalizedText}"`);
+        
+        // Remove leading whitespace only
+        const textContent = normalizedText.replace(/^\s+/, '');
+        console.log('textContent:', `"${textContent}"`);
+        
+        const isEmpty = !textContent;
+        console.log('isEmpty (!textContent):', isEmpty);
+        
+        if (isEmpty) {
+            console.log('❌ WOULD BE BLOCKED by empty check');
+        } else {
+            console.log('✅ Would pass empty check');
+        }
+        
+        return { rawText, normalizedText, textContent, isEmpty };
+    }
+
+    // Test various scenarios
+    const testCases = [
+        '# ',           // hash space
+        ' # ',          // space hash space  
+        '  # ',         // multiple spaces hash space
+        '- ',           // dash space
+        ' - ',          // space dash space
+        '* ',           // asterisk space
+        '1. ',          // number dot space
+        '',             // completely empty
+        ' ',            // just space
+        '  ',           // multiple spaces
+        '#',            // hash without space
+        '-',            // dash without space
+    ];
+
+    testCases.forEach(testTextProcessing);
+    
+    console.log('\n=== Analysis ===');
+    console.log('The empty check blocks conversion when textContent becomes empty after processing.');
+    console.log('For markdown triggers like "# ", this should NOT be empty, so the issue might be elsewhere.');
+</script>
+
+</body>
+</html>

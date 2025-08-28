@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Empty Block Markdown Trigger Fix</title>
+    <title>Test Empty Block Markdown Trigger Fix v2</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         #editor { border: 1px solid #ccc; min-height: 200px; padding: 10px; margin: 20px 0; }
@@ -11,21 +11,29 @@
         .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
         .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 8px 12px; }
     </style>
 </head>
 <body>
-    <h1>Test: Empty Block Markdown Trigger Fix</h1>
+    <h1>Test: Empty Block Markdown Trigger Fix v2</h1>
     
     <div class="instructions">
-        <h3>Instructions:</h3>
+        <h3>Manual Test Instructions:</h3>
         <ol>
             <li>Click in the editor below to focus it</li>
             <li>Type <code># </code> (hash followed by space) in the empty block</li>
-            <li>The block should immediately convert to a heading</li>
+            <li>The block should immediately convert to a heading (H1)</li>
             <li>Try other triggers like <code>- </code>, <code>* </code>, <code>1. </code></li>
+            <li>Use the automated test buttons below to verify programmatically</li>
         </ol>
-        <p><strong>Expected:</strong> Markdown triggers should work immediately in empty blocks without clearing the content.</p>
+        <p><strong>Expected:</strong> Markdown triggers should work immediately in empty blocks without clearing the content or resetting to paragraph.</p>
     </div>
+    
+    <button onclick="testHeaderTrigger()">Test # Trigger</button>
+    <button onclick="testListTrigger()">Test - Trigger</button>
+    <button onclick="testOrderedListTrigger()">Test 1. Trigger</button>
+    <button onclick="resetEditor()">Reset Editor</button>
     
     <div id="editor"></div>
     
@@ -35,33 +43,144 @@
         import { Editor } from './src/index.js';
 
         const resultsDiv = document.getElementById('test-results');
+        let editor;
         
-        function showResult(message, success = true) {
+        function showResult(message, type = 'info') {
             const div = document.createElement('div');
-            div.className = `test-result ${success ? 'success' : 'error'}`;
-            div.textContent = message;
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
             resultsDiv.appendChild(div);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
         }
 
-        try {
-            const editor = new Editor({
-                containerId: 'editor',
-                placeholder: 'Type markdown triggers like # for heading...'
-            });
+        function initEditor() {
+            try {
+                const editorContainer = document.getElementById('editor');
+                editorContainer.innerHTML = ''; // Clear any existing content
+                
+                editor = new Editor({
+                    containerId: 'editor',
+                    placeholder: 'Type markdown triggers here...'
+                });
 
-            showResult('✅ Editor initialized successfully');
-            
-            // Add debugging to see when conversions happen
-            editor.eventEmitter.on('block.converted', (data) => {
-                showResult(`✅ Block converted: ${data.from} → ${data.to}`);
-            });
+                showResult('✅ Editor initialized successfully', 'success');
+                
+                // Add debugging to see when conversions happen
+                editor.eventEmitter.on('block.converted', (data) => {
+                    showResult(`✅ Block converted: ${data.fromType} → ${data.toType} (trigger: "${data.triggerText}")`, 'success');
+                });
 
-            showResult('✅ Test setup complete. Try typing markdown triggers in the editor above.');
-            
-        } catch (error) {
-            showResult(`❌ Failed to initialize editor: ${error.message}`, false);
-            console.error('Editor initialization error:', error);
+                return true;
+                
+            } catch (error) {
+                showResult(`❌ Failed to initialize editor: ${error.message}`, 'error');
+                console.error('Editor initialization error:', error);
+                return false;
+            }
         }
+
+        window.resetEditor = function() {
+            if (editor) {
+                editor.destroy();
+            }
+            resultsDiv.innerHTML = '';
+            initEditor();
+        };
+
+        window.testHeaderTrigger = function() {
+            showResult('🧪 Testing # trigger in empty block...', 'info');
+            
+            if (!editor) {
+                showResult('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            // Get the first block (should be empty)
+            const blocks = editor.getBlocks();
+            if (blocks.length === 0) {
+                showResult('❌ No blocks found in editor', 'error');
+                return;
+            }
+            
+            const firstBlock = blocks[0];
+            const blockType = firstBlock.getAttribute('data-block-type');
+            showResult(`📋 Initial block type: ${blockType}`, 'info');
+            
+            // Simulate typing "# " in the block
+            firstBlock.innerHTML = '# ';
+            
+            // Trigger the conversion check manually
+            setTimeout(() => {
+                const result = editor.checkAndConvertBlock(firstBlock);
+                showResult(`🔍 Conversion result: ${result}`, result ? 'success' : 'error');
+                
+                // Check the final block type
+                setTimeout(() => {
+                    const finalBlockType = firstBlock.getAttribute('data-block-type');
+                    showResult(`📋 Final block type: ${finalBlockType}`, 
+                        finalBlockType === 'h1' ? 'success' : 'error');
+                    
+                    if (finalBlockType === 'h1') {
+                        showResult('🎉 SUCCESS: Empty block # trigger works!', 'success');
+                    } else {
+                        showResult('💥 FAILED: Block did not convert to H1', 'error');
+                    }
+                }, 100);
+            }, 100);
+        };
+
+        window.testListTrigger = function() {
+            showResult('🧪 Testing - trigger in empty block...', 'info');
+            
+            // Reset to clean state first
+            resetEditor();
+            
+            setTimeout(() => {
+                const blocks = editor.getBlocks();
+                const firstBlock = blocks[0];
+                
+                firstBlock.innerHTML = '- ';
+                
+                setTimeout(() => {
+                    const result = editor.checkAndConvertBlock(firstBlock);
+                    showResult(`🔍 List conversion result: ${result}`, result ? 'success' : 'error');
+                    
+                    setTimeout(() => {
+                        const finalBlockType = firstBlock.getAttribute('data-block-type');
+                        showResult(`📋 Final block type: ${finalBlockType}`, 
+                            finalBlockType === 'ul' ? 'success' : 'error');
+                    }, 100);
+                }, 100);
+            }, 500);
+        };
+
+        window.testOrderedListTrigger = function() {
+            showResult('🧪 Testing 1. trigger in empty block...', 'info');
+            
+            // Reset to clean state first
+            resetEditor();
+            
+            setTimeout(() => {
+                const blocks = editor.getBlocks();
+                const firstBlock = blocks[0];
+                
+                firstBlock.innerHTML = '1. ';
+                
+                setTimeout(() => {
+                    const result = editor.checkAndConvertBlock(firstBlock);
+                    showResult(`🔍 Ordered list conversion result: ${result}`, result ? 'success' : 'error');
+                    
+                    setTimeout(() => {
+                        const finalBlockType = firstBlock.getAttribute('data-block-type');
+                        showResult(`📋 Final block type: ${finalBlockType}`, 
+                            finalBlockType === 'ol' ? 'success' : 'error');
+                    }, 100);
+                }, 100);
+            }, 500);
+        };
+
+        // Initialize on load
+        initEditor();
     </script>
 </body>
 </html>

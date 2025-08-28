@@ -56,6 +56,9 @@ export class Editor
         this.debug = options.debug || false;
         this.debugMode = this.debug; // Current debug state (can be toggled)
         
+        // Flag to prevent interference during block conversion
+        this.isConvertingBlock = false;
+        
         // Create instance-specific event emitter
         this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
         
@@ -673,11 +676,14 @@ export class Editor
             }
             
             // Check if editor is effectively empty after content deletion
-            const allBlocks = this.instance.querySelectorAll('.block');
-            if (this.isEditorEmpty(allBlocks)) {
-                // Editor is empty, ensure at least one default block exists
-                this.ensureDefaultBlock();
-                return;
+            // Skip this check if a block conversion is in progress to prevent interference
+            if (!this.isConvertingBlock) {
+                const allBlocks = this.instance.querySelectorAll('.block');
+                if (this.isEditorEmpty(allBlocks)) {
+                    // Editor is empty, ensure at least one default block exists
+                    this.ensureDefaultBlock();
+                    return;
+                }
             }
             
             if (block) {
@@ -1536,6 +1542,9 @@ export class Editor
         log('convertBlockType()', 'Editor.');
         
         try {
+            // Set flag to prevent input event handler interference
+            this.isConvertingBlock = true;
+            
             // Create new block instance
             const newBlock = BlockFactory.createBlock(targetBlockType);
             
@@ -1594,6 +1603,9 @@ export class Editor
         } catch (error) {
             logWarning('Error converting block type: ' + error.message, 'Editor.convertBlockType()');
             return false;
+        } finally {
+            // Always clear the conversion flag
+            this.isConvertingBlock = false;
         }
     }
 

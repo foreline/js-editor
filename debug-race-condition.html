@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Race Condition</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #editor { border: 1px solid #ccc; min-height: 200px; padding: 10px; margin: 20px 0; }
+        .log { background: #f5f5f5; padding: 5px; margin: 2px 0; font-family: monospace; font-size: 12px; }
+        .input-event { color: blue; }
+        .keypress-event { color: green; }
+        .conversion { color: red; font-weight: bold; }
+        .clear-btn { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Debug: Race Condition Between Input and KeyPress Events</h1>
+    <p>Type <code># </code> in the editor below and watch the event order:</p>
+    
+    <button class="clear-btn" onclick="clearLog()">Clear Log</button>
+    <div id="editor"></div>
+    <div id="log"></div>
+
+    <script type="module">
+        import { Editor } from './src/index.js';
+
+        const logDiv = document.getElementById('log');
+        let eventCounter = 0;
+        
+        function addLog(message, type = '') {
+            eventCounter++;
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${eventCounter}] [${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        window.clearLog = function() {
+            logDiv.innerHTML = '';
+            eventCounter = 0;
+        };
+
+        try {
+            const editor = new Editor({
+                containerId: 'editor',
+                placeholder: 'Type # followed by space...'
+            });
+
+            // Override the input event handler logic
+            const originalMethod = editor.checkAndConvertBlock.bind(editor);
+            editor.checkAndConvertBlock = function(block) {
+                const blockType = block.getAttribute('data-block-type');
+                const innerHTML = block.innerHTML;
+                addLog(`checkAndConvertBlock called - blockType: ${blockType}, innerHTML: "${innerHTML}"`, 'conversion');
+                
+                const result = originalMethod(block);
+                addLog(`checkAndConvertBlock result: ${result}`, 'conversion');
+                return result;
+            };
+
+            // Monitor keyboard events
+            document.addEventListener('keydown', (e) => {
+                if (e.target.closest('#editor')) {
+                    addLog(`keydown: "${e.key}" (code: ${e.code})`, 'keypress-event');
+                }
+            });
+
+            document.addEventListener('keypress', (e) => {
+                if (e.target.closest('#editor')) {
+                    addLog(`keypress: "${e.key}" (code: ${e.code})`, 'keypress-event');
+                }
+            });
+
+            // Monitor input events
+            document.addEventListener('input', (e) => {
+                if (e.target.closest('#editor')) {
+                    const block = e.target.closest('.block');
+                    if (block) {
+                        const blockType = block.getAttribute('data-block-type');
+                        const innerHTML = block.innerHTML;
+                        addLog(`input event - blockType: ${blockType}, innerHTML: "${innerHTML}"`, 'input-event');
+                        
+                        // Check the regex matching logic
+                        const raw = innerHTML.replace(/<[^>]*>/g, ''); // Simple strip tags
+                        const normalized = raw.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
+                        const textContent = normalized.replace(/^\s+/, '');
+                        
+                        addLog(`processed text: "${textContent}"`, 'input-event');
+                        
+                        const triggerRegex = /^(#{1,6}\s|[\*\-]\s|[\*\-]\s*\[[x\s]\]\s*|\d+\.?\s|>\s|```|~~~)/;
+                        const matches = triggerRegex.test(textContent);
+                        addLog(`regex test result: ${matches}`, 'input-event');
+                    }
+                }
+            });
+
+            addLog('Editor initialized with event monitoring', '');
+            
+        } catch (error) {
+            addLog(`Failed to initialize editor: ${error.message}`, 'conversion');
+            console.error('Editor initialization error:', error);
+        }
+    </script>
+</body>
+</html>
