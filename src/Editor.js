@@ -1494,13 +1494,14 @@ export class Editor
         const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
         const textContent = normalizedText.replace(/^\s+/, '');
         
-        // Don't convert if content is empty
-        if (!textContent) {
-            return false;
-        }
-
         // Find matching block class for the current text content
         const matchingBlockClass = BlockFactory.findBlockClassForTrigger(textContent);
+        
+        // Only skip conversion if content is empty AND no markdown trigger was found
+        // This allows triggers like "# " to work even in "empty" blocks
+        if (!textContent && !matchingBlockClass) {
+            return false;
+        }
         
         if (!matchingBlockClass) {
             return false;

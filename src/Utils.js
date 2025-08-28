@@ -28,7 +28,7 @@ export class Utils
      */
     static stripTags(str, allow= '')
     {
-        log('stripTags()', 'Editor.'); console.log({allow});
+        log('stripTags()', 'Editor.');
         
         // Making sure the "allow" argument is a string containing only tags in lowercase ()
         allow = (((allow || "") + "")

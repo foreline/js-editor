@@ -5,7 +5,12 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.0.24] - 2025-08-28
+## [0.0.25] - 2025-01-28
+
+### Fixed
+- **Markdown trigger for empty block conversion**: Fixed issue where markdown triggers like `# `, `- `, `* `, `1. ` would fail to convert empty blocks properly. The problem was an overly aggressive empty content check in `checkAndConvertBlock()` that prevented trigger recognition. Updated the logic to check for matching markdown triggers before rejecting empty content, ensuring proper conversion even for trigger-only inputs.
+
+## [0.0.24] - 2025-01-28
 
 ### Fixed
 - **Markdown trigger for empty block not working**: Fixed issue where typing markdown trigger sequences like `# `, `- `, `* `, `1 `, `1. ` in empty blocks would fail to convert
