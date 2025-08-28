@@ -21,12 +21,13 @@ import {DebugTooltip} from "@/DebugTooltip.js";
  * @property {Array.<string>} keybuffer - Buffer for tracking key presses
  * @property {Array.<Object>} rules - Custom rules for the editor
  * @property {EditorEventEmitter} eventEmitter - Instance-specific event emitter
-    // 2) Prefer any explicitly editable descendant (e.g., <h1 contenteditable="true">)
-    const editableChild = blockElement.querySelector('[contenteditable="true"]');
+ */
+export class Editor
+{
     // Static registry to track all editor instances
     static _instances = new Map();
     static _fallbackBlocks = [];
-    
+
     /**
      * @param {object} options
      */
