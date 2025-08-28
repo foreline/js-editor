@@ -1,10 +1,5 @@
 'use strict';
 
-/**
- * WYSIWYG editor.
- * Editable area consists of blocks (<div class="block">)
- */
-
 import {Toolbar} from "./Toolbar.js";
 import {log, logWarning} from "./utils/log.js";
 import showdown from "showdown";
@@ -81,7 +76,10 @@ export class Editor
      * Initialize toolbar after editor instance is created
      * @param {object} options 
      */
-    initializeToolbar(options) {
+    initializeToolbar(options)
+    {
+        log('initializeToolbar()', 'Editor.');
+
         // Initialize toolbar - use the editor instance element's parent as container
         const toolbarContainer = this.instance.parentElement || this.instance;
         const defaultToolbarConfig = [
@@ -246,11 +244,6 @@ export class Editor
             timestamp: Date.now()
         }, { source: 'editor.init' });
         
-        // Initialize debug mode if enabled
-        if (this.debugMode) {
-            this.initDebugMode();
-        }
-        
         // Initialize debug tooltip after editor is fully set up
         this.debugTooltip = new DebugTooltip({
             editorInstance: this.instance,
@@ -264,22 +257,15 @@ export class Editor
     }
     
     /**
-     * Initialize debug mode
-     */
-    initDebugMode() {
-        // This method now only handles basic debug mode setup
-        // Tooltip functionality is handled by DebugTooltip class
-        log('Debug mode enabled', 'Editor');
-    }
-    
-    /**
      * Toggle debug mode
      */
-    toggleDebugMode() {
+    toggleDebugMode()
+    {
+        log('toggleDebugMode()', 'Editor.');
+
         this.debugMode = !this.debugMode;
         
         if (this.debugMode) {
-            this.initDebugMode();
             if (this.debugTooltip) {
                 this.debugTooltip.enable(this);
             }
@@ -561,7 +547,7 @@ export class Editor
      * Sets focus on given or current editor block.
      * @param {?HTMLElement} element
      */
-    focus(element= null)
+    focus(element = null)
     {
         log('focus()', 'Editor.');
         
@@ -752,7 +738,6 @@ export class Editor
         }
 
         // Emit both legacy and new events
-        this.eventEmitter.emit('EDITOR.UPDATED_EVENT'); // Legacy compatibility
         this.eventEmitter.emit(EVENTS.EDITOR_UPDATED, {
             html: editorHtml,
             markdown: markdownContent,
