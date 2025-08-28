@@ -51,20 +51,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Lists enter keypress issue**. When pressing `Enter` key inside a **last** list item, it should create a new list item below the current one. Fixed by strengthening list-item detection in `ListBlock.handleEnterKey()` (robust `li` lookup via `closest` and selection fallback) and adding a guard in `KeyHandler.handleEnterKey()` to create a new list item instead of a paragraph when at end-of-item within lists.
 - [x] **Markdown trigger for headers block not working** Fixed detection by preserving trailing spaces in trigger checks so sequences like `# ` convert paragraph to headers on space/input.
 - [x] **Empty block focus causes methods call duplication**. ✅ **FIXED** - When a cursor is placed in an empty block the same methods were called multiple times. Fixed by adding duplicate check in `setCurrentBlock()` to prevent setting the same block as current if it's already current, and removing redundant logging in `updateToolbarButtonStates()`. The issue was caused by both `focusin` and `mouseup` events calling `setCurrentBlock()` for the same user action.
-```
-13:47:02.465 Editor.setCurrentBlock() 13:47:02.466 (19506 ms) log.js:31:13
-13:47:02.466 Editor.updateToolbarButtonStates() 13:47:02.467 (1 ms) log.js:31:13
-13:47:02.466 Editor.enableAllToolbarButtons() 13:47:02.467 (0 ms) log.js:31:13
-13:47:02.467 Editor.updateToolbarButtonStates() 13:47:02.468 (1 ms) log.js:31:13
-13:47:02.567 Editor.setCurrentBlock() 13:47:02.568 (100 ms) log.js:31:13
-13:47:02.568 Editor.updateToolbarButtonStates() 13:47:02.568 (0 ms) log.js:31:13
-13:47:02.568 Editor.enableAllToolbarButtons() 13:47:02.569 (1 ms) log.js:31:13
-13:47:02.568 Editor.updateToolbarButtonStates() 13:47:02.569 (0 ms) log.js:31:13
-13:47:02.571 Editor.setCurrentBlock() 13:47:02.571 (2 ms) log.js:31:13
-13:47:02.571 Editor.updateToolbarButtonStates() 13:47:02.572 (1 ms) log.js:31:13
-13:47:02.571 Editor.enableAllToolbarButtons() 13:47:02.572 (0 ms) log.js:31:13
-13:47:02.571 Editor.updateToolbarButtonStates() 13:47:02.572 (0 ms)
-```
+- [ ] **Markdown trigger for empty block not working** When hitting markdown trigger key sequence, i.e. `# `, `- `, `* `, `1 `, `1. ` the empty block should convert to the corresponding block type. Now the block tries to convert, but then just clears its contents and resets to default block type.
 
 ## Test Suite Issues
 
