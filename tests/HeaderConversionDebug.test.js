@@ -27,7 +27,7 @@ describe('Header Conversion Debug', () => {
 
     test('should convert text to header', () => {
         // Add some initial content
-        const defaultBlock = editor.addEmptyBlock();
+        const defaultBlock = editor.addDefaultBlock();
         defaultBlock.textContent = 'Test text to convert';
         editor.setCurrentBlock(defaultBlock);
 

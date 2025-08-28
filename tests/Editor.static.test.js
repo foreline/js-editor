@@ -33,7 +33,7 @@ describe('Editor Static Methods', () => {
             currentBlock: mockElement,
             blocks: [{ type: 'p' }],
             instance: null,
-            addEmptyBlock: jest.fn().mockReturnValue(mockElement),
+            addDefaultBlock: jest.fn().mockReturnValue(mockElement),
             setCurrentBlock: jest.fn(),
             update: jest.fn(),
             getMarkdown: jest.fn().mockReturnValue('# Test Markdown'),
@@ -164,18 +164,18 @@ describe('Editor Static Methods', () => {
             Editor._instances.set(mockElement, mockEditor);
         });
 
-        it('should call addEmptyBlock on first editor instance', () => {
-            const result = Editor.addEmptyBlock();
-            
-            expect(mockEditor.addEmptyBlock).toHaveBeenCalled();
+        it('should call addDefaultBlock on first editor instance', () => {
+            const result = Editor.addDefaultBlock();
+
+            expect(mockEditor.addDefaultBlock).toHaveBeenCalled();
             expect(result).toBe(mockElement);
         });
 
         it('should return undefined when no editor instances exist', () => {
             Editor._instances.clear();
-            
-            const result = Editor.addEmptyBlock();
-            
+
+            const result = Editor.addDefaultBlock();
+
             expect(result).toBeUndefined();
         });
 

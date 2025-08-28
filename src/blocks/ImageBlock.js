@@ -64,7 +64,7 @@ export class ImageBlock extends BaseBlock
     handleEnterKey(event) {
         // Create new paragraph block after image
         event.preventDefault();
-        Editor.addEmptyBlock();
+        Editor.addDefaultBlock();
         return true;
     }
 

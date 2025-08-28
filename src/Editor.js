@@ -1058,7 +1058,7 @@ export class Editor
             this.currentBlock = null;
             
             // Create and add a new default block
-            const newBlock = this.addEmptyBlock();
+            const newBlock = this.addDefaultBlock();
             
             // No need to call update() here as this method is already called from within the update cycle
             // The newly created block will be processed by the current update cycle
@@ -1156,9 +1156,9 @@ export class Editor
     /**
      * @return HTMLElement
      */
-    addEmptyBlock()
+    addDefaultBlock()
     {
-        log('addEmptyBlock()', 'Editor.');
+        log('addDefaultBlock()', 'Editor.');
         
         const block = new Block(BlockType.PARAGRAPH);
         const htmlBlock = Parser.html(block);

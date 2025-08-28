@@ -517,7 +517,7 @@ describe('Editor Instance Methods', () => {
         });
     });
 
-    describe('addEmptyBlock', () => {
+    describe('addDefaultBlock', () => {
         beforeEach(() => {
             editor = new Editor({ id: 'test-editor' });
             editor.setCurrentBlock = jest.fn();
@@ -532,7 +532,7 @@ describe('Editor Instance Methods', () => {
             
             document.createElement.mockReturnValue(mockBlock);
 
-            const result = editor.addEmptyBlock();
+            const result = editor.addDefaultBlock();
 
             expect(document.createElement).toHaveBeenCalledWith('div');
             expect(mockBlock.classList.add).toHaveBeenCalledWith('block');
@@ -551,15 +551,15 @@ describe('Editor Instance Methods', () => {
             
             document.createElement.mockReturnValue(mockBlock);
 
-            editor.addEmptyBlock();
+            editor.addDefaultBlock();
 
             expect(editor.eventEmitter.emit).toHaveBeenCalledWith(
                 EVENTS.BLOCK_CREATED,
                 expect.objectContaining({
-                    blockType: 'empty',
+                    blockType: 'default',
                     timestamp: expect.any(Number)
                 }),
-                { source: 'editor.addEmptyBlock' }
+                { source: 'editor.addDefaultBlock' }
             );
         });
     });

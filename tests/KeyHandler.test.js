@@ -49,7 +49,7 @@ describe('KeyHandler', () => {
         // Setup Editor static methods
         Editor.currentBlock = mockCurrentBlock;
         Editor.keybuffer = [];
-        Editor.addEmptyBlock = jest.fn();
+        Editor.addDefaultBlock = jest.fn();
         Editor.update = jest.fn();
 
         // Setup Utils mock
@@ -199,7 +199,7 @@ describe('KeyHandler', () => {
 
             KeyHandler.handleEnterKey(mockEvent);
 
-            expect(Editor.addEmptyBlock).not.toHaveBeenCalled();
+            expect(Editor.addDefaultBlock).not.toHaveBeenCalled();
         });
 
         it('should create code block when triple backticks detected', () => {
@@ -234,7 +234,7 @@ describe('KeyHandler', () => {
 
             KeyHandler.handleEnterKey(mockEvent);
 
-            expect(Editor.addEmptyBlock).toHaveBeenCalled();
+            expect(Editor.addDefaultBlock).toHaveBeenCalled();
             expect(isCursorAtEndSpy).toHaveBeenCalled();
         });
     });

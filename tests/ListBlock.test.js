@@ -299,11 +299,11 @@ describe('ListBlock', () => {
         });
 
         it('should remove empty list item and add new paragraph block', () => {
-            const addEmptyBlockSpy = jest.spyOn(Editor, 'addEmptyBlock').mockImplementation();
+            const addDefaultBlockSpy = jest.spyOn(Editor, 'addDefaultBlock').mockImplementation();
 
             listBlock.exitList(mockEvent);
 
-            expect(addEmptyBlockSpy).toHaveBeenCalled();
+            expect(addDefaultBlockSpy).toHaveBeenCalled();
             expect(mockEvent.preventDefault).toHaveBeenCalled();
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
         });

@@ -90,21 +90,21 @@ describe('Empty Editor Fix', () => {
     });
 
     test('should handle ensureDefaultBlock correctly', () => {
-        // Mock addEmptyBlock method
+        // Mock addDefaultBlock method
         const mockBlock = {
             classList: { contains: jest.fn().mockReturnValue(true) },
             setAttribute: jest.fn(),
             isConnected: true
         };
-        
-        mockEditor.addEmptyBlock = jest.fn().mockReturnValue(mockBlock);
+
+        mockEditor.addDefaultBlock = jest.fn().mockReturnValue(mockBlock);
         mockInstance.querySelectorAll.mockReturnValue([]);
         
         // Call ensureDefaultBlock
         const result = mockEditor.ensureDefaultBlock();
         
-        // Should call addEmptyBlock
-        expect(mockEditor.addEmptyBlock).toHaveBeenCalled();
+        // Should call addDefaultBlock
+        expect(mockEditor.addDefaultBlock).toHaveBeenCalled();
         expect(result).toBe(mockBlock);
     });
 
@@ -115,13 +115,13 @@ describe('Empty Editor Fix', () => {
         ];
         
         mockInstance.querySelectorAll.mockReturnValue(mockBlocks);
-        mockEditor.addEmptyBlock = jest.fn();
+        mockEditor.addDefaultBlock = jest.fn();
         
         // Call ensureDefaultBlock
         const result = mockEditor.ensureDefaultBlock();
-        
-        // Should not call addEmptyBlock
-        expect(mockEditor.addEmptyBlock).not.toHaveBeenCalled();
+
+        // Should not call addDefaultBlock
+        expect(mockEditor.addDefaultBlock).not.toHaveBeenCalled();
         expect(result).toBeNull();
     });
 

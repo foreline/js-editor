@@ -13,7 +13,7 @@ jest.mock('@/Toolbar.js', () => ({
 
 jest.mock('@/Editor.js', () => ({
   Editor: {
-    addEmptyBlock: jest.fn()
+    addDefaultBlock: jest.fn()
   }
 }));
 
@@ -148,7 +148,7 @@ describe('ImageBlock', () => {
       const result = imageBlock.handleEnterKey(event);
       
       expect(event.preventDefault).toHaveBeenCalled();
-      expect(Editor.addEmptyBlock).toHaveBeenCalled();
+      expect(Editor.addDefaultBlock).toHaveBeenCalled();
       expect(result).toBe(true);
     });
   });
