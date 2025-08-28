@@ -730,9 +730,11 @@ export class Editor
         // Update timestamps for all blocks
         this.updateBlockTimestamps();
         
-        // Check if editor has no blocks or all blocks are empty
+        // Empty-editor protection: ensure at least one default block exists
+        // Only enforce when there are no blocks, or when there's exactly one empty block.
+        // Do NOT collapse multiple empty blocks, as users may intentionally create them.
         const blocks = this.instance.querySelectorAll('.block');
-        if (blocks.length === 0 || this.isEditorEmpty(blocks)) {
+        if (blocks.length === 0 || (blocks.length === 1 && this.isEditorEmpty(blocks))) {
             // Use the safe method to ensure default block
             this.ensureDefaultBlock();
         }

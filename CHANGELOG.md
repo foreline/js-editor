@@ -5,10 +5,17 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.27] - 2025-08-28
+
+### Fixed
+- Single empty block issue: When the editor had exactly one empty block, pressing Enter created a new block which was immediately removed by over-aggressive empty-editor protection. Adjusted `_performUpdate()` to enforce a default block only when there are zero blocks or exactly one empty block, without collapsing multiple empty blocks. This lets users create multiple empty blocks freely while still protecting the truly empty editor case.
+
 ## [0.0.26] - 2025-01-28
 
 ### Fixed
 - **Markdown trigger for empty block conversion (Race Condition Fix)**: Fixed critical race condition where markdown triggers like `# `, `- `, `* `, `1. ` would fail to convert empty blocks properly. The issue was that during block conversion, when `convertBlockType()` temporarily cleared the block content, the input event handler would detect an "empty" editor and call `ensureDefaultBlock()` to reset it before the transformation could complete. Added `isConvertingBlock` flag to prevent the empty editor check from interfering during block conversion, ensuring proper conversion even for trigger-only inputs.
+
+### Fixed
 
 ## [0.0.25] - 2025-01-28
 
