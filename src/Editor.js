@@ -733,10 +733,20 @@ export class Editor
         // Empty-editor protection: ensure at least one default block exists
         // Only enforce when there are no blocks, or when there's exactly one empty block.
         // Do NOT collapse multiple empty blocks, as users may intentionally create them.
+        // Also skip enforcement while a conversion/creation is in progress to avoid racing with transformations.
         const blocks = this.instance.querySelectorAll('.block');
-        if (blocks.length === 0 || (blocks.length === 1 && this.isEditorEmpty(blocks))) {
-            // Use the safe method to ensure default block
-            this.ensureDefaultBlock();
+        if (!this.isConvertingBlock && !this.isCreatingBlock) {
+            if (blocks.length === 0) {
+                this.ensureDefaultBlock();
+            } else if (blocks.length === 1 && this.isEditorEmpty(blocks)) {
+                const onlyBlock = blocks[0];
+                const type = onlyBlock.getAttribute('data-block-type');
+                // Only enforce default block if the single empty block is a paragraph.
+                // Allow empty non-paragraph blocks (e.g., an empty heading after typing "# ") to persist.
+                if (type === 'p' || type === 'paragraph') {
+                    this.ensureDefaultBlock();
+                }
+            }
         }
 
         // Emit both legacy and new events

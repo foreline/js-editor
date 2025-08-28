@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Single empty block issue: When the editor had exactly one empty block, pressing Enter created a new block which was immediately removed by over-aggressive empty-editor protection. Adjusted `_performUpdate()` to enforce a default block only when there are zero blocks or exactly one empty block, without collapsing multiple empty blocks. This lets users create multiple empty blocks freely while still protecting the truly empty editor case.
+- Markdown trigger in single empty block: Conversion like typing `# ` in the sole empty paragraph sometimes got overridden by empty-editor protection. We now skip protection during conversion/creation and only enforce when the single empty block is a paragraph, allowing the header/list conversion to persist.
 
 ## [0.0.26] - 2025-01-28
 
