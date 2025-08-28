@@ -710,8 +710,8 @@ export class Editor
             }
         });
         
-        // mask focused block as currentBlock
-        document.addEventListener('click', (e) => {
+        // Primary handler for setting current block - handles both click and focus events
+        this.instance.addEventListener('click', (e) => {
             // Only handle clicks for this editor instance
             if (!e.target.closest(`#${this.instance.id}`)) {
                 return;
@@ -724,16 +724,21 @@ export class Editor
                 block = e.target.closest('ul, ol, div').closest('.block');
             }
             
-            if ( !block ) {
-                return;
+            if ( block ) {
+                this.setCurrentBlock(block);
             }
-            this.setCurrentBlock(block);
         });
 
-        // Add focus event for keyboard navigation
+        // Handle focus events for keyboard navigation (only when not caused by mouse interaction)
         this.instance.addEventListener('focusin', (e) => {
             // Only handle focus events for this editor instance
             if (!e.target.closest(`#${this.instance.id}`)) {
+                return;
+            }
+
+            // Skip if this focus event was caused by a recent mouse click
+            // to avoid duplicate setCurrentBlock calls
+            if (this._lastClickTime && Date.now() - this._lastClickTime < 100) {
                 return;
             }
 
@@ -754,35 +759,10 @@ export class Editor
                 }
             }
         });
-        
-        // Add mouseup event to catch cursor placement
-        this.instance.addEventListener('mouseup', (e) => {
-            // Only handle mouse events for this editor instance
-            if (!e.target.closest(`#${this.instance.id}`)) {
-                return;
-            }
 
-            // Check if cursor is placed in a block
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const commonAncestor = range.commonAncestorContainer;
-                let block = commonAncestor.nodeType === Node.TEXT_NODE ? 
-                    commonAncestor.parentElement : commonAncestor;
-                
-                // Find the closest block element
-                block = block.closest('.block');
-                
-                // If no block is found but the target is within a list item, look for the parent list block
-                if (!block && block?.closest('li')) {
-                    const listItem = block.closest('li');
-                    block = listItem.closest('ul, ol, div').closest('.block');
-                }
-                
-                if ( block ) {
-                    this.setCurrentBlock(block);
-                }
-            }
+        // Track mouse clicks to prevent duplicate focus handling
+        this.instance.addEventListener('mousedown', () => {
+            this._lastClickTime = Date.now();
         });
     }
 
@@ -1323,10 +1303,17 @@ export class Editor
     {
         log('setCurrentBlock()', 'Editor.', { block });
 
-        // Prevent duplicate calls for the same block
+        // Ensure block is valid before proceeding
+        if (!block) {
+            return;
+        }
+
+        // Prevent duplicate calls for the same block - check this first before any other operations
         if (this.currentBlock === block) {
             return;
         }
+
+        log('setCurrentBlock()', 'Editor.', { block });
 
         const previousBlock = this.currentBlock;
         
@@ -1341,10 +1328,10 @@ export class Editor
         this.updateToolbarButtonStates();
         
         // Emit block focus event
-        this.eventEmitter.emit(EVENTS.BLOCK_FOCUSED, {
-            blockId: block.getAttribute('data-block-id') || block.id,
-            blockType: block.getAttribute('data-block-type'),
-            previousBlockId: previousBlock ? (previousBlock.getAttribute('data-block-id') || previousBlock.id) : null,
+        this.eventEmitter.emit(EVENTS.BLOCK_ACTIVATED, {
+            blockId: (block && block.getAttribute) ? (block.getAttribute('data-block-id') || block.id) : null,
+            blockType: (block && block.getAttribute) ? block.getAttribute('data-block-type') : null,
+            previousBlockId: (previousBlock && previousBlock.getAttribute) ? (previousBlock.getAttribute('data-block-id') || previousBlock.id) : null,
             timestamp: Date.now()
         }, { throttle: 50, source: 'editor.focus' });
         
@@ -1878,14 +1865,6 @@ export class Editor
         const firstInstance = Array.from(Editor._instances.values())[0];
         if (firstInstance) {
             firstInstance.currentBlock = value;
-        }
-    }
-    
-    // Static backward compatibility methods for KeyHandler and other components
-    static addEmptyBlock() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            return firstInstance.addEmptyBlock();
         }
     }
     

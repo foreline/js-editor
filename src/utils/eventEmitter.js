@@ -24,6 +24,7 @@ export const EVENTS = {
     BLOCK_DELETED: 'block.deleted',
     BLOCK_DESTROYED: 'block.destroyed',
     BLOCK_FOCUSED: 'block.focused',
+    BLOCK_ACTIVATED: 'block.activated',
     BLOCK_CONTENT_CHANGED: 'block.content.changed',
     BLOCK_TYPE_CHANGED: 'block.type.changed',
     BLOCK_CONVERTED: 'block.converted',

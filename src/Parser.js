@@ -252,7 +252,7 @@ export class Parser
      * @returns {HTMLElement|HTMLElement[]} htmlElement(s)
      */
     static html(blocks) {
-        log('html()', 'Parser.'); console.log({blocks});
+        log('html()', 'Parser.');
 
         // Handle array of blocks
         if (Array.isArray(blocks)) {

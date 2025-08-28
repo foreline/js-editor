@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test setCurrentBlock Optimization</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <style>
+        .counter { margin: 20px; font-weight: bold; }
+        .active-block { border: 2px solid #007bff !important; }
+    </style>
+</head>
+<body>
+    <div class="counter" id="call-counter">setCurrentBlock calls: 0</div>
+    <div id="editor" style="min-height: 200px; border: 1px solid #ccc; padding: 10px;"></div>
+    
+    <script type="module">
+        import { Editor } from './src/index.js';
+        
+        let callCount = 0;
+        
+        // Initialize editor
+        const editor = new Editor({
+            id: 'editor',
+            content: '<div class="block block-p" data-block-type="p">Click me to test setCurrentBlock calls</div>'
+        });
+        
+        // Wrap setCurrentBlock to count calls
+        const originalSetCurrentBlock = editor.setCurrentBlock.bind(editor);
+        editor.setCurrentBlock = function(block) {
+            callCount++;
+            document.getElementById('call-counter').textContent = `setCurrentBlock calls: ${callCount}`;
+            console.log(`setCurrentBlock called (#${callCount})`, block);
+            return originalSetCurrentBlock(block);
+        };
+        
+        console.log('Test ready. Click on the editor content to test optimization.');
+    </script>
+</body>
+</html>
