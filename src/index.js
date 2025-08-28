@@ -11,6 +11,7 @@ export { Toolbar } from './Toolbar.js';
 export { Parser } from './Parser.js';
 export { KeyHandler } from './KeyHandler.js';
 export { Utils } from './Utils.js';
+export { DebugTooltip } from './DebugTooltip.js';
 
 // Block types
 export { BlockFactory } from './blocks/BlockFactory.js';

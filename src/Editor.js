@@ -15,6 +15,7 @@ import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
 import {BlockFactory} from "@/blocks/BlockFactory.js";
 import {KeyHandler} from "@/KeyHandler.js";
+import {DebugTooltip} from "@/DebugTooltip.js";
 
 /**
  * Editor class
@@ -30,6 +31,7 @@ export class Editor
 {
     // Static registry to track all editor instances
     static _instances = new Map();
+    static _fallbackBlocks = [];
     
     /**
      * @param {object} options
@@ -61,6 +63,9 @@ export class Editor
         
         // Create instance-specific event emitter
         this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
+        
+        // Initialize debug tooltip instance
+        this.debugTooltip = null;
         
         // Initialize the editor first
         this.init(options);
@@ -245,72 +250,26 @@ export class Editor
         if (this.debugMode) {
             this.initDebugMode();
         }
+        
+        // Initialize debug tooltip after editor is fully set up
+        this.debugTooltip = new DebugTooltip({
+            editorInstance: this.instance,
+            eventEmitter: this.eventEmitter
+        });
+        
+        // Enable debug tooltips if debug mode is on
+        if (this.debugMode) {
+            this.debugTooltip.enable(this);
+        }
     }
     
     /**
      * Initialize debug mode
      */
     initDebugMode() {
-        this.createDebugTooltips();
-        this.startDebugUpdateLoop();
-        this.addDebugEventListeners();
-        
-        // Add debug mode class to editor instance
-        this.instance.classList.add('debug-mode');
-    }
-    
-    /**
-     * Add event listeners for debug mode
-     */
-    addDebugEventListeners() {
-        // Update tooltip positions on scroll and resize
-        this.debugScrollHandler = () => {
-            if (this.debugMode) {
-                this.updateDebugTooltipPositions();
-            }
-        };
-        
-        this.debugResizeHandler = () => {
-            if (this.debugMode) {
-                this.updateDebugTooltipPositions();
-            }
-        };
-        
-        window.addEventListener('scroll', this.debugScrollHandler);
-        window.addEventListener('resize', this.debugResizeHandler);
-    }
-    
-    /**
-     * Remove debug event listeners
-     */
-    removeDebugEventListeners() {
-        if (this.debugScrollHandler) {
-            window.removeEventListener('scroll', this.debugScrollHandler);
-            this.debugScrollHandler = null;
-        }
-        
-        if (this.debugResizeHandler) {
-            window.removeEventListener('resize', this.debugResizeHandler);
-            this.debugResizeHandler = null;
-        }
-    }
-    
-    /**
-     * Update tooltip positions only (without content)
-     */
-    updateDebugTooltipPositions() {
-        if (!this.debugMode || !this.currentBlock) return;
-        
-        // Only update position for the active block's tooltip
-        const blocks = this.instance.querySelectorAll('.block');
-        const currentIndex = Array.from(blocks).indexOf(this.currentBlock);
-        
-        if (currentIndex !== -1) {
-            const tooltip = document.querySelector(`.debug-tooltip[data-block-index="${currentIndex}"]`);
-            if (tooltip) {
-                this.positionDebugTooltip(tooltip, this.currentBlock);
-            }
-        }
+        // This method now only handles basic debug mode setup
+        // Tooltip functionality is handled by DebugTooltip class
+        log('Debug mode enabled', 'Editor');
     }
     
     /**
@@ -321,13 +280,13 @@ export class Editor
         
         if (this.debugMode) {
             this.initDebugMode();
+            if (this.debugTooltip) {
+                this.debugTooltip.enable(this);
+            }
         } else {
-            this.removeDebugTooltips();
-            this.stopDebugUpdateLoop();
-            this.removeDebugEventListeners();
-            
-            // Remove debug mode class from editor instance
-            this.instance.classList.remove('debug-mode');
+            if (this.debugTooltip) {
+                this.debugTooltip.disable();
+            }
         }
         
         // Emit debug mode change event
@@ -337,243 +296,6 @@ export class Editor
         }, { source: 'editor.toggleDebugMode' });
     }
     
-    /**
-     * Create debug tooltips for all blocks
-     */
-    createDebugTooltips()
-    {
-        log('createDebugTooltips()', 'Editor.');
-
-        // Only create tooltip for the active block
-        this.updateActiveBlockTooltip();
-    }
-    
-    /**
-     * Create debug tooltip for a specific block
-     */
-    createDebugTooltip(blockElement, index)
-    {
-        log('createDebugTooltip()', 'Editor.');
-
-        // Remove existing tooltip if present
-        const existingTooltip = document.querySelector(`.debug-tooltip[data-block-index="${index}"]`);
-        if (existingTooltip) {
-            existingTooltip.remove();
-        }
-        
-        const tooltip = document.createElement('div');
-        tooltip.className = 'debug-tooltip';
-        tooltip.setAttribute('data-block-index', index);
-        
-        // Position tooltip to the right of the block using fixed positioning
-        this.updateDebugTooltipContent(tooltip, blockElement, index);
-        this.positionDebugTooltip(tooltip, blockElement);
-        
-        // Add to document body for fixed positioning
-        document.body.appendChild(tooltip);
-    }
-    
-    /**
-     * Position debug tooltip relative to block
-     */
-    positionDebugTooltip(tooltip, blockElement)
-    {
-        log('positionDebugTooltip()', 'Editor.');
-
-        const blockRect = blockElement.getBoundingClientRect();
-        const tooltipWidth = 280;
-        const gap = 10;
-        
-        // Position to the right of the block
-        let left = blockRect.right + gap;
-        let top = blockRect.top;
-        
-        // Ensure tooltip doesn't go off screen
-        if (left + tooltipWidth > window.innerWidth) {
-            left = blockRect.left - tooltipWidth - gap; // Position to the left
-        }
-        
-        // Ensure tooltip doesn't go off top of screen
-        if (top < 0) {
-            top = 10;
-        }
-        
-        // Ensure tooltip doesn't go off bottom of screen
-        if (top + tooltip.offsetHeight > window.innerHeight) {
-            top = window.innerHeight - tooltip.offsetHeight - 10;
-        }
-        
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${top}px`;
-    }
-    
-    /**
-     * Update debug tooltip content
-     */
-    updateDebugTooltipContent(tooltip, blockElement, index)
-    {
-        log('updateDebugTooltipContent()', 'Editor.');
-
-        const block = this.blocks[index];
-        const isActive = blockElement.classList.contains('active-block');
-        const currentTimestamp = Date.now();
-        
-        // Get block type from multiple sources
-        let blockType = 'unknown';
-        if (blockElement.getAttribute('data-block-type')) {
-            blockType = blockElement.getAttribute('data-block-type');
-        } else if (block && block.type) {
-            blockType = block.type;
-        } else {
-            // Infer type from tag name
-            const tagName = blockElement.tagName.toLowerCase();
-            if (tagName === 'h1') blockType = 'h1';
-            else if (tagName === 'h2') blockType = 'h2';
-            else if (tagName === 'h3') blockType = 'h3';
-            else if (tagName === 'h4') blockType = 'h4';
-            else if (tagName === 'h5') blockType = 'h5';
-            else if (tagName === 'h6') blockType = 'h6';
-            else if (tagName === 'p') blockType = 'paragraph';
-            else if (tagName === 'pre') blockType = 'code';
-            else if (tagName === 'blockquote') blockType = 'quote';
-            else if (tagName === 'ul') blockType = 'ul';
-            else if (tagName === 'ol') blockType = 'ol';
-            else if (tagName === 'table') blockType = 'table';
-            else if (tagName === 'img') blockType = 'image';
-            else if (tagName === 'hr') blockType = 'delimiter';
-            else blockType = tagName;
-        }
-        
-        // Get markdown content
-        let markdownContent = '';
-        if (block && block.content) {
-            // Use the block's markdown content if available
-            markdownContent = block.content;
-        } else {
-            // Try to get markdown from the block instance
-            if (block && block._blockInstance && typeof block._blockInstance.toMarkdown === 'function') {
-                markdownContent = block._blockInstance.toMarkdown();
-            } else {
-                // Convert HTML content to markdown as fallback
-                const htmlContent = blockElement.innerHTML || blockElement.outerHTML;
-                try {
-                    markdownContent = Editor.html2md(htmlContent);
-                } catch (error) {
-                    // If conversion fails, use text content as fallback
-                    markdownContent = blockElement.textContent || blockElement.innerHTML || '';
-                }
-            }
-        }
-        
-        // Clean up the markdown content
-        markdownContent = markdownContent.trim();
-        
-        // Remove any HTML tags that might have leaked through
-        markdownContent = markdownContent.replace(/<[^>]*>/g, '');
-        
-        // Truncate long content
-        if (markdownContent.length > 50) {
-            markdownContent = markdownContent.substring(0, 50) + '...';
-        }
-        
-        // Get last updated timestamp from element, fallback to current time
-        const lastUpdatedStr = blockElement.getAttribute('data-timestamp');
-        let lastUpdatedDate;
-        let timeDisplay;
-        
-        if (lastUpdatedStr) {
-            lastUpdatedDate = new Date(parseInt(lastUpdatedStr));
-            timeDisplay = lastUpdatedDate.toLocaleTimeString();
-        } else {
-            // If no timestamp is set, show "not modified"
-            timeDisplay = 'not modified';
-        }
-        
-        tooltip.innerHTML = `
-            <div class="debug-tooltip-header">Block ${index} (Active)</div>
-            <div class="debug-tooltip-row"><strong>Type:</strong> ${blockType}</div>
-            <div class="debug-tooltip-row"><strong>Active:</strong> ✓ Yes</div>
-            <div class="debug-tooltip-row"><strong>Updated:</strong> ${timeDisplay}</div>
-            <div class="debug-tooltip-row"><strong>Content:</strong></div>
-            <div class="debug-tooltip-content">${markdownContent || '(empty)'}</div>
-        `;
-    }
-    
-    /**
-     * Remove all debug tooltips
-     */
-    removeDebugTooltips()
-    {
-        log('removeDebugTooltips()', 'Editor.');
-
-        const tooltips = document.querySelectorAll('.debug-tooltip');
-        tooltips.forEach(tooltip => tooltip.remove());
-    }
-    
-    /**
-     * Start debug update loop
-     */
-    startDebugUpdateLoop()
-    {
-        log('startDebugUpdateLoop()', 'Editor.');
-
-        if (this.debugUpdateInterval) {
-            clearInterval(this.debugUpdateInterval);
-        }
-        
-        this.debugUpdateInterval = setInterval(() => {
-            this.updateActiveBlockTooltip();
-        }, 1000); // Update every second
-    }
-    
-    /**
-     * Stop debug update loop
-     */
-    stopDebugUpdateLoop()
-    {
-        log('stopDebugUpdateLoop()', 'Editor.');
-
-        if (this.debugUpdateInterval) {
-            clearInterval(this.debugUpdateInterval);
-            this.debugUpdateInterval = null;
-        }
-    }
-    
-    /**
-     * Update all debug tooltips
-     */
-    updateDebugTooltips()
-    {
-        log('updateDebugTooltips()', 'Editor.');
-
-        if (!this.debugMode) return;
-        
-        // Only show tooltip for the active block
-        this.updateActiveBlockTooltip();
-    }
-    
-    /**
-     * Update tooltip for the currently active block only
-     */
-    updateActiveBlockTooltip()
-    {
-        log('updateActiveBlockTooltip()', 'Editor.');
-
-        if (!this.debugMode || !this.currentBlock) {
-            return;
-        }
-        
-        // Remove all existing tooltips first
-        this.removeDebugTooltips();
-        
-        // Find the index of the current block
-        const blocks = this.instance.querySelectorAll('.block');
-        const currentIndex = Array.from(blocks).indexOf(this.currentBlock);
-        
-        if (currentIndex !== -1) {
-            this.createDebugTooltip(this.currentBlock, currentIndex);
-        }
-    }
     
     /**
      * Subscribe to events on this editor instance
@@ -1045,9 +767,9 @@ export class Editor
         }, { debounce: 500, source: 'editor.update' });
         
         // Update debug tooltips if debug mode is active
-        if (this.debugMode) {
+        if (this.debugMode && this.debugTooltip) {
             // Use a slight delay to ensure DOM updates are complete
-            setTimeout(() => this.updateActiveBlockTooltip(), 10);
+            setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
         }
     }
 
@@ -1080,8 +802,8 @@ export class Editor
                 }, { throttle: 200, source: 'block.content' });
                 
                 // Update debug tooltip if this is the active block
-                if (this.debugMode && block === this.currentBlock) {
-                    setTimeout(() => this.updateActiveBlockTooltip(), 10);
+                if (this.debugMode && this.debugTooltip && block === this.currentBlock) {
+                    setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
                 }
             }
         });
@@ -1426,8 +1148,8 @@ export class Editor
         }, { throttle: 50, source: 'editor.focus' });
         
         // Update debug tooltip for the active block only
-        if (this.debugMode) {
-            this.updateActiveBlockTooltip();
+        if (this.debugMode && this.debugTooltip) {
+            this.debugTooltip.updateActiveBlockTooltip();
         }
     }
 
@@ -1903,4 +1625,130 @@ export class Editor
             return false;
         }
     }
+    
+    /**
+     * Destroy the editor instance and clean up resources
+     */
+    destroy() {
+        log('destroy()', 'Editor.');
+        
+        // Disable debug tooltips if enabled
+        if (this.debugTooltip) {
+            this.debugTooltip.disable();
+        }
+        
+        // Remove this instance from the registry
+        if (this.instance) {
+            Editor._instances.delete(this.instance);
+        }
+        
+        // Clear references
+        this.blocks = [];
+        this.currentBlock = null;
+        this.debugTooltip = null;
+        this.eventEmitter = null;
+    }
 }
+
+// Static property getters for backward compatibility
+Object.defineProperty(Editor, 'instance', {
+    get() {
+        const firstInstance = Editor._instances.keys().next().value;
+        return firstInstance || null;
+    },
+    set(value) {
+        if (value === null) {
+            Editor._instances.clear();
+        }
+    }
+});
+
+Object.defineProperty(Editor, 'currentBlock', {
+    get() {
+        const firstEditor = Editor._instances.values().next().value;
+        return firstEditor ? firstEditor.currentBlock : null;
+    },
+    set(value) {
+        const firstEditor = Editor._instances.values().next().value;
+        if (firstEditor) {
+            firstEditor.currentBlock = value;
+        }
+    }
+});
+
+Object.defineProperty(Editor, 'keybuffer', {
+    get() {
+        const firstEditor = Editor._instances.values().next().value;
+        return firstEditor ? firstEditor.keybuffer : [];
+    },
+    set(value) {
+        const firstEditor = Editor._instances.values().next().value;
+        if (firstEditor) {
+            firstEditor.keybuffer = value;
+        }
+    }
+});
+
+Object.defineProperty(Editor, 'blocks', {
+    get() {
+        const firstEditor = Editor._instances.values().next().value;
+        return firstEditor ? firstEditor.blocks : (Editor._fallbackBlocks || []);
+    },
+    set(value) {
+        const firstEditor = Editor._instances.values().next().value;
+        if (firstEditor) {
+            firstEditor.blocks = value;
+        } else {
+            Editor._fallbackBlocks = value;
+        }
+    }
+});
+
+/**
+ * @deprecated Use editor instance methods instead
+ * Static method for backward compatibility - delegates to first editor instance
+ */
+Editor.addDefaultBlock = function() {
+    const firstEditor = Editor._instances.values().next().value;
+    return firstEditor ? firstEditor.addDefaultBlock() : undefined;
+};
+
+/**
+ * @deprecated Use editor instance methods instead  
+ * Static method for backward compatibility - delegates to first editor instance
+ */
+Editor.setCurrentBlock = function(block) {
+    const firstEditor = Editor._instances.values().next().value;
+    if (firstEditor) {
+        firstEditor.setCurrentBlock(block);
+    }
+};
+
+/**
+ * @deprecated Use editor instance methods instead
+ * Static method for backward compatibility - delegates to first editor instance  
+ */
+Editor.update = function() {
+    const firstEditor = Editor._instances.values().next().value;
+    if (firstEditor) {
+        firstEditor.update();
+    }
+};
+
+/**
+ * @deprecated Use editor instance methods instead
+ * Static method for backward compatibility - delegates to first editor instance
+ */
+Editor.getMarkdown = function() {
+    const firstEditor = Editor._instances.values().next().value;
+    return firstEditor ? firstEditor.getMarkdown() : '';
+};
+
+/**
+ * @deprecated Use editor instance methods instead  
+ * Static method for backward compatibility - delegates to first editor instance
+ */
+Editor.getHtml = function() {
+    const firstEditor = Editor._instances.values().next().value;
+    return firstEditor ? firstEditor.getHtml() : '';
+};
