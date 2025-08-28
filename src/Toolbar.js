@@ -224,20 +224,17 @@ export const Toolbar = {
     {
         log('code()', 'Toolbar.');
         
-        // Try to convert current block, fallback to legacy behavior
-        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('code')) {
-            const range = window.getSelection().getRangeAt(0);
-            const selectedText = range.toString();
-            
-            if ( 1 || selectedText ) {
-                document.execCommand('formatBlock', false, '<pre>');
-            } else {
-                document.execCommand('insertHTML', false, '<pre></pre><p></p>');
+        // Use the new block-based architecture
+        if (Toolbar.editorInstance) {
+            const result = Toolbar.editorInstance.convertCurrentBlockOrCreate('code');
+            if (result) {
+                Toolbar.after();
+                return;
             }
-            
-            Toolbar.br();
         }
         
+        // Fallback for legacy usage (should not normally reach here)
+        log('Warning: Falling back to legacy code block creation', 'Toolbar.');
         Toolbar.after();
     },
     

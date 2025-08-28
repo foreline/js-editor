@@ -4,213 +4,195 @@
 The JS Editor project is a web-based rich text editor designed to provide users with advanced text editing capabilities. It supports features such as markdown conversion, toolbar-based formatting, event handling, and block-based content management.
 
 ## Functional Requirements
+# JS Editor Specifications — Logic and Features
 
-### Editor Core
-1. **Initialization**:
-   - The editor should initialize with a valid DOM element ID.
-   - Default block should be created if no content is provided.
-   - Toolbar configuration should be applied during initialization.
+This document describes the current behavior of the editor based on implemented features and resolved issues. It focuses on editor logic, block architecture, keyboard handling, conversion, clipboard behavior, toolbar integration, and export APIs.
 
-2. **Content Blocks**:
-   - Support multiple block types (e.g., paragraph, headers, lists, code blocks).
-   - Allow adding, removing, and updating blocks dynamically.
+## Architecture Overview
 
-3. **Event Handling**:
-   - Implement custom events for editor updates.
-   - Provide listeners for key events like `keydown`, `keyup`, and `paste`.
+- Instance-based editor: `Editor` is an instance-driven API. Remaining legacy static methods are kept as back-compat shims and are deprecated. Static shims delegate to the first created editor instance (see Export APIs section).
+- Main components:
+   - `Editor`: lifecycle, state, rendering/update cycle, selection/focus, conversions, paste.
+   - `Block` classes: one class per block type; encapsulate key handling, conversion, rendering, and serialization.
+   - `Toolbar` + `ToolbarHandlers`: UI actions that call editor instance methods; dynamic states reflect the current selection/block.
+   - `KeyHandler`: centralizes keyboard handling, delegates list/enter/backspace specifics to block types.
+   - `Parser`: markdown/HTML conversions, sanitization, and preprocessing for special syntaxes (code fences, task lists, tables).
+   - `DebugTooltip`: optional debug overlay extracted from `Editor`; handles its own lifecycle.
 
-4. **Focus Management**:
-   - Ensure focus is set on the current block or editor instance.
+## Block Model and DOM Structure
 
-5. **Clipboard Support**:
-   - Handle text paste events and convert markdown to HTML.
+- Each block container has:
+   - `class="block block-<type>"` where `<type>`: `p`, `h1..h6`, `ul`, `ol`, `sq` (task list), `code`, `table`, `image`, `quote`.
+   - `data-block-type="<type>"` matching the block type.
+- Lists:
+   - Unordered and ordered lists use `<ul>`/`<ol>` as the block container element and carry the `block` classes and `data-block-type` on the list element.
+   - List items (`<li>`) DO NOT carry `block` classes and are not treated as blocks.
+- Task lists:
+   - Render as a semantic `<ul class="block block-sq" data-block-type="sq">` with `<li class="task-list-item">` children.
+   - Each task item contains an interactive `<input type="checkbox">` and an editable text container (e.g., `<span contenteditable>`), aligned without list bullets.
+   - Markdown supports `[ ]`, `[x]`, `[X]`, and `[]`. Checkbox toggling updates markdown state. Keyboard Ctrl+Space toggles the checkbox.
+- Headings:
+   - Inner heading element (`<h1>`..`<h6>`) is contenteditable and receives focus after conversion.
+- Code blocks:
+   - Fenced code blocks (``` and ~~~) parse into dedicated `code` blocks; code content is preserved and safely escaped.
+ - Change tracking:
+    - Each block updates a `data-timestamp` attribute on content changes to efficiently detect modifications and emit change events.
 
-### Toolbar
-1. **Toolbar Buttons**:
-   - Provide buttons for formatting options like bold, italic, underline, and strikethrough.
-   - Support list creation (unordered, ordered).
-   - Include buttons for headers, paragraphs, and code blocks.
+## Initialization and Update Cycle
 
-2. **Event Listeners**:
-   - Attach click event listeners to toolbar buttons.
-   - Call appropriate methods in `Toolbar.js` for each button.
+- Initialization validates container, builds the toolbar, installs listeners, and ensures at least one default paragraph block exists.
+- The editor maintains `currentBlock` and updates toolbar state when it changes. Duplicate `setCurrentBlock()` calls are suppressed.
+- `ensureDefaultBlock()` guarantees a default block exists but does not recurse into the update cycle.
+- Flags prevent race conditions:
+   - `isCreatingBlock`: prevents empty-editor enforcement immediately after creating blocks.
+   - `isConvertingBlock`: suspends empty-editor checks during type conversions (e.g., markdown triggers).
 
-### Parsing
-1. **Markdown Conversion**:
-   - Convert markdown to HTML and vice versa.
+## Focus Management
 
-2. **HTML Parsing**:
-   - Parse HTML content into editor blocks.
+- `Editor.focus()` focuses the current block’s primary editable element. If `currentBlock` is null or detached, it falls back to focusing the editor root.
+- On empty-block deletion or block creation, focus moves predictably:
+   - After Enter that creates a block or list item, focus moves to the new element.
+   - After Backspace removes an empty block, focus moves to the previous block (caret at end); if none, to the next block.
 
-### Utilities
-1. **Event Emitters**:
-   - Provide a utility for emitting and listening to custom events.
+## Keyboard Behavior
+# JS Editor Specifications — Logic and Features
 
-2. **Logging**:
-   - Include logging utilities for debugging.
+This document describes the current behavior of the editor based on implemented features and resolved issues. It focuses on editor logic, block architecture, keyboard handling, conversion, clipboard behavior, toolbar integration, and export APIs.
 
-## Expanded Functional Requirements
+## Architecture Overview
 
-### Editor Core
-1. **Initialization**:
-   - Validate the provided DOM element ID and throw an error if invalid.
-   - Create a default block with a paragraph type if no content is provided.
-   - Apply toolbar configuration dynamically based on user preferences.
-   - Reset editor state (blocks, keybuffer, current block) during reinitialization.
+- Instance-based editor: `Editor` is an instance-driven API. Remaining legacy static methods are kept as back-compat shims and are deprecated. Static shims delegate to the first created editor instance (see Export APIs section).
+- Main components:
+   - `Editor`: lifecycle, state, rendering/update cycle, selection/focus, conversions, paste.
+   - `Block` classes: one class per block type; encapsulate key handling, conversion, rendering, and serialization.
+   - `Toolbar` + `ToolbarHandlers`: UI actions that call editor instance methods; dynamic states reflect the current selection/block.
+   - `KeyHandler`: centralizes keyboard handling, delegates list/enter/backspace specifics to block types.
+   - `Parser`: markdown/HTML conversions, sanitization, and preprocessing for special syntaxes (code fences, task lists, tables).
+   - `DebugTooltip`: optional debug overlay extracted from `Editor`; handles its own lifecycle.
 
-2. **Content Blocks**:
-   - Support block types including paragraph, headers (H1-H6), code blocks, and lists.
-   - Provide methods for splitting, merging, and rearranging blocks.
-   - Ensure blocks are editable and maintain their state during updates.
-   - **List Block Behavior**: For unordered (ul) and ordered (ol) list blocks, Enter key creates new list items of the same type. Empty list items can be removed with Backspace or converted to regular paragraphs by pressing Enter.
+## Block Model and DOM Structure
 
-3. **Event Handling**:
-   - Implement custom events for editor updates, block changes, and toolbar interactions.
-   - Provide listeners for key events (`keydown`, `keyup`, `paste`, `click`) and ensure proper propagation.
-   - Handle edge cases like empty keybuffer or invalid event targets.
-   - **Enter Key Handling**: Create new blocks when Enter is pressed at the end of a block. For list blocks (ul, ol), create new list items when cursor is at the end of the item, or end the list if the current item is empty. For non-list blocks, create a new paragraph block when cursor is at the end.
-   - **Backspace Key Handling**: Remove empty blocks when Backspace is pressed and focus on the previous block with cursor positioned at the end of the content. When no previous block exists, focus on the next block. Maintain at least one block in the editor.
-   - **Cursor-based Block Activation**: When a user clicks or places cursor within a block, that block automatically becomes the active/current block.
+- Each block container has:
+   - `class="block block-<type>"` where `<type>`: `p`, `h1..h6`, `ul`, `ol`, `sq` (task list), `code`, `table`, `image`, `quote`.
+   - `data-block-type="<type>"` matching the block type.
+- Lists:
+   - Unordered and ordered lists use `<ul>`/`<ol>` as the block container element and carry the `block` classes and `data-block-type` on the list element.
+   - List items (`<li>`) DO NOT carry `block` classes and are not treated as blocks.
+- Task lists:
+   - Render as a semantic `<ul class="block block-sq" data-block-type="sq">` with `<li class="task-list-item">` children.
+   - Each task item contains an interactive `<input type="checkbox">` and an editable text container (e.g., `<span contenteditable>`), aligned without list bullets.
+   - Markdown supports `[ ]`, `[x]`, `[X]`, and `[]`. Checkbox toggling updates markdown state. Keyboard Ctrl+Space toggles the checkbox.
+- Headings:
+   - Inner heading element (`<h1>`..`<h6>`) is contenteditable and receives focus after conversion.
+- Code blocks:
+   - Fenced code blocks (``` and ~~~) parse into dedicated `code` blocks; code content is preserved and safely escaped.
+- Change tracking:
+   - Each block updates a `data-timestamp` attribute on content changes to efficiently detect modifications and emit change events.
 
-4. **Focus Management**:
-   - Automatically focus on the first block when the editor is initialized.
-   - Provide methods to programmatically set focus on specific blocks.
-   - Handle focus transitions when blocks are added, removed, or updated.
-   - Support cursor placement detection via mouseup events to track which block contains the cursor.
+## Initialization and Update Cycle
 
-5. **Block Rendering and Classes**:
-   - Each block type has a corresponding CSS class for proper styling: `block-p` for paragraphs, `block-h1` through `block-h6` for headers, `block-ul` for unordered lists, `block-ol` for ordered lists, `block-sq` for task lists, `block-code` for code blocks, `block-table` for tables, `block-image` for images, and `block-quote` for quotes.
-   - **List Item Element Handling**: Individual list items (`<li>` elements) within lists do NOT have the `block` class. Only the container elements (`<ul>`, `<ol>`, or `<div>` for task lists) have the `block` class. This ensures proper event handling where clicking on a list item focuses the parent list block.
-   - Task blocks (`sq` type) are rendered as div elements with checkboxes rather than list items to avoid bullet points and ensure proper alignment.
-   - All data-block-type attributes correctly match the actual block type for proper key handling and styling.
+- Initialization validates container, builds the toolbar, installs listeners, and ensures at least one default paragraph block exists.
+- The editor maintains `currentBlock` and updates toolbar state when it changes. Duplicate `setCurrentBlock()` calls are suppressed.
+- `ensureDefaultBlock()` guarantees a default block exists but does not recurse into the update cycle.
+- Flags prevent race conditions:
+   - `isCreatingBlock`: prevents empty-editor enforcement immediately after creating blocks.
+   - `isConvertingBlock`: suspends empty-editor checks during type conversions (e.g., markdown triggers).
 
-6. **Code Block Parsing**:
-   - Fenced code blocks (using triple backticks ``` or tildes ~~~) are properly parsed as separate blocks.
-   - Pre-processing ensures fenced code blocks are isolated on their own lines before markdown conversion.
-   - **Intelligent Block Removal**: When empty blocks are removed via Backspace, automatically focus on the nearest available block (previous block preferred, fallback to next block).
+## Focus Management
 
-5. **Clipboard Support**:
-   - Parse pasted content and sanitize it to prevent XSS attacks.
-   - Convert markdown to HTML and vice versa during paste operations.
-   - Support rich text paste with formatting retention.
+- `Editor.focus()` focuses the current block’s primary editable element. If `currentBlock` is null or detached, it falls back to focusing the editor root.
+- On empty-block deletion or block creation, focus moves predictably:
+   - After Enter that creates a block or list item, focus moves to the new element.
+   - After Backspace removes an empty block, focus moves to the previous block (caret at end); if none, to the next block.
 
-6. **Content Export**:
-   - Provide `Editor.getMarkdown()` method to export all editor content as markdown format.
-   - Provide `Editor.getHtml()` method to export all editor content as HTML format.
-   - Export methods return clean content without metadata or editor-specific markup.
-   - Handle edge cases like empty content and malformed blocks gracefully.
+## Keyboard Behavior
 
-## Block Architecture
-   - Implement BlockInterface contract for consistent block behavior.
-   - All blocks implement required methods: `handleKeyPress()`, `handleEnterKey()`, `toMarkdown()`, `toHtml()`, `applyTransformation()`.
-   - All blocks provide static methods: `getMarkdownTriggers()`, `getToolbarConfig()`, `getDisabledButtons()`.
-   - Blocks maintain consistent properties: `type`, `content`, `html`, `nested`.
-   - Interface validation available for ensuring blocks meet contract requirements.
-   - **Task List Support**: TaskListBlock supports checkbox lists with markdown syntax `- [ ]` for unchecked and `- [x]` for checked items. Checkboxes are interactive HTML input elements with toggle functionality via click or Ctrl+Space keyboard shortcut.
-   - **Table Support**: TableBlock supports markdown table syntax with header rows and data rows. Tables are rendered as HTML table elements with interactive cell editing, Tab navigation between cells, and Enter key to add new rows. **Contextual table controls** appear near the table when any cell is focused, providing buttons to add/remove columns and rows. The control panel automatically appears on cell focus and disappears on blur with a short delay to allow interaction with the buttons.
-   - **Image Support**: ImageBlock supports image insertion via URL input, drag & drop file upload, and file picker selection. Images are resizable by dragging the resize handle and support markdown syntax `![alt](src)`. Uploaded images are converted to base64 data URLs for embedding.
+- Enter:
+   - In paragraphs/headings/other non-list blocks: create a new default paragraph after the block when the caret is at the end; focus it.
+   - In lists (`ul`/`ol`):
+      - At end of a non-empty `<li>`: create a new `<li>` in the same list and focus it.
+      - On an empty `<li>`: close the list and create a new default paragraph after the list.
+- Backspace:
+   - In an empty block: delete the block and move focus to the previous block (caret to end). Maintain at least one default block in the editor.
+- Active block tracking: placing the caret inside a block makes it the current block (duplicate calls coalesced).
 
-### Toolbar
-1. **Toolbar Buttons**:
-   - Include buttons for text alignment (left, center, right, justify).
-   - Provide options for text color and background color.
-   - Support undo and redo operations with visual indicators.
-   - Include advanced formatting options like superscript, subscript, and blockquote.
+## Markdown Triggers and Conversion
 
-2. **Event Listeners**:
-   - Attach click event listeners to toolbar buttons dynamically based on configuration.
-   - Ensure event listeners are removed during toolbar reinitialization.
-   - Provide visual feedback (e.g., active state) for toolbar buttons based on editor state.
+- Supported triggers in a paragraph at start of block (space-terminated): `# `, `## ` ... `###### `, `- `, `* `, `1 `, `1. `.
+- Trailing spaces are preserved for trigger detection.
+- Single-empty-editor case: triggers can convert the sole paragraph block to the requested type.
+- Conversion flow:
+   - Toolbar and trigger conversions call `Editor.convertCurrentBlockOrCreate(<type>)`.
+   - Each block implements `applyTransformation(targetType)` to change its DOM in place (no circular calls back into toolbar).
+   - After header conversion, focus is moved to the inner heading element.
 
-### Parsing
-1. **Markdown Conversion**:
-   - Support extended markdown syntax (e.g., tables, task lists).
-   - Ensure accurate conversion of nested markdown structures to HTML.
+## Clipboard and Pasting
 
-2. **HTML Parsing**:
-   - Parse HTML content into editor blocks while preserving formatting.
-   - Handle invalid or malformed HTML gracefully.
+- Pasted content is sanitized to prevent XSS.
+- Multi-paragraph or rich content (lists, tables, code fences) is split into appropriate blocks rather than inserted as one fragment.
+- Task list processing uses custom preprocessing; native task-list support in the markdown engine is disabled to avoid disabled checkboxes.
+- Fenced code blocks are isolated into `code` blocks with preserved formatting and safe HTML entity escaping.
 
-### Utilities
-1. **Event Emitters**:
-   - Provide a utility for emitting and listening to custom events with namespaces.
-   - Ensure event listeners can be dynamically added and removed.
+## Toolbar Integration
 
-2. **Logging**:
-   - Include logging utilities with configurable log levels (e.g., debug, info, warn, error).
-   - Provide methods to log editor state for debugging purposes.
+- Toolbar buttons are initialized dynamically and removed on reinit to avoid leaks.
+- Buttons convert the current block or create blocks as appropriate (e.g., list, header, code).
+- Button active/disabled states reflect current selection and block type.
+- The code toolbar action converts selection to a `code` block without circular dependencies.
+- Toolbar groups are supported; blocks can contribute buttons and target specific groups via their toolbar configuration.
 
-## Non-Functional Requirements
+## Block Contract
 
-### Code Quality
-1. **Testing**:
-   - Achieve high test coverage for all modules.
-   - Write unit tests for core functionalities.
+Blocks implement a common contract to integrate with the editor lifecycle:
 
-2. **Linting**:
-   - Use ESLint for code linting.
+- Instance methods: `handleKeyPress(evt)`, `handleEnterKey(evt)`, `toMarkdown()`, `toHtml()`, `applyTransformation(targetType)`.
+- Static methods: `getMarkdownTriggers()`, `getToolbarConfig()`, `getDisabledButtons()`.
+- Properties: `type`, optional `nested`, and a DOM element as the block container.
 
-### Performance
-1. **Efficiency**:
-   - Optimize DOM manipulations.
-   - Minimize reflows and repaints.
+## Block Types and Capabilities
 
-2. **Scalability**:
-   - Ensure the editor can handle large documents.
+- Paragraph (`p`): default block; supports triggers to convert into other types.
+- Headings (`h1..h6`): contenteditable heading element; cursor moves to inner heading on creation.
+- Unordered/Ordered Lists (`ul`, `ol`): Enter creates items; empty item Enter exits list.
+- Task List (`sq`): semantic UL with interactive checkboxes; markdown `[ ]`/`[x]` round-trips; no bullets.
+- Code (`code`): fenced code; safe escaping; syntax highlighting supported by the highlighter integration.
+- Table (`table`): markdown table support; editable cells; Tab cycles cells; Enter adds rows; contextual controls allow add/remove rows/columns while focused.
+- Image (`image`): URL input, drag & drop, file picker; resizable; supports `![alt](src)` markdown; files may be embedded as base64.
+- Quote (`quote`): standard block quote rendering and editing.
 
-### Compatibility
-1. **Browser Support**:
-   - Support modern browsers (Chrome, Firefox, Edge).
+## Export APIs
 
-2. **Responsive Design**:
-   - Ensure the editor works well on different screen sizes.
+- Instance methods provide canonical exports:
+   - `editor.getMarkdown()` returns clean markdown content for all blocks.
+   - `editor.getHtml()` returns clean HTML content for all blocks.
+- Deprecated static shims for back-compat:
+   - `Editor.getMarkdown()` and `Editor.getHtml()` delegate to the first editor instance when present.
 
-## Expanded Non-Functional Requirements
+## Event System
 
-### Code Quality
-1. **Testing**:
-   - Write integration tests to validate interactions between modules.
-   - Ensure tests cover edge cases and error handling scenarios.
+- `editor.on(eventName, handler)` to subscribe to editor events (e.g., content change, block add/remove, selection change). Handlers can be debounced.
+- Events reflect updates from user input, toolbar actions, conversions, and paste operations.
 
-2. **Linting**:
-   - Enforce consistent code style using Prettier.
+## Performance and Reliability Notes
 
-### Performance
-1. **Efficiency**:
-   - Optimize rendering of blocks to minimize DOM updates.
-   - Use virtual DOM techniques for efficient updates.
+- Duplicate `setCurrentBlock()` calls are prevented to reduce redundant work.
+- Empty-editor protection avoids infinite loops by not triggering update recursively from `ensureDefaultBlock()`.
+- Flags (`isCreatingBlock`, `isConvertingBlock`) remove race conditions between creation/conversion and empty-editor checks.
 
-2. **Scalability**:
-   - Ensure the editor can handle documents with thousands of blocks without performance degradation.
+## Compatibility
 
-## Future Enhancements
-1. **Plugins**:
-   - Allow users to extend functionality via plugins.
+- Modern browsers (Chrome, Firefox, Edge).
+- Responsive layout for editor container and toolbar.
 
-2. **Themes**:
-   - Provide support for custom themes.
+## Dependencies (high level)
 
-3. **Versioning**:
-   - Provide version control for editor content with rollback capabilities.
+- Build: Vite
+- Tests: Jest
+- Transforms: Babel
+- Markdown/Parsing: project markdown/HTML parsing with custom preprocessing (task lists, code fences, tables); tasklists in the underlying parser are disabled in favor of custom processing.
 
-## Dependencies
-- **Vite**: Build tool for development.
-- **Jest**: Testing framework.
-- **Babel**: JavaScript compiler.
-- **markdown**: The markup library.
+## Notes and Future Enhancements (non-binding)
 
-## Development Workflow
-1. **Setup**:
-   - Install dependencies using `npm install`.
-
-2. **Build**:
-   - Use Vite for building the project.
-
-3. **Testing**:
-   - Run tests using `npm test`.
-
-4. **Linting**:
-   - Run ESLint to check code quality.
-
-## Conclusion
-The JS Editor project is designed to be modular, block-based and extensible.
+- Dynamic toolbar configuration via plugins.
+- Export/import JSON with block metadata.
+- Further performance work for very large documents.

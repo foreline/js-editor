@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Code Block Conversion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .editor-container {
+            border: 1px solid #ccc;
+            min-height: 300px;
+            padding: 20px;
+            background: white;
+        }
+        .toolbar {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+        .toolbar button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+        }
+        .toolbar button:hover {
+            background: #e9e9e9;
+        }
+        .block {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #007cba;
+        }
+        .block-code {
+            background: #f8f8f8;
+            border-left-color: #666;
+        }
+        .block-code pre {
+            margin: 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        .language-selector {
+            margin-top: 10px;
+        }
+        .language-selector select {
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Code Block Conversion Test</h1>
+    <p>This page tests the code block conversion functionality.</p>
+    
+    <div class="test-results">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Type some text in the editor (e.g., "console.log('Hello World');")</li>
+            <li>Select the text</li>
+            <li>Click the Code button in the toolbar</li>
+            <li>The text should be converted to a code block with syntax highlighting</li>
+        </ol>
+    </div>
+
+    <div class="toolbar">
+        <button class="editor-toolbar-text" title="Text">
+            <i class="fa fa-paragraph"></i> Text
+        </button>
+        <button class="editor-toolbar-code" title="Code Block">
+            <i class="fa fa-code"></i> Code
+        </button>
+        <button class="editor-toolbar-ul" title="Unordered List">
+            <i class="fa fa-list"></i> List
+        </button>
+    </div>
+
+    <div class="editor-container" id="editor"></div>
+
+    <div class="test-results">
+        <h3>Test Results:</h3>
+        <div id="test-output">Click the buttons above to test the functionality.</div>
+    </div>
+
+    <script type="module">
+        // Import the editor modules
+        import { Editor } from './src/index.js';
+
+        // Initialize the editor
+        const editor = new Editor({
+            container: document.getElementById('editor'),
+            debug: true
+        });
+
+        // Test output area
+        const testOutput = document.getElementById('test-output');
+
+        // Add test logging
+        function logTest(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testOutput.innerHTML += `<div>${timestamp}: ${message}</div>`;
+        }
+
+        // Test the code button functionality
+        document.querySelector('.editor-toolbar-code').addEventListener('click', () => {
+            logTest('Code button clicked');
+            
+            try {
+                const result = editor.convertCurrentBlockOrCreate('code');
+                logTest(`Code conversion result: ${result ? 'Success' : 'Failed'}`);
+                
+                // Check if a code block was created
+                const codeBlocks = editor.instance.querySelectorAll('.block-code');
+                logTest(`Number of code blocks in editor: ${codeBlocks.length}`);
+                
+                if (codeBlocks.length > 0) {
+                    logTest('✅ Code block conversion test PASSED');
+                } else {
+                    logTest('❌ Code block conversion test FAILED');
+                }
+            } catch (error) {
+                logTest(`❌ Error during code conversion: ${error.message}`);
+            }
+        });
+
+        // Test other buttons for comparison
+        document.querySelector('.editor-toolbar-ul').addEventListener('click', () => {
+            logTest('List button clicked');
+            try {
+                const result = editor.convertCurrentBlockOrCreate('ul');
+                logTest(`List conversion result: ${result ? 'Success' : 'Failed'}`);
+            } catch (error) {
+                logTest(`❌ Error during list conversion: ${error.message}`);
+            }
+        });
+
+        // Initial test log
+        logTest('Editor initialized successfully');
+        logTest('Ready for testing - add some text and click the Code button');
+    </script>
+</body>
+</html>

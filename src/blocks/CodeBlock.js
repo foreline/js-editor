@@ -4,6 +4,7 @@ import {BaseBlock} from "@/blocks/BaseBlock";
 import {BlockType} from "@/BlockType";
 import {Toolbar} from "@/Toolbar";
 import {SyntaxHighlighter} from "@/utils/syntaxHighlighter";
+import {Utils} from "@/Utils";
 
 /**
  * Code block
@@ -38,7 +39,7 @@ export class CodeBlock extends BaseBlock
      * @returns {string} - Highlighted HTML content
      */
     highlightSyntax() {
-        if (!this._content) return '';
+        if (!this._content) return this._content || '';
         
         const highlighted = SyntaxHighlighter.highlight(this._content, this._language);
         this._highlighted = true;
@@ -85,7 +86,9 @@ export class CodeBlock extends BaseBlock
      * @returns {void}
      */
     applyTransformation() {
-        Toolbar.code();
+        // Don't call Toolbar.code() to avoid circular dependency
+        // This method is called from within the conversion process
+        // The actual conversion is handled by the Editor's convertCurrentBlockOrCreate method
     }
 
     /**
@@ -102,7 +105,23 @@ export class CodeBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
-        const highlighted = this.highlightSyntax();
+        // Handle empty content case
+        if (!this._content) {
+            return `<pre><code></code></pre>`;
+        }
+        
+        // For testing and backward compatibility, use content directly if highlighting fails
+        let highlighted;
+        try {
+            highlighted = this.highlightSyntax();
+            // If highlighting returns empty but content exists, use escaped content directly
+            if (!highlighted && this._content) {
+                highlighted = Utils.escapeHTML(this._content);
+            }
+        } catch (error) {
+            // Fallback to escaped plain content if highlighting fails
+            highlighted = Utils.escapeHTML(this._content);
+        }
         
         if (!this._language) {
             return `<pre><code>${highlighted}</code></pre>`;

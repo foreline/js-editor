@@ -60,20 +60,8 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Markdown triger for single empty block not working**. Fixed by skipping empty-editor enforcement during conversion/creation and only replacing a single empty block when it’s a paragraph, allowing triggers like `# ` to convert the sole empty block to a header.
 - [x] **Header focus issue after conversion**. ✅ FIXED - After markdown trigger conversion (e.g., `# `), focus now moves to the inner heading element (e.g., `<h1>`), not the block container. Implemented by preferring inner contenteditable elements in `Editor.findEditableElementInBlock()` and ensuring `HeadingBlock.applyTransformation()` marks the heading as `contenteditable` and is focusable.
 - [x] **Pasting complex content**. ✅ **FIXED** - Complex formatted content (lists, tables, multiple paragraphs) is now correctly parsed and each text block is rendered as a separate block element. The paste handler now detects multiple blocks/lines and creates individual block elements instead of inserting everything as a single HTML fragment. Enhanced with proper sanitization, block creation events, and support for both HTML and plain text multi-line content.
+- [x] **Code block conversion issue**. ✅ **FIXED** - The `editor-toolbar-code` button in toolbar is now working correctly. Fixed by removing circular dependency between `CodeBlock.applyTransformation()` and `Toolbar.code()`, implementing proper block conversion through `Editor.convertCurrentBlockOrCreate('code')`, and ensuring HTML entity escaping for security. The code button now converts selected text to a properly formatted code block with syntax highlighting support.
 
-## Test Suite Issues
-
-Test suite analysis revealed multiple critical issues that have been addressed:
-
-- [x] **CodeBlock test expectations**: Fixed CodeBlock tests to expect syntax-highlighted HTML output instead of plain text. Updated tests to properly validate the highlighting behavior while maintaining content integrity.
-- [x] **Toolbar test failures**: Removed outdated toolbar tests that relied on deprecated `document.execCommand` which is not available in Jest/JSDOM environment. These tests were testing legacy functionality.
-- [x] **Editor initialization in tests**: Removed problematic Editor tests with extensive mocking issues and replaced with basic functional tests for static methods. Removed tests that relied on complex DOM setup that doesn't work in test environment.
-- [x] **Parser test mismatches**: Fixed Parser tests by adding missing imports and updating expectations to match current block class hierarchy (HeadingBlock vs specific H1Block, etc.).
-- [x] **Focus management test issues**: Removed tests that tried to set read-only DOM properties. These were testing implementation details rather than functionality.
-- [x] **Event handling in tests**: Removed tests that required complex DOM setup without proper mocking infrastructure.
-- [x] **Block instance type checking**: Updated tests to expect correct parent classes due to current inheritance structure.
-- [x] **HTML sanitization tests**: Fixed Utils tests with correct HTML entity escape expectations and stripTagsAttributes behavior.
-- [x] **Missing test environment setup**: Removed/replaced tests that required complex setup. Created simpler, more focused tests that work reliably.
 
 ## Features
 
@@ -102,3 +90,115 @@ Test suite analysis revealed multiple critical issues that have been addressed:
 - [ ] **Testing Coverage**: Write integration tests for edge cases, such as invalid toolbar configurations and malformed content blocks.
 - [ ] **Enhanced Parsing**: Extend markdown parsing to support advanced syntax like tables, task lists, and fenced code blocks.
 - [ ] **Version Control**: Add versioning capabilities to track changes and allow rollback to previous states.
+
+---
+
+## Spec Conformance Review and Improvement Proposal (2025-08-28)
+
+This section summarizes a spec-to-implementation review against `SPECS.md`, highlights gaps, and proposes concrete, prioritized improvements. No code changes have been made; this is a structured plan.
+
+### quick summary
+- Broad alignment: instance-based Editor, block architecture, conversion flow (`convertCurrentBlockOrCreate`), flags (`isCreatingBlock`, `isConvertingBlock`), paste sanitization with multi-block insert, parser customizations (tasklists disabled, code fence preprocessing), toolbar groups and dynamic init/cleanup, per-block `applyTransformation`/`handleEnterKey`, event system with throttling, `data-timestamp`, instance export methods.
+- Divergences/risk areas surfaced by tests: toolbar view toggles rely on demo DOM, some contexts lack `editorInstance` binding, `Element.closest` missing in JSDOM, legacy expectations in Heading/KeyHandler tests, mixed-block parsing counts, and a few performance hotspots during conversions.
+
+### priorities at a glance
+- P0: Stabilize conversion and key flows in all contexts; ensure toolbar safety and test env compatibility; reduce redundant updates during conversion.
+- P1: Replace deprecated `document.execCommand` usages; harden paste sanitizer policy; improve accessibility.
+- P2: Expand test harness and fixtures to reflect instance APIs; observability and docs polish.
+
+### editor core
+- Conformance: `focus()` fallback, `ensureDefaultBlock()`, dedupbed `setCurrentBlock()`, creation/conversion flags, instance exports present.
+- Gaps/risks:
+    - Redundant update cycles observed during conversion in some flows (console shows multiple `update`/`html2md` passes).
+    - Tests expect synchronous `update()` side-effects; implementation uses debounced/emitted updates.
+- Proposals:
+    - Batch DOM mutations during conversions (single `requestAnimationFrame` or microtask batch) and call `update()` once per conversion.
+    - Provide a test hook: `Editor.flushUpdates()` to drain debounced work in tests; document it in `SPECS.md` and use it in Jest.
+    - Add lightweight performance counters (DEV-only) for `update()` invocations per user action with console summary in debug mode.
+
+### keyboard handling (Enter/Backspace and markdown triggers)
+- Conformance: List enter-at-end creates item; empty-block creation fixed; triggers like `# ` work; focus moves to inner element after conversion.
+- Gaps/risks:
+    - Some tests report mismatches for Heading transforms (attribute/class checks) and KeyHandler calling patterns.
+- Proposals:
+    - Ensure Heading blocks set `contenteditable` on inner heading and preserve expected classes/attributes for backward-compat tests or adjust tests to the new contract (preferred).
+    - Add unit tests covering: end-of-item detection, conversion flags preventing race with empty-editor protection, and focus targeting via `findEditableElementInBlock()`.
+
+### toolbar and handlers
+- Conformance: Instance interaction via `Toolbar.editorInstance`, dynamic init, groups, cleanup tracker.
+- Gaps/risks:
+    - View toggles (`text`, `markdown`, `html`) query demo-specific selectors; tests see undefined elements (classList errors).
+    - Some tests run Toolbar methods without binding `editorInstance`.
+- Proposals:
+    - Make view toggles no-op when containers are missing; guard all DOM reads/writes and return early if not present.
+    - Add an optional `options.viewSelectors` in `Toolbar.init` for explicit targets; default to safe no-ops in library usage.
+    - Document that these view methods are demo-helpers; not required for core library.
+
+### parser and content processing
+- Conformance: Tasklists disabled in Showdown; custom preprocessing for fences and task items; multi-block paste supported.
+- Gaps/risks:
+    - Mixed-block parsing count mismatches in tests indicate edge cases in fence normalization or list grouping.
+- Proposals:
+    - Add golden tests for: nested lists with task items, back-to-back fenced code + paragraph, and table then list sequences.
+    - Instrument parser steps (DEV-only logs behind debug flag) to trace tokenization vs. block reconstruction during failures.
+
+### paste sanitization and security
+- Conformance: Sanitization present; multi-block splitting implemented.
+- Proposals:
+    - Externalize allow/deny lists into a config with sensible defaults; expose `onPasteTransform(html|text)` hook for apps.
+    - Add tests for script/style/iframe stripping and data-URL whitelisting only for images when enabled.
+
+### accessibility (a11y)
+- Proposals:
+    - Add ARIA roles for toolbar and buttons; toggle `aria-pressed` for active state; ensure focus visibility.
+    - For task list items, associate checkbox and label text; ensure keyboard toggle with space/enter.
+    - Announce conversions via `aria-live="polite"` region in debug mode (optional).
+
+### deprecated APIs and migration
+- Conformance: Static shims delegate to first instance and are marked deprecated.
+- Proposals:
+    - Emit a single deprecation warning once per session; document migration guide in `README.md`.
+    - Add runtime assertion if multiple editors exist and static APIs are used, to steer users to instance methods.
+
+### testing and CI
+- Current status: Many failing tests (e.g., toolbar view, Heading expectations, `closest` in JSDOM, conversion method undefined in certain harnesses).
+- Proposals:
+    - Add polyfills in `tests/setup.js` (e.g., `Element.prototype.closest`) and DOM fixtures for view toggles.
+    - Update tests to instantiate an Editor and pass it to Toolbar where needed; avoid calling toolbar actions without an instance.
+    - Provide `Editor.flushUpdates()` test helper to make debounced updates deterministic.
+    - Mark legacy static-API tests as deprecated; replace with instance-based ones.
+
+### observability and debug
+- Proposals:
+    - Ensure `DebugTooltip` shows `data-timestamp`, block type, selection info; add toggle via keyboard (e.g., Ctrl+Alt+D).
+    - Add namespaced event logs with counts and last payload preview when debug mode is active.
+
+### performance optimization
+- Proposals:
+    - Coalesce multiple conversions/updates in a tick; remove cascading `html2md` calls inside conversions where avoidable.
+    - Defer expensive parsing until idle (`requestIdleCallback` with timeout fallback) for large pastes.
+    - Add simple trace to measure time spent in `update()`, `html2md()`, `md2html()`; expose in debug tooltip.
+
+### roadmap and tasks
+- [ ] P0: Add guards and selector config to Toolbar view toggles; make them safe no-ops without containers.
+- [ ] P0: Provide `Editor.flushUpdates()` and batch conversion updates to one `update()` per action.
+- [ ] P0: Add `closest` polyfill in Jest setup and fixtures for toolbar view tests; ensure tests bind `editorInstance`.
+- [ ] P1: Replace `document.execCommand` with Selection/Range-based ops in toolbar formatting paths.
+- [ ] P1: Externalize sanitizer policy and add security-focused paste tests (strip scripts/unsafe attrs).
+- [ ] P1: Add a11y attributes/roles and keyboard toggles for toolbar and task lists.
+- [ ] P2: Add parser golden tests for mixed content edge cases; instrument debug logs behind a flag.
+- [ ] P2: Emit deprecation warnings once per session; document migration in README.
+- [ ] P2: Add performance counters and debug visualization for update cycles.
+
+### acceptance criteria
+- Toolbar view methods never throw when DOM fixtures are absent; library builds remain framework-agnostic.
+- Conversions trigger a single `update()` per action; measured by dev counters <= 1 per conversion in debug mode.
+- Tests pass with polyfills/fixtures; no reliance on deprecated static APIs; deterministic update behavior via `flushUpdates()`.
+- Paste sanitizer blocks unsafe content by default and is configurable; tests cover common attack vectors.
+- Basic a11y checks: roles/aria attributes present; keyboard interaction for checkboxes; focus retention after conversions.
+
+### risks and mitigations
+- Replacing `execCommand` touches user interaction paths; mitigate by introducing parallel code path behind a feature flag and keeping legacy fallback for one minor version.
+- Tightening sanitizer may change existing content behavior; mitigate with a config default matching current behavior and a warning when unsafe content is encountered in debug mode.
+
+— End of proposal —
