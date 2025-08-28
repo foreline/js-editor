@@ -18,6 +18,7 @@
 .editor .block:empty::before {
     content: attr(data-placeholder);
     color: #666;
+    cursor: text;
 }
 
 .editor-toolbar {

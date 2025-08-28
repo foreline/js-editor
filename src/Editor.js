@@ -31,9 +31,6 @@ export class Editor
     // Static registry to track all editor instances
     static _instances = new Map();
     
-    // Static fallback properties for backward compatibility when no instances exist
-    static _fallbackBlocks = [];
-    
     /**
      * @param {object} options
      */
@@ -58,6 +55,9 @@ export class Editor
         
         // Flag to prevent interference during block conversion
         this.isConvertingBlock = false;
+        
+        // Flag to prevent empty editor check immediately after creating a block
+        this.isCreatingBlock = false;
         
         // Create instance-specific event emitter
         this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
@@ -340,7 +340,10 @@ export class Editor
     /**
      * Create debug tooltips for all blocks
      */
-    createDebugTooltips() {
+    createDebugTooltips()
+    {
+        log('createDebugTooltips()', 'Editor.');
+
         // Only create tooltip for the active block
         this.updateActiveBlockTooltip();
     }
@@ -348,7 +351,10 @@ export class Editor
     /**
      * Create debug tooltip for a specific block
      */
-    createDebugTooltip(blockElement, index) {
+    createDebugTooltip(blockElement, index)
+    {
+        log('createDebugTooltip()', 'Editor.');
+
         // Remove existing tooltip if present
         const existingTooltip = document.querySelector(`.debug-tooltip[data-block-index="${index}"]`);
         if (existingTooltip) {
@@ -370,7 +376,10 @@ export class Editor
     /**
      * Position debug tooltip relative to block
      */
-    positionDebugTooltip(tooltip, blockElement) {
+    positionDebugTooltip(tooltip, blockElement)
+    {
+        log('positionDebugTooltip()', 'Editor.');
+
         const blockRect = blockElement.getBoundingClientRect();
         const tooltipWidth = 280;
         const gap = 10;
@@ -401,7 +410,10 @@ export class Editor
     /**
      * Update debug tooltip content
      */
-    updateDebugTooltipContent(tooltip, blockElement, index) {
+    updateDebugTooltipContent(tooltip, blockElement, index)
+    {
+        log('updateDebugTooltipContent()', 'Editor.');
+
         const block = this.blocks[index];
         const isActive = blockElement.classList.contains('active-block');
         const currentTimestamp = Date.now();
@@ -490,7 +502,10 @@ export class Editor
     /**
      * Remove all debug tooltips
      */
-    removeDebugTooltips() {
+    removeDebugTooltips()
+    {
+        log('removeDebugTooltips()', 'Editor.');
+
         const tooltips = document.querySelectorAll('.debug-tooltip');
         tooltips.forEach(tooltip => tooltip.remove());
     }
@@ -498,7 +513,10 @@ export class Editor
     /**
      * Start debug update loop
      */
-    startDebugUpdateLoop() {
+    startDebugUpdateLoop()
+    {
+        log('startDebugUpdateLoop()', 'Editor.');
+
         if (this.debugUpdateInterval) {
             clearInterval(this.debugUpdateInterval);
         }
@@ -511,7 +529,10 @@ export class Editor
     /**
      * Stop debug update loop
      */
-    stopDebugUpdateLoop() {
+    stopDebugUpdateLoop()
+    {
+        log('stopDebugUpdateLoop()', 'Editor.');
+
         if (this.debugUpdateInterval) {
             clearInterval(this.debugUpdateInterval);
             this.debugUpdateInterval = null;
@@ -521,7 +542,10 @@ export class Editor
     /**
      * Update all debug tooltips
      */
-    updateDebugTooltips() {
+    updateDebugTooltips()
+    {
+        log('updateDebugTooltips()', 'Editor.');
+
         if (!this.debugMode) return;
         
         // Only show tooltip for the active block
@@ -531,8 +555,13 @@ export class Editor
     /**
      * Update tooltip for the currently active block only
      */
-    updateActiveBlockTooltip() {
-        if (!this.debugMode || !this.currentBlock) return;
+    updateActiveBlockTooltip()
+    {
+        log('updateActiveBlockTooltip()', 'Editor.');
+
+        if (!this.debugMode || !this.currentBlock) {
+            return;
+        }
         
         // Remove all existing tooltips first
         this.removeDebugTooltips();
@@ -604,14 +633,46 @@ export class Editor
      * @param {HTMLElement} element - The editor DOM element
      * @returns {Editor|null} The editor instance or null if not found
      */
-    static getInstance(element) {
+    static getInstance(element)
+    {
         return Editor._instances.get(element) || null;
+    }
+    
+    /**
+     * Get the editor instance that contains a given DOM element
+     * @param {HTMLElement} element - Any DOM element within an editor
+     * @returns {Editor|null} The editor instance or null if not found
+     */
+    static getInstanceFromElement(element)
+    {
+        log('getInstanceFromElement()', 'Editor.');
+
+        if (!element) {
+            return null;
+        }
+
+        // Walk up the DOM tree to find an editor instance
+        let currentElement = element;
+        while (currentElement) {
+            const editorInstance = Editor._instances.get(currentElement);
+            if (editorInstance) {
+                return editorInstance;
+            }
+            currentElement = currentElement.parentElement;
+        }
+        
+        // If not found by walking up, try to find the first instance as fallback
+        const instances = Array.from(Editor._instances.values());
+        return instances.length > 0 ? instances[0] : null;
     }
     
     /**
      * Destroy the editor instance and cleanup
      */
-    destroy() {
+    destroy()
+    {
+        log('destroy()', 'Editor.');
+
         // Stop debug update loop and remove tooltips
         this.stopDebugUpdateLoop();
         this.removeDebugTooltips();
@@ -677,15 +738,23 @@ export class Editor
             
             // Check if editor is effectively empty after content deletion
             // Skip this check if a block conversion is in progress to prevent interference
-            if (!this.isConvertingBlock) {
+            // Also skip if we just created a new block to allow empty blocks to persist
+            if (!this.isConvertingBlock && !this.isCreatingBlock) {
                 const allBlocks = this.instance.querySelectorAll('.block');
-                if (this.isEditorEmpty(allBlocks)) {
+                
+                // Only trigger empty editor protection if:
+                // 1. There are no blocks at all, OR
+                // 2. There's exactly one block and it's empty (likely user deleted all content)
+                // Do NOT trigger if there are multiple blocks, even if they're all empty,
+                // as the user may have intentionally created multiple empty blocks
+                if (allBlocks.length === 0 || 
+                    (allBlocks.length === 1 && this.isEditorEmpty(allBlocks))) {
                     // Editor is empty, ensure at least one default block exists
                     this.ensureDefaultBlock();
                     return;
                 }
             }
-            
+        
             if (block) {
                 // Only check for conversion on paragraph blocks to avoid performance issues
                 const blockType = block.getAttribute('data-block-type');
@@ -778,8 +847,6 @@ export class Editor
             element = this.currentBlock;
         }
         
-        console.log({element});
-    
         // Verify element exists and is attached to DOM
         if ( !element || !element.isConnected ) {
             logWarning('Cannot focus on non-existent or detached element', 'Editor.focus()');
@@ -809,7 +876,10 @@ export class Editor
      * Helper method to focus on an element without recursion
      * @param {HTMLElement} element - The element to focus on
      */
-    focusElement(element) {
+    focusElement(element)
+    {
+        log('focusElement()', 'Editor.');
+
         if (!element || !element.isConnected) {
             return;
         }
@@ -911,7 +981,7 @@ export class Editor
         }, { source: 'user.paste' });
         
         // Update editor after paste
-        Editor.update();
+        this.update();
     }
     
     /**
@@ -936,7 +1006,10 @@ export class Editor
      * Perform the actual update operation (private method)
      * @private
      */
-    _performUpdate() {
+    _performUpdate()
+    {
+        log('_performUpdate()', 'Editor.');
+
         let editorHtml = this.instance.innerHTML;
         
         // Only compute markdown if it's actually needed (performance optimization)
@@ -981,7 +1054,10 @@ export class Editor
     /**
      * Update timestamps for all blocks to track content changes
      */
-    updateBlockTimestamps() {
+    updateBlockTimestamps()
+    {
+        log('updateBlockTimestamps()', 'Editor.');
+
         const blocks = this.instance.querySelectorAll('.block');
         const currentTimestamp = Date.now();
         
@@ -1016,7 +1092,8 @@ export class Editor
      * @param {NodeList} blocks - Collection of block elements
      * @returns {boolean}
      */
-    isEditorEmpty(blocks) {
+    isEditorEmpty(blocks)
+    {
         log('isEditorEmpty()', 'Editor.');
         
         if (blocks.length === 0) {
@@ -1038,7 +1115,8 @@ export class Editor
      * Ensures the editor has at least one default block
      * Handles the empty editor edge case safely
      */
-    ensureDefaultBlock() {
+    ensureDefaultBlock()
+    {
         log('ensureDefaultBlock()', 'Editor.');
         
         // Get all current blocks
@@ -1073,7 +1151,8 @@ export class Editor
      * Detach events from blocks before removing them
      * @param {NodeList} blocks - Collection of block elements to clean up
      */
-    detachBlockEvents(blocks) {
+    detachBlockEvents(blocks)
+    {
         log('detachBlockEvents()', 'Editor.');
         
         blocks.forEach(block => {
@@ -1160,6 +1239,9 @@ export class Editor
     {
         log('addDefaultBlock()', 'Editor.');
         
+        // Set flag to prevent input event handler from checking empty editor state
+        this.isCreatingBlock = true;
+        
         const block = new Block(BlockType.PARAGRAPH);
         const htmlBlock = Parser.html(block);
         
@@ -1195,6 +1277,12 @@ export class Editor
                 if (htmlBlock.isConnected) {
                     this.focus(htmlBlock);
                 }
+                
+                // Clear the flag after a short delay to allow the new block to be focused
+                // and any initial events to be processed
+                setTimeout(() => {
+                    this.isCreatingBlock = false;
+                }, 100);
             });
         });
         
@@ -1206,6 +1294,8 @@ export class Editor
      */
     updateToolbarButtonStates()
     {
+        log('updateToolbarButtonStates()', 'Editor.');
+
         if (!this.currentBlock) {
             return;
         }
@@ -1472,7 +1562,8 @@ export class Editor
      * @param {HTMLElement} blockElement - The block element to check
      * @returns {boolean} - true if block was converted, false otherwise
      */
-    checkAndConvertBlock(blockElement) {
+    checkAndConvertBlock(blockElement) 
+    {
         log('checkAndConvertBlock()', 'Editor.');
         
         if (!blockElement || !blockElement.hasAttribute('data-block-type')) {
@@ -1525,7 +1616,8 @@ export class Editor
      * @param {string} triggerText - The text that triggered the conversion
      * @returns {boolean} - true if conversion was successful, false otherwise
      */
-    convertBlockType(blockElement, targetBlockType, triggerText) {
+    convertBlockType(blockElement, targetBlockType, triggerText) 
+    {
         log('convertBlockType()', 'Editor.');
         
         try {
@@ -1601,7 +1693,10 @@ export class Editor
      * @param {HTMLElement} blockElement - The block element to search in
      * @returns {HTMLElement|null} - The editable element or null if not found
      */
-    findEditableElementInBlock(blockElement) {
+    findEditableElementInBlock(blockElement)
+    {
+        log('findEditableElementInBlock()', 'Editor.');
+
         // For list blocks, find the first list item
         const firstListItem = blockElement.querySelector('li');
         if (firstListItem) {
@@ -1627,9 +1722,14 @@ export class Editor
      * Place cursor at the end of the given element
      * @param {HTMLElement} element - The element to place cursor in
      */
-    placeCursorAtEnd(element) {
-        if (!element) return;
-        
+    placeCursorAtEnd(element)
+    {
+        log('placeCursorAtEnd()', 'Editor.');
+
+        if (!element) {
+            return;
+        }
+
         try {
             const selection = window.getSelection();
             const range = document.createRange();
@@ -1660,13 +1760,15 @@ export class Editor
      * @param {Object} options - Optional parameters for block creation
      * @returns {boolean} - true if conversion or creation was successful
      */
-    convertCurrentBlockOrCreate(targetBlockType, options = {}) {
+    convertCurrentBlockOrCreate(targetBlockType, options = {})
+    {
         log('convertCurrentBlockOrCreate()', 'Editor.');
+        
         console.log('convertCurrentBlockOrCreate called with:', targetBlockType);
         
         const currentBlock = this.currentBlock;
-        console.log('Current block:', currentBlock);
-        
+        log('Current block:', currentBlock);
+
         if (!currentBlock) {
             // No current block, create a new one
             console.log('No current block, calling createNewBlock');
@@ -1699,7 +1801,10 @@ export class Editor
      * @param {string} existingContent - Existing content to preserve
      * @returns {string} - The trigger text with existing content
      */
-    generateTriggerForBlockType(blockType, existingContent = '') {
+    generateTriggerForBlockType(blockType, existingContent = '')
+    {
+        log('generateTriggerForBlockType()', 'Editor.');
+
         const blockClass = BlockFactory.getBlockClass(blockType);
         if (!blockClass || typeof blockClass.getMarkdownTriggers !== 'function') {
             return existingContent;
@@ -1720,29 +1825,28 @@ export class Editor
      * @param {Object} options - Optional parameters for block creation
      * @returns {boolean} - true if creation was successful
      */
-    createNewBlock(blockType, options = {}) {
+    createNewBlock(blockType, options = {})
+    {
+        log('createNewBlock()', 'Editor.');
+
         try {
-            console.log('createNewBlock called with:', blockType);
+            // Set flag to prevent input event handler from checking empty editor state
+            this.isCreatingBlock = true;
             
             // Ensure there's a current block context
             if (!this.currentBlock) {
-                console.log('No current block, ensuring default block');
                 this.ensureDefaultBlock();
             }
             
             // Create the block object
             const newBlock = BlockFactory.createBlock(blockType);
-            console.log('Created block object:', newBlock);
             if (!newBlock) {
-                console.log('BlockFactory.createBlock returned null');
                 return false;
             }
             
             // Convert block to HTML element
             const htmlBlock = Parser.html(newBlock);
-            console.log('Converted to HTML block:', htmlBlock);
             if (!htmlBlock) {
-                console.log('Parser.html returned null');
                 return false;
             }
             
@@ -1782,152 +1886,21 @@ export class Editor
             }, { source: 'editor.create' });
             
             console.log('Block creation successful');
+            
+            // Clear the flag after a short delay to allow the new block to be processed
+            setTimeout(() => {
+                this.isCreatingBlock = false;
+            }, 100);
+            
             return true;
         } catch (error) {
             console.error('Error in createNewBlock:', error);
             logWarning('Error creating new block: ' + error.message, 'Editor.createNewBlock()');
+            
+            // Clear the flag even in error case
+            this.isCreatingBlock = false;
+            
             return false;
-        }
-    }
-    
-    // Static backward compatibility methods - these delegate to the first editor instance
-    static getMarkdown() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            return firstInstance.getMarkdown();
-        }
-        
-        // Fallback for when no instances exist (for testing compatibility)
-        try {
-            if (!Editor._fallbackBlocks || Editor._fallbackBlocks.length === 0) {
-                return '';
-            }
-
-            const markdownBlocks = Editor._fallbackBlocks.map(block => {
-                if (typeof block.toMarkdown === 'function') {
-                    return block.toMarkdown();
-                }
-                // Fallback for blocks that don't implement toMarkdown
-                return Editor.html2md(block.html || block.content || '');
-            });
-
-            return markdownBlocks.join('\n\n').trim();
-        } catch (error) {
-            return '';
-        }
-    }
-    
-    static getHtml() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            return firstInstance.getHtml();
-        }
-        
-        // Fallback for when no instances exist (for testing compatibility)
-        try {
-            if (!Editor._fallbackBlocks || Editor._fallbackBlocks.length === 0) {
-                return '';
-            }
-
-            const htmlBlocks = Editor._fallbackBlocks.map(block => {
-                if (typeof block.toHtml === 'function') {
-                    return block.toHtml();
-                }
-                // Fallback for blocks that don't implement toHtml
-                return block.html || Editor.md2html(block.content || '');
-            });
-
-            return htmlBlocks.join('\n').trim();
-        } catch (error) {
-            return '';
-        }
-    }
-    
-    // Add convenience properties for backward compatibility with tests
-    static get instance() {
-        const firstInstance = Array.from(Editor._instances.keys())[0];
-        return firstInstance || null;
-    }
-    
-    static set instance(value) {
-        // This is for test compatibility - in real use cases, instances are managed automatically
-        if (value === null) {
-            Editor._instances.clear();
-        }
-    }
-    
-    static get currentBlock() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        return firstInstance ? firstInstance.currentBlock : null;
-    }
-    
-    static set currentBlock(value) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.currentBlock = value;
-        }
-    }
-    
-    static update() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.update();
-        }
-    }
-    
-    static setCurrentBlock(block) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.setCurrentBlock(block);
-        }
-    }
-    
-    static focus(element) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.focus(element);
-        }
-    }
-    
-    static get keybuffer() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        return firstInstance ? firstInstance.keybuffer : [];
-    }
-    
-    static set keybuffer(value) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.keybuffer = value;
-        }
-    }
-    
-    static checkAndConvertBlock(blockElement) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            return firstInstance.checkAndConvertBlock(blockElement);
-        }
-        return false;
-    }
-    
-    static convertCurrentBlockOrCreate(targetBlockType, options = {}) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            return firstInstance.convertCurrentBlockOrCreate(targetBlockType, options);
-        }
-        return false;
-    }
-    
-    static get blocks() {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        return firstInstance ? firstInstance.blocks : Editor._fallbackBlocks;
-    }
-    
-    static set blocks(value) {
-        const firstInstance = Array.from(Editor._instances.values())[0];
-        if (firstInstance) {
-            firstInstance.blocks = value;
-        } else {
-            Editor._fallbackBlocks = value;
         }
     }
 }

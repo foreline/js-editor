@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Block Issue Test</title>
+    <link rel="stylesheet" href="src/css/editor.css">
+    <link rel="stylesheet" href="src/css/blocks.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Empty Block Issue Test</h1>
+    
+    <div class="test-section">
+        <h2>Test: Create empty block with Enter key</h2>
+        <p>Steps:</p>
+        <ol>
+            <li>Click in the editor below</li>
+            <li>Press Enter to create a new block</li>
+            <li>Check if the empty block persists</li>
+        </ol>
+        
+        <div id="editor1"></div>
+        
+        <button id="testBtn">Run Test</button>
+        <button id="addEmptyBtn">Add Empty Block</button>
+        <button id="checkEditorBtn">Check Editor State</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        
+        let editor;
+        
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        function initEditor() {
+            const editorContainer = document.getElementById('editor1');
+            editorContainer.innerHTML = ''; // Clear previous content
+            
+            try {
+                editor = new Editor('#editor1');
+                editor.init();
+                showResult('✅ Editor initialized successfully', 'success');
+                
+                // Listen for events
+                editor.on('EDITOR_UPDATED', (data) => {
+                    showResult(`📝 Editor updated: ${data.blockCount} blocks`, 'info');
+                });
+                
+                editor.on('BLOCK_CREATED', (data) => {
+                    showResult(`🆕 Block created: ${data.blockType}`, 'info');
+                });
+                
+            } catch (error) {
+                showResult(`❌ Error initializing editor: ${error.message}`, 'error');
+            }
+        }
+        
+        function runTest() {
+            showResult('🧪 Starting empty block test...', 'info');
+            
+            if (!editor) {
+                showResult('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            // Get current blocks
+            const blocks = editor.instance.querySelectorAll('.block');
+            showResult(`📋 Current blocks: ${blocks.length}`, 'info');
+            
+            // Focus on the last block
+            if (blocks.length > 0) {
+                const lastBlock = blocks[blocks.length - 1];
+                editor.setCurrentBlock(lastBlock);
+                editor.focus(lastBlock);
+                showResult('🎯 Focused on last block', 'info');
+                
+                // Simulate Enter key press
+                setTimeout(() => {
+                    const enterEvent = new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    
+                    lastBlock.dispatchEvent(enterEvent);
+                    showResult('⌨️ Enter key pressed', 'info');
+                    
+                    // Check result after a delay
+                    setTimeout(() => {
+                        const newBlocks = editor.instance.querySelectorAll('.block');
+                        showResult(`📋 Blocks after Enter: ${newBlocks.length}`, newBlocks.length > blocks.length ? 'success' : 'error');
+                        
+                        if (newBlocks.length > blocks.length) {
+                            const newBlock = newBlocks[newBlocks.length - 1];
+                            const isEmpty = newBlock.textContent.trim() === '';
+                            showResult(`📝 New block is empty: ${isEmpty}`, isEmpty ? 'success' : 'info');
+                            
+                            // Wait and check if the empty block persists
+                            setTimeout(() => {
+                                const persistentBlocks = editor.instance.querySelectorAll('.block');
+                                const stillThere = persistentBlocks.length === newBlocks.length;
+                                showResult(`⏰ Empty block persisted: ${stillThere}`, stillThere ? 'success' : 'error');
+                            }, 1000);
+                        }
+                    }, 100);
+                }, 100);
+            } else {
+                showResult('❌ No blocks found in editor', 'error');
+            }
+        }
+        
+        function addEmptyBlock() {
+            if (!editor) {
+                showResult('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const beforeCount = editor.instance.querySelectorAll('.block').length;
+            showResult(`📋 Blocks before adding: ${beforeCount}`, 'info');
+            
+            const newBlock = editor.addDefaultBlock();
+            showResult('➕ Called addDefaultBlock()', 'info');
+            
+            setTimeout(() => {
+                const afterCount = editor.instance.querySelectorAll('.block').length;
+                showResult(`📋 Blocks after adding: ${afterCount}`, 'info');
+                
+                const isEmpty = newBlock.textContent.trim() === '';
+                showResult(`📝 Added block is empty: ${isEmpty}`, 'info');
+                
+                // Check if it persists
+                setTimeout(() => {
+                    const finalCount = editor.instance.querySelectorAll('.block').length;
+                    showResult(`📋 Final block count: ${finalCount}`, finalCount === afterCount ? 'success' : 'error');
+                }, 1000);
+            }, 100);
+        }
+        
+        function checkEditorState() {
+            if (!editor) {
+                showResult('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const blocks = editor.instance.querySelectorAll('.block');
+            showResult(`📊 Total blocks: ${blocks.length}`, 'info');
+            
+            blocks.forEach((block, index) => {
+                const type = block.getAttribute('data-block-type');
+                const content = block.textContent.trim();
+                const isEmpty = content === '';
+                showResult(`📋 Block ${index + 1}: ${type}, content: "${content}" (empty: ${isEmpty})`, isEmpty ? 'error' : 'success');
+            });
+            
+            const isEditorEmpty = editor.isEditorEmpty(blocks);
+            showResult(`🤔 Editor considers itself empty: ${isEditorEmpty}`, isEditorEmpty ? 'error' : 'success');
+        }
+        
+        // Initialize editor when page loads
+        window.addEventListener('load', () => {
+            initEditor();
+        });
+        
+        // Event listeners
+        document.getElementById('testBtn').addEventListener('click', runTest);
+        document.getElementById('addEmptyBtn').addEventListener('click', addEmptyBlock);
+        document.getElementById('checkEditorBtn').addEventListener('click', checkEditorState);
+    </script>
+</body>
+</html>

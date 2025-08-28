@@ -61,7 +61,7 @@ export const Toolbar = {
         log('h1()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h1')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h1')) {
             document.execCommand('formatBlock', false, '<h1>');
         }
         
@@ -73,7 +73,7 @@ export const Toolbar = {
         log('h2()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h2')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h2')) {
             document.execCommand('formatBlock', false, '<h2>');
         }
         
@@ -85,7 +85,7 @@ export const Toolbar = {
         log('h3()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h3')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h3')) {
             document.execCommand('formatBlock', false, '<h3>');
         }
         
@@ -97,7 +97,7 @@ export const Toolbar = {
         log('h4()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h4')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h4')) {
             document.execCommand('formatBlock', false, '<h4>');
         }
         
@@ -109,7 +109,7 @@ export const Toolbar = {
         log('h5()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h5')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h5')) {
             document.execCommand('formatBlock', false, '<h5>');
         }
         
@@ -121,7 +121,7 @@ export const Toolbar = {
         log('h6()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('h6')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('h6')) {
             document.execCommand('formatBlock', false, '<h6>');
         }
         
@@ -175,7 +175,7 @@ export const Toolbar = {
         log('ul()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('ul')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('ul')) {
             document.execCommand('insertUnorderedList');
         }
         
@@ -190,7 +190,7 @@ export const Toolbar = {
         log('ol()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('ol')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('ol')) {
             document.execCommand('insertOrderedList');
         }
         
@@ -205,8 +205,8 @@ export const Toolbar = {
         log('sq()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('sq')) {
-            const currentBlock = Editor.currentBlock;
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('sq')) {
+            const currentBlock = Toolbar.editorInstance?.currentBlock;
             if (!currentBlock) return;
             
             // Create task list block using BlockFactory
@@ -225,7 +225,7 @@ export const Toolbar = {
         log('code()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('code')) {
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('code')) {
             const range = window.getSelection().getRangeAt(0);
             const selectedText = range.toString();
             
@@ -261,8 +261,8 @@ export const Toolbar = {
         log('table()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('table')) {
-            const currentBlock = Editor.currentBlock;
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('table')) {
+            const currentBlock = Toolbar.editorInstance?.currentBlock;
             if (!currentBlock) return;
             
             // Create table block and apply transformation
@@ -281,8 +281,8 @@ export const Toolbar = {
         log('image()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('image')) {
-            const currentBlock = Editor.currentBlock;
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('image')) {
+            const currentBlock = Toolbar.editorInstance?.currentBlock;
             if (!currentBlock) return;
             
             // Create image block and apply transformation
@@ -301,8 +301,8 @@ export const Toolbar = {
         log('quote()', 'Toolbar.');
         
         // Try to convert current block, fallback to legacy behavior
-        if (!Editor.convertCurrentBlockOrCreate('quote')) {
-            const currentBlock = Editor.currentBlock;
+        if (!Toolbar.editorInstance?.convertCurrentBlockOrCreate('quote')) {
+            const currentBlock = Toolbar.editorInstance?.currentBlock;
             if (!currentBlock) return;
             
             // Create quote block and apply transformation
@@ -395,6 +395,11 @@ export const Toolbar = {
         textMd?.classList.remove('visually-hidden');
         textHtml?.classList.add('visually-hidden');
 
+        // Populate markdown content
+        if (textMd && Toolbar.editorInstance) {
+            textMd.textContent = Toolbar.editorInstance.getMarkdown();
+        }
+
         if (btnText) {
             btnText.disabled = false;
         }
@@ -423,6 +428,11 @@ export const Toolbar = {
         noteText?.classList.add('visually-hidden');
         textMd?.classList.add('visually-hidden');
         textHtml?.classList.remove('visually-hidden');
+
+        // Populate HTML content
+        if (textHtml && Toolbar.editorInstance) {
+            textHtml.textContent = Toolbar.editorInstance.getHtml();
+        }
 
         if (btnText) {
             btnText.disabled = false;
@@ -467,7 +477,7 @@ export const Toolbar = {
     {
         log('after()', 'Toolbar.');
         //eventEmitter.emit('EDITOR.UPDATED_EVENT');
-        Editor.update();
+        Toolbar.editorInstance?.update();
     },
 
     /**

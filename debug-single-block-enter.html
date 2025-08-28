@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug: Single Block Enter Key Issue</title>
+    <link rel="stylesheet" href="src/css/editor.css">
+    <link rel="stylesheet" href="src/css/blocks.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #editor1 {
+            min-height: 200px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-error { color: #721c24; background: #f8d7da; padding: 3px 6px; border-radius: 3px; }
+        .log-info { color: #0c5460; background: #d1ecf1; padding: 3px 6px; border-radius: 3px; }
+        .log-warning { color: #856404; background: #fff3cd; padding: 3px 6px; border-radius: 3px; }
+        .log-success { color: #155724; background: #d4edda; padding: 3px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h1>🐛 Debug: Single Block Enter Key Issue</h1>
+        <p><strong>Issue:</strong> When there's only one default block and Enter is pressed, a new empty block appears but then gets removed.</p>
+        
+        <div id="editor1"></div>
+        
+        <div class="controls">
+            <button onclick="resetToSingleBlock()">Reset to Single Block</button>
+            <button onclick="simulateEnterInSingleBlock()">Simulate Enter in Single Block</button>
+            <button onclick="checkEditorState()">Check Editor State</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        
+        let editor;
+        let logCounter = 0;
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `${++logCounter}. ${new Date().toLocaleTimeString()}: ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function initEditor() {
+            try {
+                editor = new Editor({
+                    container: document.getElementById('editor1'),
+                    toolbar: false
+                });
+                editor.init();
+                log('✅ Editor initialized', 'success');
+                
+                // Add debugging for events
+                editor.on('BLOCK_CREATED', (data) => {
+                    log(`🆕 BLOCK_CREATED: ${data.blockType}`, 'info');
+                });
+                
+                editor.on('EDITOR_UPDATED', (data) => {
+                    log(`📊 EDITOR_UPDATED: ${data.blockCount} blocks`, 'info');
+                });
+                
+                // Add debug logging to the original input event handler
+                const originalAddEventListener = editor.instance.addEventListener;
+                let inputEventCount = 0;
+                
+                // Override addEventListener to add logging
+                editor.instance.addEventListener = function(event, handler, options) {
+                    if (event === 'input') {
+                        const wrappedHandler = function(e) {
+                            inputEventCount++;
+                            log(`📥 INPUT EVENT #${inputEventCount} triggered`, 'warning');
+                            log(`🏁 isCreatingBlock: ${editor.isCreatingBlock}`, 'info');
+                            log(`🏁 isConvertingBlock: ${editor.isConvertingBlock}`, 'info');
+                            
+                            const blocksBefore = editor.instance.querySelectorAll('.block').length;
+                            log(`📊 Blocks before input handler: ${blocksBefore}`, 'info');
+                            
+                            // Call original handler
+                            const result = handler.call(this, e);
+                            
+                            const blocksAfter = editor.instance.querySelectorAll('.block').length;
+                            log(`📊 Blocks after input handler: ${blocksAfter}`, 'info');
+                            
+                            if (blocksBefore !== blocksAfter) {
+                                log(`⚠️ Block count changed in input handler: ${blocksBefore} → ${blocksAfter}`, 'error');
+                            }
+                            
+                            return result;
+                        };
+                        return originalAddEventListener.call(this, event, wrappedHandler, options);
+                    } else {
+                        return originalAddEventListener.call(this, event, handler, options);
+                    }
+                };
+                
+                return true;
+            } catch (error) {
+                log(`❌ Error initializing editor: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        function getEditorState() {
+            if (!editor) return null;
+            
+            const blocks = editor.instance.querySelectorAll('.block');
+            const state = {
+                totalBlocks: blocks.length,
+                blocks: []
+            };
+            
+            blocks.forEach((block, index) => {
+                const content = block.textContent.trim();
+                const isEmpty = content === '';
+                state.blocks.push({
+                    index: index + 1,
+                    type: block.getAttribute('data-block-type'),
+                    content: content,
+                    isEmpty: isEmpty,
+                    id: block.getAttribute('data-block-id') || 'no-id'
+                });
+            });
+            
+            return state;
+        }
+        
+        window.resetToSingleBlock = function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            // Clear editor and add single block
+            editor.instance.innerHTML = '';
+            editor.addDefaultBlock();
+            
+            log('🔄 Reset to single default block', 'info');
+            
+            setTimeout(() => {
+                const state = getEditorState();
+                log(`📊 After reset: ${state.totalBlocks} blocks`, 'info');
+                state.blocks.forEach(block => {
+                    log(`  📋 Block ${block.index}: ${block.type} - "${block.content}" (empty: ${block.isEmpty})`, 'info');
+                });
+            }, 100);
+        };
+        
+        window.simulateEnterInSingleBlock = async function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            log('🧪 Starting test: Enter key in single default block...', 'info');
+            
+            // Ensure we have exactly one block
+            const stateBefore = getEditorState();
+            if (stateBefore.totalBlocks !== 1) {
+                log(`⚠️ Expected 1 block, found ${stateBefore.totalBlocks}. Resetting...`, 'warning');
+                resetToSingleBlock();
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            const blocks = editor.instance.querySelectorAll('.block');
+            const singleBlock = blocks[0];
+            
+            if (!singleBlock) {
+                log('❌ No blocks found after reset', 'error');
+                return;
+            }
+            
+            log(`📋 Found single block: ${singleBlock.getAttribute('data-block-type')} - "${singleBlock.textContent.trim()}"`, 'info');
+            
+            // Focus on the block
+            editor.setCurrentBlock(singleBlock);
+            editor.focus(singleBlock);
+            log('🎯 Focused on single block', 'info');
+            
+            // Make sure it's empty
+            singleBlock.innerHTML = '';
+            log('🧹 Cleared block content to make it empty', 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const stateBeforeEnter = getEditorState();
+            log(`📊 Before Enter: ${stateBeforeEnter.totalBlocks} blocks`, 'info');
+            
+            // Simulate Enter key press
+            log('⌨️ Simulating Enter key press...', 'info');
+            const enterEvent = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                bubbles: true,
+                cancelable: true
+            });
+            
+            singleBlock.dispatchEvent(enterEvent);
+            
+            // Check immediately
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const stateImmediate = getEditorState();
+            log(`📊 Immediately after Enter: ${stateImmediate.totalBlocks} blocks`, 'info');
+            
+            // Check after processing
+            await new Promise(resolve => setTimeout(resolve, 200));
+            const stateAfterProcessing = getEditorState();
+            log(`📊 After processing (200ms): ${stateAfterProcessing.totalBlocks} blocks`, 'info');
+            
+            // Check after longer delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const stateFinal = getEditorState();
+            log(`📊 Final state (1200ms): ${stateFinal.totalBlocks} blocks`, 'info');
+            
+            if (stateFinal.totalBlocks > stateBeforeEnter.totalBlocks) {
+                log('✅ New block created and persisted!', 'success');
+            } else if (stateImmediate.totalBlocks > stateBeforeEnter.totalBlocks) {
+                log('❌ New block was created but then removed!', 'error');
+            } else {
+                log('❌ No new block was created at all!', 'error');
+            }
+            
+            // Log final blocks
+            stateFinal.blocks.forEach(block => {
+                log(`  📋 Final Block ${block.index}: ${block.type} - "${block.content}" (empty: ${block.isEmpty})`, 'info');
+            });
+        };
+        
+        window.checkEditorState = function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const state = getEditorState();
+            log(`📊 Current editor state: ${state.totalBlocks} blocks`, 'info');
+            log(`🏁 isCreatingBlock: ${editor.isCreatingBlock}`, 'info');
+            log(`🏁 isConvertingBlock: ${editor.isConvertingBlock}`, 'info');
+            
+            state.blocks.forEach(block => {
+                log(`  📋 Block ${block.index}: ${block.type} - "${block.content}" (empty: ${block.isEmpty}, id: ${block.id})`, 'info');
+            });
+        };
+        
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+            logCounter = 0;
+        };
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            if (initEditor()) {
+                log('🚀 Ready for debugging!', 'success');
+                // Start with a single block
+                setTimeout(() => resetToSingleBlock(), 100);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -223,9 +223,13 @@ describe('Toolbar', () => {
             
             BlockFactory.createBlock.mockReturnValue(mockTaskBlock);
             
-            // Mock Editor.currentBlock
+            // Mock Editor instance with currentBlock
             const mockCurrentBlock = document.createElement('div');
-            require('../src/Editor.js').Editor.currentBlock = mockCurrentBlock;
+            const mockEditorInstance = {
+                currentBlock: mockCurrentBlock,
+                convertCurrentBlockOrCreate: jest.fn().mockReturnValue(false)
+            };
+            Toolbar.editorInstance = mockEditorInstance;
 
             Toolbar.sq();
 
@@ -235,7 +239,11 @@ describe('Toolbar', () => {
         });
 
         it('should return early if no current block', () => {
-            require('../src/Editor.js').Editor.currentBlock = null;
+            const mockEditorInstance = {
+                currentBlock: null,
+                convertCurrentBlockOrCreate: jest.fn().mockReturnValue(false)
+            };
+            Toolbar.editorInstance = mockEditorInstance;
 
             Toolbar.sq();
 
@@ -339,25 +347,29 @@ describe('Toolbar', () => {
         });
 
         it('should switch to markdown view', () => {
-            // Mock Editor methods
-            const Editor = require('../src/Editor.js').Editor;
-            Editor.getMarkdown = jest.fn().mockReturnValue('# Test markdown');
+            // Mock Editor instance and methods
+            const mockEditorInstance = {
+                getMarkdown: jest.fn().mockReturnValue('# Test markdown')
+            };
+            Toolbar.editorInstance = mockEditorInstance;
 
             Toolbar.markdown();
 
-            expect(Editor.getMarkdown).toHaveBeenCalled();
-            expect(document.querySelector).toHaveBeenCalledWith('.note-markdown');
+            expect(mockEditorInstance.getMarkdown).toHaveBeenCalled();
+            expect(document.querySelector).toHaveBeenCalledWith('.note-text');
         });
 
         it('should switch to html view', () => {
-            // Mock Editor methods
-            const Editor = require('../src/Editor.js').Editor;
-            Editor.getHtml = jest.fn().mockReturnValue('<h1>Test HTML</h1>');
+            // Mock Editor instance and methods
+            const mockEditorInstance = {
+                getHtml: jest.fn().mockReturnValue('<h1>Test HTML</h1>')
+            };
+            Toolbar.editorInstance = mockEditorInstance;
 
             Toolbar.html();
 
-            expect(Editor.getHtml).toHaveBeenCalled();
-            expect(document.querySelector).toHaveBeenCalledWith('.note-html');
+            expect(mockEditorInstance.getHtml).toHaveBeenCalled();
+            expect(document.querySelector).toHaveBeenCalledWith('.note-text');
         });
     });
 

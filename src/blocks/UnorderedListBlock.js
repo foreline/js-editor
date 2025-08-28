@@ -59,7 +59,10 @@ export class UnorderedListBlock extends ListBlock
         ulElement.appendChild(newListItem);
         
         // Focus on the new list item
-        Editor.setCurrentBlock(currentBlock); // Keep the same block
+        const editorInstance = Editor.getInstanceFromElement(currentBlock);
+        if (editorInstance) {
+            editorInstance.setCurrentBlock(currentBlock); // Keep the same block
+        }
         
         // Use requestAnimationFrame to ensure DOM is updated before focusing
         requestAnimationFrame(() => {

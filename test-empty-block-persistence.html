@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Block Persistence Test</title>
+    <link rel="stylesheet" href="src/css/editor.css">
+    <link rel="stylesheet" href="src/css/blocks.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #editor1 {
+            min-height: 200px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Empty Block Persistence Test</h1>
+    
+    <div class="test-section">
+        <h2>Test: Empty blocks should persist</h2>
+        <p><strong>The Issue:</strong> When a user hits Enter in an empty block, a new empty block should be created and both should persist (not be automatically removed).</p>
+        
+        <div id="editor1"></div>
+        
+        <div class="controls">
+            <button onclick="addEmptyBlock()">Add Empty Block</button>
+            <button onclick="simulateEnterKey()">Simulate Enter Key</button>
+            <button onclick="checkBlockStatus()">Check Block Status</button>
+        </div>
+        
+        <div id="output"></div>
+    </div>
+
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        
+        let editor;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        function init() {
+            try {
+                editor = new Editor('#editor1');
+                editor.init();
+                log('✅ Editor initialized', 'success');
+                
+                // Listen for events
+                editor.on('BLOCK_CREATED', () => {
+                    log('🆕 Block created event fired', 'info');
+                });
+                
+                editor.on('EDITOR_UPDATED', (data) => {
+                    log(`📊 Editor updated: ${data.blockCount} blocks`, 'info');
+                });
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        window.addEmptyBlock = function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const beforeCount = editor.instance.querySelectorAll('.block').length;
+            log(`📋 Before adding block: ${beforeCount} blocks`, 'info');
+            
+            editor.addDefaultBlock();
+            log('➕ Called addDefaultBlock()', 'info');
+            
+            setTimeout(() => {
+                const afterCount = editor.instance.querySelectorAll('.block').length;
+                log(`📋 After adding block: ${afterCount} blocks`, 'info');
+                
+                if (afterCount > beforeCount) {
+                    log('✅ Block successfully added and persisted!', 'success');
+                } else {
+                    log('❌ Block was not added or was removed', 'error');
+                }
+            }, 1000);
+        };
+        
+        window.simulateEnterKey = function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const blocks = editor.instance.querySelectorAll('.block');
+            if (blocks.length === 0) {
+                log('❌ No blocks found', 'error');
+                return;
+            }
+            
+            const beforeCount = blocks.length;
+            const lastBlock = blocks[blocks.length - 1];
+            
+            // Make sure the block is empty
+            lastBlock.innerHTML = '';
+            
+            // Focus on the block
+            editor.setCurrentBlock(lastBlock);
+            editor.focus(lastBlock);
+            
+            log(`⌨️ Simulating Enter key press in empty block (${beforeCount} blocks total)`, 'info');
+            
+            // Simulate Enter key
+            const event = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                bubbles: true,
+                cancelable: true
+            });
+            
+            lastBlock.dispatchEvent(event);
+            
+            setTimeout(() => {
+                const afterCount = editor.instance.querySelectorAll('.block').length;
+                log(`📋 After Enter key: ${afterCount} blocks`, 'info');
+                
+                if (afterCount > beforeCount) {
+                    log('✅ Enter key created new block', 'success');
+                    
+                    // Check if blocks persist
+                    setTimeout(() => {
+                        const finalCount = editor.instance.querySelectorAll('.block').length;
+                        if (finalCount === afterCount) {
+                            log('✅ Blocks persisted - fix is working!', 'success');
+                        } else {
+                            log('❌ Some blocks were removed - fix needs work', 'error');
+                        }
+                    }, 1000);
+                } else {
+                    log('❌ No new block created', 'error');
+                }
+            }, 200);
+        };
+        
+        window.checkBlockStatus = function() {
+            if (!editor) {
+                log('❌ Editor not initialized', 'error');
+                return;
+            }
+            
+            const blocks = editor.instance.querySelectorAll('.block');
+            log(`📊 Total blocks: ${blocks.length}`, 'info');
+            
+            let emptyCount = 0;
+            blocks.forEach((block, index) => {
+                const content = block.textContent.trim();
+                const isEmpty = content === '';
+                const type = block.getAttribute('data-block-type');
+                
+                if (isEmpty) emptyCount++;
+                
+                log(`📋 Block ${index + 1}: ${type} - "${content}" (empty: ${isEmpty})`, isEmpty ? 'info' : 'success');
+            });
+            
+            log(`📊 Summary: ${blocks.length} total blocks, ${emptyCount} empty`, 'info');
+        };
+        
+        // Initialize when loaded
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

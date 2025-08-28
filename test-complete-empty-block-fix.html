@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Empty Block Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #editor {
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            min-height: 200px;
+            padding: 10px;
+            background: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #007acc;
+            border-radius: 4px;
+        }
+        .success { border-left-color: #28a745; background-color: #d4edda; }
+        .error { border-left-color: #dc3545; background-color: #f8d7da; }
+        .warning { border-left-color: #ffc107; background-color: #fff3cd; }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005a9e; }
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            border-left: 3px solid #6c757d;
+        }
+        .step.active {
+            background: #cce5ff;
+            border-left-color: #007acc;
+        }
+        .step.completed {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        .step.failed {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Complete Empty Block Persistence Fix Test</h1>
+        <p>This test verifies that the "Empty blocks are automatically removed" issue has been completely fixed.</p>
+        
+        <div class="test-section">
+            <h3>Test Scenarios:</h3>
+            <div class="step" id="step1">
+                <strong>Test 1:</strong> Single default block + Enter key (the edge case)
+            </div>
+            <div class="step" id="step2">
+                <strong>Test 2:</strong> Multiple empty blocks creation
+            </div>
+            <div class="step" id="step3">
+                <strong>Test 3:</strong> Mixed content with empty blocks
+            </div>
+            <div class="step" id="step4">
+                <strong>Test 4:</strong> Delete all content, verify single block remains
+            </div>
+        </div>
+
+        <div>
+            <button onclick="runTest1()">🧪 Test 1: Single Block + Enter</button>
+            <button onclick="runTest2()">🧪 Test 2: Multiple Empty Blocks</button>
+            <button onclick="runTest3()">🧪 Test 3: Mixed Content</button>
+            <button onclick="runTest4()">🧪 Test 4: Delete All Content</button>
+            <button onclick="runAllTests()">🚀 Run All Tests</button>
+            <button onclick="clearEditor()">🗑️ Clear Editor</button>
+            <button onclick="clearLog()">📝 Clear Log</button>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h3>📝 Editor Instance</h3>
+        <div id="editor"></div>
+        
+        <div style="margin-top: 15px;">
+            <strong>Current State:</strong>
+            <span id="block-count">0 blocks</span> |
+            <span id="empty-blocks">0 empty</span> |
+            <span id="content-blocks">0 with content</span>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h3>📊 Test Results</h3>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>🔍 Detailed Log</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="demo-dist/assets/index-DRCs7pCf.js"></script>
+    <script>
+        let editor;
+        let testResults = [];
+        
+        function log(message, category = 'INFO') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const colorMap = {
+                'INFO': '#9cdcfe',
+                'SUCCESS': '#4ec9b0', 
+                'ERROR': '#f44747',
+                'WARNING': '#ffcc02',
+                'DEBUG': '#c586c0'
+            };
+            
+            logElement.innerHTML += `
+                <div style="color: ${colorMap[category] || '#d4d4d4'}">
+                    [${timestamp}] [${category}] ${message}
+                </div>
+            `;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus() {
+            const blocks = editor.instance.querySelectorAll('.block');
+            let emptyCount = 0;
+            let contentCount = 0;
+            
+            blocks.forEach(block => {
+                const content = block.textContent.trim();
+                if (content.length === 0) {
+                    emptyCount++;
+                } else {
+                    contentCount++;
+                }
+            });
+            
+            document.getElementById('block-count').textContent = `${blocks.length} blocks`;
+            document.getElementById('empty-blocks').textContent = `${emptyCount} empty`;
+            document.getElementById('content-blocks').textContent = `${contentCount} with content`;
+        }
+
+        function setStepState(stepId, state) {
+            const step = document.getElementById(stepId);
+            step.className = `step ${state}`;
+        }
+
+        function addTestResult(testName, passed, details) {
+            testResults.push({ testName, passed, details });
+            updateTestResults();
+            log(`${testName}: ${passed ? 'PASSED' : 'FAILED'} - ${details}`, passed ? 'SUCCESS' : 'ERROR');
+        }
+
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            let html = '';
+            
+            testResults.forEach(result => {
+                const statusClass = result.passed ? 'success' : 'error';
+                const statusIcon = result.passed ? '✅' : '❌';
+                html += `
+                    <div class="test-section ${statusClass}">
+                        ${statusIcon} <strong>${result.testName}</strong><br>
+                        ${result.details}
+                    </div>
+                `;
+            });
+            
+            if (testResults.length > 0) {
+                const passedCount = testResults.filter(r => r.passed).length;
+                const totalCount = testResults.length;
+                html = `
+                    <div class="test-section ${passedCount === totalCount ? 'success' : 'warning'}">
+                        <strong>Overall: ${passedCount}/${totalCount} tests passed</strong>
+                    </div>
+                ` + html;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        async function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runTest1() {
+            setStepState('step1', 'active');
+            log('Starting Test 1: Single default block + Enter key (edge case)', 'INFO');
+            
+            try {
+                // Clear editor and ensure single default block
+                editor.clearEditor();
+                await wait(100);
+                
+                const initialBlocks = editor.instance.querySelectorAll('.block');
+                if (initialBlocks.length !== 1) {
+                    throw new Error(`Expected 1 initial block, got ${initialBlocks.length}`);
+                }
+                
+                // Focus the block and simulate Enter key
+                const firstBlock = initialBlocks[0];
+                firstBlock.focus();
+                
+                // Create Enter key event
+                const enterEvent = new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    code: 'Enter',
+                    keyCode: 13,
+                    which: 13,
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                log('Pressing Enter in empty default block...', 'DEBUG');
+                firstBlock.dispatchEvent(enterEvent);
+                
+                // Wait for DOM updates
+                await wait(200);
+                
+                const finalBlocks = editor.instance.querySelectorAll('.block');
+                const expectedBlocks = 2; // Original block + new block
+                
+                if (finalBlocks.length === expectedBlocks) {
+                    addTestResult('Test 1', true, `Successfully created ${expectedBlocks} blocks from single block + Enter`);
+                    setStepState('step1', 'completed');
+                } else {
+                    addTestResult('Test 1', false, `Expected ${expectedBlocks} blocks, got ${finalBlocks.length}`);
+                    setStepState('step1', 'failed');
+                }
+                
+                updateStatus();
+                
+            } catch (error) {
+                addTestResult('Test 1', false, `Error: ${error.message}`);
+                setStepState('step1', 'failed');
+                log(`Test 1 error: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function runTest2() {
+            setStepState('step2', 'active');
+            log('Starting Test 2: Multiple empty blocks creation', 'INFO');
+            
+            try {
+                editor.clearEditor();
+                await wait(100);
+                
+                // Create multiple empty blocks
+                for (let i = 0; i < 3; i++) {
+                    editor.addDefaultBlock();
+                    await wait(50);
+                }
+                
+                await wait(200);
+                
+                const blocks = editor.instance.querySelectorAll('.block');
+                const expectedBlocks = 4; // 1 initial + 3 added
+                
+                if (blocks.length >= expectedBlocks) {
+                    addTestResult('Test 2', true, `Successfully maintained ${blocks.length} empty blocks`);
+                    setStepState('step2', 'completed');
+                } else {
+                    addTestResult('Test 2', false, `Expected at least ${expectedBlocks} blocks, got ${blocks.length}`);
+                    setStepState('step2', 'failed');
+                }
+                
+                updateStatus();
+                
+            } catch (error) {
+                addTestResult('Test 2', false, `Error: ${error.message}`);
+                setStepState('step2', 'failed');
+                log(`Test 2 error: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function runTest3() {
+            setStepState('step3', 'active');
+            log('Starting Test 3: Mixed content with empty blocks', 'INFO');
+            
+            try {
+                editor.clearEditor();
+                await wait(100);
+                
+                // Add content block
+                const contentBlock = editor.addDefaultBlock();
+                contentBlock.textContent = 'This block has content';
+                
+                // Add empty blocks
+                editor.addDefaultBlock(); // Empty
+                editor.addDefaultBlock(); // Empty
+                
+                await wait(200);
+                
+                const blocks = editor.instance.querySelectorAll('.block');
+                let emptyCount = 0;
+                let contentCount = 0;
+                
+                blocks.forEach(block => {
+                    if (block.textContent.trim().length === 0) {
+                        emptyCount++;
+                    } else {
+                        contentCount++;
+                    }
+                });
+                
+                if (emptyCount >= 2 && contentCount >= 1) {
+                    addTestResult('Test 3', true, `Mixed content: ${contentCount} content blocks, ${emptyCount} empty blocks`);
+                    setStepState('step3', 'completed');
+                } else {
+                    addTestResult('Test 3', false, `Unexpected block distribution: ${contentCount} content, ${emptyCount} empty`);
+                    setStepState('step3', 'failed');
+                }
+                
+                updateStatus();
+                
+            } catch (error) {
+                addTestResult('Test 3', false, `Error: ${error.message}`);
+                setStepState('step3', 'failed');
+                log(`Test 3 error: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function runTest4() {
+            setStepState('step4', 'active');
+            log('Starting Test 4: Delete all content, verify single block remains', 'INFO');
+            
+            try {
+                // Add some content first
+                editor.clearEditor();
+                const block1 = editor.addDefaultBlock();
+                block1.textContent = 'Content 1';
+                const block2 = editor.addDefaultBlock();
+                block2.textContent = 'Content 2';
+                
+                await wait(100);
+                
+                // Now clear all content
+                const blocks = editor.instance.querySelectorAll('.block');
+                blocks.forEach(block => {
+                    block.textContent = '';
+                });
+                
+                // Trigger input event to simulate content deletion
+                const inputEvent = new Event('input', { bubbles: true });
+                blocks[0].dispatchEvent(inputEvent);
+                
+                await wait(200);
+                
+                const finalBlocks = editor.instance.querySelectorAll('.block');
+                
+                if (finalBlocks.length >= 1) {
+                    addTestResult('Test 4', true, `After content deletion: ${finalBlocks.length} blocks remain (should be at least 1)`);
+                    setStepState('step4', 'completed');
+                } else {
+                    addTestResult('Test 4', false, `After content deletion: ${finalBlocks.length} blocks (should be at least 1)`);
+                    setStepState('step4', 'failed');
+                }
+                
+                updateStatus();
+                
+            } catch (error) {
+                addTestResult('Test 4', false, `Error: ${error.message}`);
+                setStepState('step4', 'failed');
+                log(`Test 4 error: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function runAllTests() {
+            log('Running all tests...', 'INFO');
+            testResults = [];
+            updateTestResults();
+            
+            await runTest1();
+            await wait(500);
+            await runTest2();
+            await wait(500);
+            await runTest3();
+            await wait(500);
+            await runTest4();
+            
+            const passedCount = testResults.filter(r => r.passed).length;
+            const totalCount = testResults.length;
+            
+            if (passedCount === totalCount) {
+                log(`🎉 All tests passed! (${passedCount}/${totalCount})`, 'SUCCESS');
+            } else {
+                log(`⚠️ Some tests failed: ${passedCount}/${totalCount} passed`, 'WARNING');
+            }
+        }
+
+        function clearEditor() {
+            editor.clearEditor();
+            updateStatus();
+            log('Editor cleared', 'INFO');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Initialize editor
+        window.addEventListener('DOMContentLoaded', () => {
+            log('Initializing editor...', 'INFO');
+            
+            editor = new JSEditor({
+                element: document.getElementById('editor'),
+                toolbar: {
+                    enabled: true,
+                    groups: ['basic', 'formatting', 'lists']
+                }
+            });
+
+            // Add event listeners for real-time status updates
+            editor.on('BLOCK_CREATED', (data) => {
+                log(`Block created: ${data.blockType}`, 'DEBUG');
+                setTimeout(updateStatus, 50);
+            });
+            
+            editor.on('EDITOR_UPDATED', () => {
+                log('Editor updated', 'DEBUG');
+                setTimeout(updateStatus, 50);
+            });
+            
+            setTimeout(() => {
+                updateStatus();
+                log('Editor initialized successfully', 'SUCCESS');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
