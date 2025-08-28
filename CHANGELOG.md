@@ -5,6 +5,15 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.24] - 2025-08-28
+
+### Fixed
+- **Markdown trigger for empty block not working**: Fixed issue where typing markdown trigger sequences like `# `, `- `, `* `, `1 `, `1. ` in empty blocks would fail to convert
+  - **Root Cause**: The `convertBlockType()` method was clearing block content before calling `applyTransformation()`, causing transformation methods to read empty content instead of the intended remaining content
+  - **Solution**: Modified the conversion sequence to set block content to remaining content (without trigger) before applying transformation, ensuring proper conversion even for trigger-only inputs
+  - This fix enables proper block conversion for all markdown triggers when typed in empty blocks
+  - Conversion now works correctly whether typing just the trigger (e.g., `# `) or trigger with content (e.g., `# Hello`)
+
 ## [v0.0.23] - 2025-08-27
 
 ### Fixed

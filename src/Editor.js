@@ -208,7 +208,7 @@ export class Editor
         
         for ( let block of blocks ) {
             let html = Parser.html(block);
-            this.instance.append(html);
+            this.instance.appendChild(html);
         }
         
         this.setCurrentBlock(this.instance.querySelectorAll('.block')[0]);
@@ -1490,11 +1490,9 @@ export class Editor
         // Preserve trailing space to allow triggers like "# " to match
         // but ignore leading whitespace so triggers at the start still detect
         const rawText = Utils.stripTags(blockElement.innerHTML);
-        console.warn({rawText});
         // Normalize non-breaking spaces (&nbsp; and \u00A0) to regular spaces before checking triggers
         const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
         const textContent = normalizedText.replace(/^\s+/, '');
-        console.warn({textContent});
         
         // Don't convert if content is empty
         if (!textContent) {
@@ -1503,8 +1501,6 @@ export class Editor
 
         // Find matching block class for the current text content
         const matchingBlockClass = BlockFactory.findBlockClassForTrigger(textContent);
-
-        console.warn({matchingBlockClass});
         
         if (!matchingBlockClass) {
             return false;
@@ -1541,15 +1537,12 @@ export class Editor
         try {
             // Create new block instance
             const newBlock = BlockFactory.createBlock(targetBlockType);
-
-            console.warn({newBlock});
             
             if (!newBlock) {
                 return false;
             }
 
-            // Clear the trigger text from the block element
-            // For list triggers like "- " or "* ", we want to remove the trigger and keep any additional content
+            // Calculate remaining content after removing the trigger
             const triggers = newBlock.constructor.getMarkdownTriggers();
             let remainingContent = triggerText;
             
@@ -1561,40 +1554,28 @@ export class Editor
                 }
             }
 
-            // Clear the current block content
-            blockElement.innerHTML = '';
-            
-            // Set the cursor position before applying transformation
+            // Store the cursor position before applying transformation
             const wasFocused = blockElement === this.currentBlock;
+            
+            // Set the block content to just the remaining content (without trigger)
+            // so that applyTransformation can read the correct content
+            blockElement.textContent = remainingContent.trim();
             
             // Apply the transformation (this will call the appropriate Toolbar method)
             newBlock.applyTransformation();
             
-            // If there was remaining content after the trigger, add it to the new block structure
-            if (remainingContent.trim()) {
-                // Find the appropriate element to add the content to
-                const editableElement = this.findEditableElementInBlock(blockElement);
-                if (editableElement) {
-                    editableElement.textContent = remainingContent.trim();
-                    
-                    // Position cursor at the end of the content
-                    if (wasFocused) {
-                        requestAnimationFrame(() => {
-                            editableElement.focus();
+            // Position cursor appropriately after transformation
+            if (wasFocused) {
+                requestAnimationFrame(() => {
+                    const editableElement = this.findEditableElementInBlock(blockElement);
+                    if (editableElement) {
+                        editableElement.focus();
+                        // If there's content, place cursor at the end
+                        if (remainingContent.trim()) {
                             this.placeCursorAtEnd(editableElement);
-                        });
-                    }
-                }
-            } else {
-                // No remaining content, just focus the appropriate element
-                if (wasFocused) {
-                    requestAnimationFrame(() => {
-                        const editableElement = this.findEditableElementInBlock(blockElement);
-                        if (editableElement) {
-                            editableElement.focus();
                         }
-                    });
-                }
+                    }
+                });
             }
             
             // Emit block conversion event
