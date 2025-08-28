@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Header focus after conversion: When converting a paragraph to a heading via markdown trigger (e.g., typing `# `), focus was left on the block container instead of the new heading element. Updated focus resolution to prefer inner contenteditable elements (`Editor.findEditableElementInBlock()`), and ensured headings are explicitly contenteditable in `HeadingBlock.applyTransformation()`. Cursor now lands at the end of the heading text after conversion.
 
+### Follow-up
+- Prevented typing into the block container for headings by setting the block div `contenteditable="false"` during heading conversion, ensuring all input goes into the newly created `<h1>` element.
+
 ## [v0.0.27] - 2025-08-28
 
 ### Fixed

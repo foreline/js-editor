@@ -48,6 +48,8 @@ export class HeadingBlock extends BaseBlock
         // Update block attributes
         currentBlock.setAttribute('data-block-type', `h${this.level}`);
         currentBlock.className = `block block-h${this.level}`;
+    // Prevent typing directly into the block container; edits should happen inside the heading element
+    currentBlock.setAttribute('contenteditable', 'false');
         
         // Get existing content
         const existingContent = currentBlock.textContent || '';
