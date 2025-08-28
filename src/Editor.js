@@ -1416,24 +1416,25 @@ export class Editor
     {
         log('findEditableElementInBlock()', 'Editor.');
 
-        // For list blocks, find the first list item
+        // 1) For list blocks, prefer the first list item (or its editable child)
         const firstListItem = blockElement.querySelector('li');
         if (firstListItem) {
-            return firstListItem;
+            const editableInLi = firstListItem.querySelector('[contenteditable="true"]');
+            return editableInLi || firstListItem;
         }
-        
-        // For other blocks, the block itself is editable
-        if (blockElement.hasAttribute('contenteditable') || 
-            blockElement.getAttribute('contenteditable') !== 'false') {
-            return blockElement;
-        }
-        
-        // Look for any contenteditable child
-        const editableChild = blockElement.querySelector('[contenteditable="true"]');
+
+        // 2) Prefer any explicitly editable descendant (e.g., <h1 contenteditable="true">)</n+        const editableChild = blockElement.querySelector('[contenteditable="true"]');
         if (editableChild) {
             return editableChild;
         }
-        
+
+        // 3) If the block itself is contenteditable, use it
+        // Use isContentEditable or explicit attribute check for 'true'
+        if (blockElement.isContentEditable || blockElement.getAttribute('contenteditable') === 'true') {
+            return blockElement;
+        }
+
+        // 4) Fallback to the block itself
         return blockElement;
     }
 
