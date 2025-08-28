@@ -1724,6 +1724,17 @@ Editor.setCurrentBlock = function(block) {
 
 /**
  * @deprecated Use editor instance methods instead
+ * Static method for backward compatibility - delegates to first editor instance
+ */
+Editor.focus = function(element = null) {
+    const firstEditor = Editor._instances.values().next().value;
+    if (firstEditor) {
+        firstEditor.focus(element);
+    }
+};
+
+/**
+ * @deprecated Use editor instance methods instead
  * Static method for backward compatibility - delegates to first editor instance  
  */
 Editor.update = function() {
