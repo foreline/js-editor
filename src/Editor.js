@@ -764,10 +764,10 @@ export class Editor
         }, { debounce: 500, source: 'editor.update' });
         
         // Update debug tooltips if debug mode is active
-        if (this.debugMode && this.debugTooltip) {
+        /*if (this.debugMode && this.debugTooltip) {
             // Use a slight delay to ensure DOM updates are complete
             setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
-        }
+        }*/
     }
 
     /**
@@ -799,9 +799,9 @@ export class Editor
                 }, { throttle: 200, source: 'block.content' });
                 
                 // Update debug tooltip if this is the active block
-                if (this.debugMode && this.debugTooltip && block === this.currentBlock) {
+                /*if (this.debugMode && this.debugTooltip && block === this.currentBlock) {
                     setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
-                }
+                }*/
             }
         });
     }
@@ -1423,13 +1423,13 @@ export class Editor
             return editableInLi || firstListItem;
         }
 
-        // 2) Prefer any explicitly editable descendant (e.g., <h1 contenteditable="true">)</n+        const editableChild = blockElement.querySelector('[contenteditable="true"]');
+        // 2) Prefer any explicitly editable descendant (e.g., <h1 contenteditable="true">)
+        const editableChild = blockElement.querySelector('[contenteditable="true"]');
         if (editableChild) {
             return editableChild;
         }
 
         // 3) If the block itself is contenteditable, use it
-        // Use isContentEditable or explicit attribute check for 'true'
         if (blockElement.isContentEditable || blockElement.getAttribute('contenteditable') === 'true') {
             return blockElement;
         }

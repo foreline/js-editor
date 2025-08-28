@@ -314,6 +314,8 @@ export class DebugTooltip {
     startUpdateLoop() {
         log('startUpdateLoop()', 'DebugTooltip');
 
+        return;
+
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
