@@ -59,6 +59,7 @@ Take into consideration: the bugs can be repeated, indicating that the bug may h
 - [x] **Single empty block issue**. If an Editor contains only one empty (default) block a user can not add another empty (default) block by hitting `enter` key. A new block appears and then is removed. A user can add unlimited number of empty blocks.
 - [x] **Markdown triger for single empty block not working**. Fixed by skipping empty-editor enforcement during conversion/creation and only replacing a single empty block when it’s a paragraph, allowing triggers like `# ` to convert the sole empty block to a header.
 - [x] **Header focus issue after conversion**. ✅ FIXED - After markdown trigger conversion (e.g., `# `), focus now moves to the inner heading element (e.g., `<h1>`), not the block container. Implemented by preferring inner contenteditable elements in `Editor.findEditableElementInBlock()` and ensuring `HeadingBlock.applyTransformation()` marks the heading as `contenteditable` and is focusable.
+- [x] **Pasting complex content**. ✅ **FIXED** - Complex formatted content (lists, tables, multiple paragraphs) is now correctly parsed and each text block is rendered as a separate block element. The paste handler now detects multiple blocks/lines and creates individual block elements instead of inserting everything as a single HTML fragment. Enhanced with proper sanitization, block creation events, and support for both HTML and plain text multi-line content.
 
 ## Test Suite Issues
 

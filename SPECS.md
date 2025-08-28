@@ -8,11 +8,11 @@ The JS Editor project is a web-based rich text editor designed to provide users 
 ### Editor Core
 1. **Initialization**:
    - The editor should initialize with a valid DOM element ID.
-   - Default blocks should be created if no content is provided.
+   - Default block should be created if no content is provided.
    - Toolbar configuration should be applied during initialization.
 
 2. **Content Blocks**:
-   - Support multiple block types (e.g., paragraph, headers).
+   - Support multiple block types (e.g., paragraph, headers, lists, code blocks).
    - Allow adding, removing, and updating blocks dynamically.
 
 3. **Event Handling**:
@@ -60,7 +60,6 @@ The JS Editor project is a web-based rich text editor designed to provide users 
 
 2. **Content Blocks**:
    - Support block types including paragraph, headers (H1-H6), code blocks, and lists.
-   - Allow nesting of blocks for hierarchical content structures.
    - Provide methods for splitting, merging, and rearranging blocks.
    - Ensure blocks are editable and maintain their state during updates.
    - **List Block Behavior**: For unordered (ul) and ordered (ol) list blocks, Enter key creates new list items of the same type. Empty list items can be removed with Backspace or converted to regular paragraphs by pressing Enter.

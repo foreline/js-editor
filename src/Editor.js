@@ -629,11 +629,7 @@ export class Editor
             return false;
         }
         
-        // Sanitize the input text to prevent XSS attacks
-        text = Utils.escapeHTML(text);
-        
-        // If HTML data is available, sanitize it as well
-        let finalHtml = '';
+        // If HTML data is available, handle complex content properly
         if ( htmlData && htmlData.trim() !== '' ) {
             // Basic HTML sanitization - remove script tags and event handlers
             htmlData = htmlData
@@ -645,27 +641,244 @@ export class Editor
             // Use Parser to properly parse HTML into blocks
             try {
                 const blocks = Parser.parseHtml(htmlData);
-                if ( blocks.length > 0 ) {
-                    // Convert blocks back to HTML
-                    finalHtml = blocks.map(block => block.html || block.content).join('');
+                if ( blocks.length > 1 ) {
+                    // Complex content with multiple blocks - insert as separate blocks
+                    this.insertMultipleBlocks(blocks);
+                    
+                    // Emit paste event
+                    this.eventEmitter.emit(EVENTS.USER_PASTE, {
+                        text: text,
+                        html: htmlData,
+                        blocksCount: blocks.length,
+                        timestamp: Date.now()
+                    }, { source: 'user.paste' });
+                    
+                    // Update editor after paste
+                    this.update();
+                    return;
+                } else if ( blocks.length === 1 ) {
+                    // Single block - handle as inline content
+                    const block = blocks[0];
+                    this.insertInlineContent(block.html || block.content, selection);
                 } else {
                     // Fallback to markdown conversion
-                    finalHtml = Editor.md2html(text);
+                    const finalHtml = Editor.md2html(Utils.escapeHTML(text));
+                    this.insertInlineContent(finalHtml, selection);
                 }
             } catch (error) {
                 logWarning('Error parsing HTML data, falling back to markdown conversion', 'Editor.paste()');
-                finalHtml = Editor.md2html(text);
+                const finalHtml = Editor.md2html(Utils.escapeHTML(text));
+                this.insertInlineContent(finalHtml, selection);
             }
         } else {
-            // Convert markdown to HTML
-            finalHtml = Editor.md2html(text);
+            // Handle plain text - check for multiple lines that could be separate blocks
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length > 1) {
+                // Multiple lines - create separate blocks for each line
+                this.insertMultipleLinesAsBlocks(lines);
+                
+                // Emit paste event
+                this.eventEmitter.emit(EVENTS.USER_PASTE, {
+                    text: text,
+                    html: htmlData,
+                    linesCount: lines.length,
+                    timestamp: Date.now()
+                }, { source: 'user.paste' });
+                
+                // Update editor after paste
+                this.update();
+                return;
+            } else {
+                // Single line - convert markdown to HTML and insert inline
+                const finalHtml = Editor.md2html(Utils.escapeHTML(text));
+                this.insertInlineContent(finalHtml, selection);
+            }
         }
-    
+        
+        // Emit paste event for single content
+        this.eventEmitter.emit(EVENTS.USER_PASTE, {
+            text: text,
+            html: htmlData,
+            timestamp: Date.now()
+        }, { source: 'user.paste' });
+        
+        // Update editor after paste
+        this.update();
+    }
+
+    /**
+     * Insert multiple blocks as separate block elements
+     * @param {Array} blocks - Array of parsed block objects
+     */
+    insertMultipleBlocks(blocks) {
+        log('insertMultipleBlocks()', 'Editor.');
+        
+        // Get current block
+        const currentBlock = this.currentBlock;
+        let insertAfterBlock = currentBlock;
+        
+        // Clear current block if it's empty (to replace it with first pasted block)
+        if (currentBlock && this.isBlockEmpty(currentBlock)) {
+            // Replace empty block with first pasted block
+            const firstBlock = blocks[0];
+            const firstBlockElement = this.createBlockElement(firstBlock);
+            
+            if (firstBlockElement) {
+                currentBlock.parentNode.replaceChild(firstBlockElement, currentBlock);
+                this.setCurrentBlock(firstBlockElement);
+                insertAfterBlock = firstBlockElement;
+                
+                // Remove first block from array since it replaced the current block
+                blocks = blocks.slice(1);
+            }
+        }
+        
+        // Insert remaining blocks after the current/replaced block
+        blocks.forEach((block, index) => {
+            const blockElement = this.createBlockElement(block);
+            if (blockElement && insertAfterBlock) {
+                insertAfterBlock.after(blockElement);
+                insertAfterBlock = blockElement;
+                
+                // Set focus to the last inserted block
+                if (index === blocks.length - 1) {
+                    this.setCurrentBlock(blockElement);
+                    this.focus(blockElement);
+                }
+            }
+        });
+    }
+
+    /**
+     * Insert multiple lines as separate paragraph blocks
+     * @param {Array} lines - Array of text lines
+     */
+    insertMultipleLinesAsBlocks(lines) {
+        log('insertMultipleLinesAsBlocks()', 'Editor.');
+        
+        // Get current block
+        const currentBlock = this.currentBlock;
+        let insertAfterBlock = currentBlock;
+        
+        // Clear current block if it's empty (to replace it with first line)
+        if (currentBlock && this.isBlockEmpty(currentBlock)) {
+            // Replace empty block with first line
+            const firstLineHtml = Editor.md2html(Utils.escapeHTML(lines[0]));
+            const firstBlockElement = this.createParagraphBlock(firstLineHtml);
+            
+            if (firstBlockElement) {
+                currentBlock.parentNode.replaceChild(firstBlockElement, currentBlock);
+                this.setCurrentBlock(firstBlockElement);
+                insertAfterBlock = firstBlockElement;
+                
+                // Remove first line from array since it replaced the current block
+                lines = lines.slice(1);
+            }
+        }
+        
+        // Insert remaining lines as new paragraph blocks
+        lines.forEach((line, index) => {
+            const lineHtml = Editor.md2html(Utils.escapeHTML(line));
+            const blockElement = this.createParagraphBlock(lineHtml);
+            
+            if (blockElement && insertAfterBlock) {
+                insertAfterBlock.after(blockElement);
+                insertAfterBlock = blockElement;
+                
+                // Set focus to the last inserted block
+                if (index === lines.length - 1) {
+                    this.setCurrentBlock(blockElement);
+                    this.focus(blockElement);
+                }
+            }
+        });
+    }
+
+    /**
+     * Create a block element from a parsed block object
+     * @param {Object} block - Parsed block object
+     * @returns {HTMLElement|null} - Created block element
+     */
+    createBlockElement(block) {
+        try {
+            // Create block instance
+            const blockInstance = block._blockInstance || BlockFactory.createBlock(
+                block.type, 
+                block.content, 
+                block.html, 
+                block.nested
+            );
+            
+            if (!blockInstance) {
+                return null;
+            }
+            
+            // Render to element
+            const blockElement = blockInstance.renderToElement();
+            
+            if (blockElement) {
+                // Generate unique block ID
+                const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                blockElement.setAttribute('data-block-id', blockId);
+                blockElement.setAttribute('data-timestamp', Date.now().toString());
+                
+                // Emit block creation event
+                this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+                    blockId: blockId,
+                    blockType: block.type,
+                    timestamp: Date.now()
+                }, { source: 'paste.create' });
+            }
+            
+            return blockElement;
+        } catch (error) {
+            logWarning('Error creating block element', 'Editor.createBlockElement()');
+            return null;
+        }
+    }
+
+    /**
+     * Create a paragraph block element with given HTML content
+     * @param {string} html - HTML content for the paragraph
+     * @returns {HTMLElement|null} - Created paragraph block element
+     */
+    createParagraphBlock(html) {
+        try {
+            const paragraphBlock = BlockFactory.createBlock(BlockType.PARAGRAPH, '', html);
+            const blockElement = paragraphBlock.renderToElement();
+            
+            if (blockElement) {
+                // Generate unique block ID
+                const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                blockElement.setAttribute('data-block-id', blockId);
+                blockElement.setAttribute('data-timestamp', Date.now().toString());
+                
+                // Emit block creation event
+                this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
+                    blockId: blockId,
+                    blockType: BlockType.PARAGRAPH,
+                    timestamp: Date.now()
+                }, { source: 'paste.create' });
+            }
+            
+            return blockElement;
+        } catch (error) {
+            logWarning('Error creating paragraph block', 'Editor.createParagraphBlock()');
+            return null;
+        }
+    }
+
+    /**
+     * Insert content inline within the current selection
+     * @param {string} html - HTML content to insert
+     * @param {Selection} selection - Current selection object
+     */
+    insertInlineContent(html, selection) {
         if ( selection.rangeCount ) {
             const range = selection.getRangeAt(0);
             
             try {
-                const node = document.createRange().createContextualFragment(finalHtml);
+                const node = document.createRange().createContextualFragment(html);
                 range.deleteContents(); // Clear selected content first
                 range.insertNode(node);
                 
@@ -674,22 +887,27 @@ export class Editor
                 selection.removeAllRanges();
                 selection.addRange(range);
             } catch (error) {
-                logWarning('Error inserting pasted content', 'Editor.paste()');
+                logWarning('Error inserting inline content', 'Editor.insertInlineContent()');
                 // Fallback to execCommand if modern approach fails
-                document.execCommand('insertHTML', false, finalHtml);
+                document.execCommand('insertHTML', false, html);
             }
         }
+    }
+
+    /**
+     * Check if a block is effectively empty
+     * @param {HTMLElement} block - Block element to check
+     * @returns {boolean} - True if block is empty
+     */
+    isBlockEmpty(block) {
+        if (!block) return true;
         
-        // Emit paste event
-        this.eventEmitter.emit(EVENTS.USER_PASTE, {
-            text: text,
-            html: htmlData,
-            processedHtml: finalHtml,
-            timestamp: Date.now()
-        }, { source: 'user.paste' });
+        const textContent = block.textContent || '';
+        const cleanText = textContent.trim();
+        const innerHTML = block.innerHTML || '';
         
-        // Update editor after paste
-        this.update();
+        // Consider block empty if it only contains whitespace or common empty elements
+        return cleanText === '' || cleanText === '\n' || innerHTML === '<br>' || innerHTML === '<br/>' || innerHTML === '<br />';
     }
     
     /**
