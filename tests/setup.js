@@ -104,6 +104,38 @@ const createMockElement = (tagName = 'div') => ({
     blur: jest.fn(),
     click: jest.fn(),
     scrollIntoView: jest.fn(),
+    // Minimal selector engine for closest() support in tests
+    matches: jest.fn(function(selector){
+        if (!selector) return false;
+        // Support simple selectors used in tests: tag, .class, tag.class
+        selector = selector.trim();
+        const hasClass = selector.includes('.')
+        const [selTag, selClass] = hasClass ? selector.split('.') : [selector, null];
+        const tagOk = selTag ? this.tagName.toLowerCase() === selTag.toLowerCase() : true;
+        const classOk = selClass ? (this.className || '').split(/\s+/).includes(selClass) : true;
+        return tagOk && classOk;
+    }),
+    closest: jest.fn(function(selector){
+        let el = this;
+        while (el) {
+            if (typeof el.matches === 'function' && el.matches(selector)) return el;
+            el = el.parentNode;
+        }
+        return null;
+    }),
+    // after(node): insert after this element
+    after: jest.fn(function(newNode){
+        if (!this.parentNode) return;
+        const parent = this.parentNode;
+        const idx = parent.children.indexOf(this);
+        if (idx === -1) return;
+        // insert after current index
+        parent.children.splice(idx + 1, 0, newNode);
+        newNode.parentNode = parent;
+        // keep first/lastChild hints best-effort
+        parent.firstChild = parent.children[0] || null;
+        parent.lastChild = parent.children[parent.children.length - 1] || null;
+    }),
     
     // Properties for specific element types
     get checked() { return this._checked || false; },
@@ -124,6 +156,8 @@ const createMockElement = (tagName = 'div') => ({
 global.document.createElement = jest.fn((tagName) => createMockElement(tagName));
 
 // Mock document methods
+// Provide a basic execCommand mock used by Toolbar/ToolbarHandlers
+global.document.execCommand = jest.fn();
 global.document.querySelector = jest.fn();
 global.document.querySelectorAll = jest.fn().mockReturnValue([]);
 global.document.getElementById = jest.fn().mockReturnValue(createMockElement());
@@ -404,7 +438,6 @@ global.URLSearchParams = class MockURLSearchParams {
         return pairs.join('&');
     }
 };
-
 // Export utilities for tests
 global.createMockElement = createMockElement;
 global.mockClassList = mockClassList;
