@@ -474,7 +474,8 @@ export class Editor
                     const textContent = normalized.replace(/^\s+/, '');
                     
                     // Only check for conversion if text contains potential triggers
-                    if (textContent.match(/^(#{1,6}\s|[\*\-]\s|[\*\-]\s*\[[x\s]\]\s*|\d+\.?\s|>\s|```|~~~)/)) {
+                    // Support: headings, unordered (* - +), task [- [ ]], ordered (1. / 1) ), quote, fences
+                    if (textContent.match(/^(#{1,6}\s|[\*\-\+]\s|[\*\-]\s*\[[x\s]\]\s*|\d+[\.)]?\s|>\s|```|~~~)/)) {
                         // Check if this block should be converted to a different type
                         // Use a small timeout to let the DOM update first
                         setTimeout(() => {
@@ -1569,14 +1570,19 @@ export class Editor
             }
 
             // Calculate remaining content after removing the trigger
-            const triggers = newBlock.constructor.getMarkdownTriggers();
+            const blockClass = newBlock.constructor;
             let remainingContent = triggerText;
             
-            // Find and remove the matching trigger
-            for (const trigger of triggers) {
-                if (triggerText.startsWith(trigger)) {
-                    remainingContent = triggerText.substring(trigger.length);
-                    break;
+            // Prefer class-provided computation (supports regex triggers)
+            if (typeof blockClass.computeRemainingContent === 'function') {
+                remainingContent = blockClass.computeRemainingContent(triggerText);
+            } else {
+                const triggers = blockClass.getMarkdownTriggers ? blockClass.getMarkdownTriggers() : [];
+                for (const trigger of triggers) {
+                    if (triggerText.startsWith(trigger)) {
+                        remainingContent = triggerText.substring(trigger.length);
+                        break;
+                    }
                 }
             }
 

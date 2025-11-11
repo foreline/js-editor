@@ -26,14 +26,64 @@ export class UnorderedListBlock extends ListBlock
     }
 
     static getMarkdownTriggers() {
-        return ['* ', '- '];
+        // Keep simple triggers for fallback/length comparison, but support '+' too
+        return ['* ', '- ', '+ '];
+    }
+
+    /**
+     * Support regex-based trigger matching for any unordered bullet
+     */
+    static matchesMarkdownTrigger(text) {
+        return /^(\*|\-|\+)\s/.test(text);
+    }
+
+    /**
+     * Compute remaining content after removing a bullet trigger
+     * @param {string} text
+     * @returns {string}
+     */
+    static computeRemainingContent(text) {
+        return text.replace(/^(\*|\-|\+)\s/, '');
     }
 
     applyTransformation() {
-        // No need to do anything special here - the block creation
-        // is handled by Editor.createNewBlock() which converts the block
-        // to HTML and adds it to the DOM properly.
-        // This prevents the circular dependency issue.
+        // Transform current paragraph block into an unordered list block in-place
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+
+        // Update block attributes/classes
+        currentBlock.setAttribute('data-block-type', 'ul');
+        currentBlock.className = 'block block-ul';
+        currentBlock.setAttribute('contenteditable', 'false');
+
+        // Capture existing text (Editor.convertBlockType already removed trigger)
+        const existingContent = (currentBlock.textContent || '').trim();
+
+        // Build UL with a single editable LI
+        const ul = document.createElement('ul');
+        const li = document.createElement('li');
+        li.contentEditable = true;
+        li.textContent = existingContent;
+        ul.appendChild(li);
+
+        // Replace inner content
+        currentBlock.innerHTML = '';
+        currentBlock.appendChild(ul);
+
+        // Focus the LI
+        requestAnimationFrame(() => {
+            try {
+                li.focus();
+                if (li.textContent.length) {
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(li);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            } catch (_) { /* noop in tests */ }
+        });
     }
 
     /**

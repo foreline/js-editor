@@ -26,14 +26,62 @@ export class OrderedListBlock extends ListBlock
     }
 
     static getMarkdownTriggers() {
-        return ['1 ', '1.'];
+        // Include both space and dot variants for basic trigger list
+        return ['1 ', '1.', '1) '];
+    }
+
+    /**
+     * Support regex-based trigger matching for ordered list prefixes
+     */
+    static matchesMarkdownTrigger(text) {
+        return /^\d+(?:[\.)])?\s/.test(text);
+    }
+
+    /**
+     * Compute remaining content after removing an ordered trigger
+     * @param {string} text
+     * @returns {string}
+     */
+    static computeRemainingContent(text) {
+        return text.replace(/^\d+(?:[\.)])?\s/, '');
     }
 
     applyTransformation() {
-        // No need to do anything special here - the block creation
-        // is handled by Editor.createNewBlock() which converts the block
-        // to HTML and adds it to the DOM properly.
-        // This prevents the circular dependency issue.
+        // Transform current paragraph block into an ordered list block in-place
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+
+        // Update attributes/classes
+        currentBlock.setAttribute('data-block-type', 'ol');
+        currentBlock.className = 'block block-ol';
+        currentBlock.setAttribute('contenteditable', 'false');
+
+        // Existing text after trigger removal
+        const existingContent = (currentBlock.textContent || '').trim();
+
+        // Build OL with a single editable LI
+        const ol = document.createElement('ol');
+        const li = document.createElement('li');
+        li.contentEditable = true;
+        li.textContent = existingContent;
+        ol.appendChild(li);
+
+        currentBlock.innerHTML = '';
+        currentBlock.appendChild(ol);
+
+        requestAnimationFrame(() => {
+            try {
+                li.focus();
+                if (li.textContent.length) {
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(li);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            } catch (_) { /* noop in tests */ }
+        });
     }
 
     /**
