@@ -252,7 +252,7 @@ export class DebugTooltip {
             markdownContent = Editor.html2md(htmlContent);
         } catch (error) {
             // If conversion fails, use text content as fallback
-            markdownContent = blockElement.textContent || blockElement.innerHTML || '';
+            markdownContent = blockElement.textContent || htmlContent || '';
         }
         
         // Clean up the markdown content
