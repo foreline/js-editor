@@ -127,3 +127,25 @@ Blocks update a `data-timestamp` attribute on content changes to efficiently det
 - The project uses extensive `console.log` output — each method call generates a log message
 - Use debug mode and `DebugTooltip` for runtime inspection
 - `index.html` contains the main editor demo for manual testing
+
+## E2E Testing
+
+- **Framework**: Playwright Test (`@playwright/test`)
+- **E2E tests** live in `e2e/` directory, named `<feature>.spec.js`
+- **Test page**: Use `test-page.html` for clean test environment (not `index.html`)
+- **Run E2E tests**: 
+  ```powershell
+  npm run test:e2e          # Run all E2E tests
+  npm run test:e2e:ui       # Interactive UI mode
+  npm run test:e2e:headed   # Run with visible browser
+  npm run test:e2e:debug    # Debug mode
+  ```
+- Always wait for `window.editorReady` before running test assertions
+- Use class-based selectors (`.block-h1`, `.editor-toolbar-bold`)
+- Add `await page.waitForTimeout(200)` after markdown trigger conversions
+
+---
+
+**Skills**: For specialized tasks, refer to skill files in `.github/skills/`:
+- **proposal-writer**: Architectural proposals and design documents
+- **playwright-e2e**: Writing and debugging Playwright E2E tests
