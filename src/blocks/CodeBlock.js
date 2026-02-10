@@ -3,6 +3,7 @@
 import {BaseBlock} from "@/blocks/BaseBlock";
 import {BlockType} from "@/BlockType";
 import {Toolbar} from "@/Toolbar";
+import {Editor} from "@/Editor";
 import {SyntaxHighlighter} from "@/utils/syntaxHighlighter";
 import {Utils} from "@/Utils";
 
@@ -86,9 +87,48 @@ export class CodeBlock extends BaseBlock
      * @returns {void}
      */
     applyTransformation() {
-        // Don't call Toolbar.code() to avoid circular dependency
-        // This method is called from within the conversion process
-        // The actual conversion is handled by the Editor's convertCurrentBlockOrCreate method
+        // Perform direct DOM transformation (similar to HeadingBlock)
+        // to avoid circular dependency with Toolbar.code()
+        const currentBlock = Editor.currentBlock;
+        if (!currentBlock) return;
+        
+        // Update block attributes
+        currentBlock.setAttribute('data-block-type', 'code');
+        currentBlock.className = 'block block-code';
+        currentBlock.setAttribute('contenteditable', 'false');
+        
+        // Get existing content
+        const existingContent = currentBlock.textContent || '';
+        
+        // Create code structure (pre > code)
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.textContent = existingContent;
+        code.setAttribute('contenteditable', 'true');
+        
+        // Replace content with code structure
+        currentBlock.innerHTML = '';
+        pre.appendChild(code);
+        currentBlock.appendChild(pre);
+        
+        // Create and append language selector
+        const languageSelector = this.createLanguageSelector();
+        currentBlock.appendChild(languageSelector);
+        
+        // Focus the code element if the block was focused
+        if (document.activeElement === currentBlock || 
+            currentBlock.contains(document.activeElement)) {
+            requestAnimationFrame(() => {
+                code.focus();
+                // Place cursor at end
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(code);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
+        }
     }
 
     /**
