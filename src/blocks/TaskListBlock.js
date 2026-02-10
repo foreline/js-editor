@@ -175,11 +175,13 @@ export class TaskListBlock extends ListBlock
 
     /**
      * Apply transformation to the current block
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
      * @returns {string} - markdown representation
      */
-    applyTransformation() {
+    applyTransformation(blockElement = null) {
         // Get current block and convert to task list
-        const currentBlock = Editor.currentBlock;
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
         
         // Set block type

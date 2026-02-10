@@ -46,9 +46,14 @@ export class OrderedListBlock extends ListBlock
         return text.replace(/^\d+(?:[\.)])?\s/, '');
     }
 
-    applyTransformation() {
+    /**
+     * Apply ordered list transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
+     */
+    applyTransformation(blockElement = null) {
         // Transform current paragraph block into an ordered list block in-place
-        const currentBlock = Editor.currentBlock;
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
 
         // Update attributes/classes

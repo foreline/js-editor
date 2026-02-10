@@ -1638,7 +1638,8 @@ export class Editor
             blockElement.textContent = remainingContent.trim();
             
             // Apply the transformation (this will call the appropriate Toolbar method)
-            newBlock.applyTransformation();
+            // Pass blockElement to ensure transformation happens on the correct block
+            newBlock.applyTransformation(blockElement);
             
             // Position cursor appropriately after transformation
             if (wasFocused) {

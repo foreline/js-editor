@@ -44,8 +44,9 @@ export class ParagraphBlock extends BaseBlock
 
     /**
      * Apply paragraph transformation via toolbar
+     * @param {HTMLElement} [blockElement] - The block element to transform (currently unused but kept for API consistency).
      */
-    applyTransformation() {
+    applyTransformation(blockElement = null) {
         Toolbar.paragraph();
     }
 

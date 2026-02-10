@@ -39,10 +39,12 @@ export class HeadingBlock extends BaseBlock
 
     /**
      * Apply heading transformation via toolbar
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
      */
-    applyTransformation() {
+    applyTransformation(blockElement = null) {
         // Get the current block and convert it to a heading
-        const currentBlock = Editor.currentBlock;
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
         
         // Update block attributes
