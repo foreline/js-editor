@@ -342,3 +342,7 @@
 .editor .block {
     position: relative;
 }
+
+.editor * {
+    outline: none;
+}
