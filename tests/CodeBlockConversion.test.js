@@ -20,9 +20,6 @@ describe('CodeBlock Conversion', () => {
         container.id = 'code-trigger-editor';
         document.body.appendChild(container);
         
-        // Ensure append exists
-        container.append = function(child) { return this.appendChild(child); };
-        
         // Make getElementById return our container
         document.getElementById = jest.fn().mockReturnValue(container);
 

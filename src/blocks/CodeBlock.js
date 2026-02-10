@@ -97,7 +97,7 @@ export class CodeBlock extends BaseBlock
         currentBlock.className = 'block block-code';
         currentBlock.setAttribute('contenteditable', 'false');
         
-        // Get existing content
+        // Get existing content (markdown trigger already stripped by Editor.convertBlockType)
         const existingContent = currentBlock.textContent || '';
         
         // Create code structure (pre > code)
