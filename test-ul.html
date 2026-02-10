@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Editor - UL Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #editor { border: 1px solid #ccc; padding: 20px; min-height: 200px; }
+        .block { margin: 10px 0; }
+        .block-p { padding: 5px; }
+        .block-ul { padding: 5px; }
+        ul { margin: 0; padding-left: 25px; }
+        li { padding: 2px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test UL in Empty Editor</h1>
+    <p>Instructions: Type "- test" in the editor below and observe if it converts to a list and stays</p>
+    <div id="editor"></div>
+    
+    <script type="module">
+        import { Editor } from './src/Editor.js';
+        
+        const editorDiv = document.getElementById('editor');
+        const editor = new Editor(editorDiv);
+        
+        console.log('Editor initialized:', editor);
+        window.testEditor = editor;
+    </script>
+</body>
+</html>
