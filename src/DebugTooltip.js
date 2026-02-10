@@ -243,25 +243,16 @@ export class DebugTooltip {
             else blockType = tagName;
         }
         
-        // Get markdown content
+        // Get markdown content - always read from the current DOM element
+        // to avoid stale data from the blocks array
         let markdownContent = '';
-        if (block && block.content) {
-            // Use the block's markdown content if available
-            markdownContent = block.content;
-        } else {
-            // Try to get markdown from the block instance
-            if (block && block._blockInstance && typeof block._blockInstance.toMarkdown === 'function') {
-                markdownContent = block._blockInstance.toMarkdown();
-            } else {
-                // Convert HTML content to markdown as fallback
-                const htmlContent = blockElement.innerHTML || blockElement.outerHTML;
-                try {
-                    markdownContent = Editor.html2md(htmlContent);
-                } catch (error) {
-                    // If conversion fails, use text content as fallback
-                    markdownContent = blockElement.textContent || blockElement.innerHTML || '';
-                }
-            }
+        // Convert HTML content to markdown from the actual DOM element
+        const htmlContent = blockElement.innerHTML || blockElement.outerHTML;
+        try {
+            markdownContent = Editor.html2md(htmlContent);
+        } catch (error) {
+            // If conversion fails, use text content as fallback
+            markdownContent = blockElement.textContent || htmlContent || '';
         }
         
         // Clean up the markdown content
