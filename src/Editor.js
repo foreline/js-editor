@@ -461,11 +461,9 @@ export class Editor
                     return;
                 } else if (allBlocks.length === 1 && this.isEditorEmpty(allBlocks)) {
                     const onlyBlock = allBlocks[0];
-                    const type = onlyBlock.getAttribute('data-block-type');
                     // Only enforce default block if the single empty block is a paragraph.
-                    // Treat missing type as paragraph (for legacy/malformed blocks)
                     // Allow empty non-paragraph blocks (e.g., an empty heading, list, etc.) to persist.
-                    if (!type || type === 'p' || type === 'paragraph') {
+                    if (this.isParagraphBlock(onlyBlock)) {
                         this.ensureDefaultBlock();
                         return;
                     }
@@ -969,11 +967,9 @@ export class Editor
                 this.ensureDefaultBlock();
             } else if (blocks.length === 1 && this.isEditorEmpty(blocks)) {
                 const onlyBlock = blocks[0];
-                const type = onlyBlock.getAttribute('data-block-type');
                 // Only enforce default block if the single empty block is a paragraph.
-                // Treat missing type as paragraph (for legacy/malformed blocks)
                 // Allow empty non-paragraph blocks (e.g., an empty heading, list, etc.) to persist.
-                if (!type || type === 'p' || type === 'paragraph') {
+                if (this.isParagraphBlock(onlyBlock)) {
                     this.ensureDefaultBlock();
                 }
             }
@@ -1037,6 +1033,19 @@ export class Editor
     }
 
     /**
+     * Check if a block is a paragraph block (or legacy block without type)
+     * @param {HTMLElement} block - Block element to check
+     * @returns {boolean}
+     */
+    isParagraphBlock(block)
+    {
+        if (!block) return false;
+        const type = block.getAttribute('data-block-type');
+        // Treat missing type as paragraph (for legacy/malformed blocks)
+        return !type || type === 'p' || type === 'paragraph';
+    }
+
+    /**
      * Check if the editor is effectively empty (all blocks contain no meaningful content)
      * @param {NodeList} blocks - Collection of block elements
      * @returns {boolean}
@@ -1080,9 +1089,7 @@ export class Editor
         } else if (allBlocks.length === 1 && this.isEditorEmpty(allBlocks)) {
             // One empty block - only replace if it's a paragraph
             const onlyBlock = allBlocks[0];
-            const type = onlyBlock.getAttribute('data-block-type');
-            // Treat missing type as paragraph (for legacy/malformed blocks)
-            if (!type || type === 'p' || type === 'paragraph') {
+            if (this.isParagraphBlock(onlyBlock)) {
                 needsDefault = true;
             }
         }
