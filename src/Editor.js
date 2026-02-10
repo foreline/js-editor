@@ -455,11 +455,20 @@ export class Editor
                 // 2. There's exactly one block and it's empty (likely user deleted all content)
                 // Do NOT trigger if there are multiple blocks, even if they're all empty,
                 // as the user may have intentionally created multiple empty blocks
-                if (allBlocks.length === 0 || 
-                    (allBlocks.length === 1 && this.isEditorEmpty(allBlocks))) {
-                    // Editor is empty, ensure at least one default block exists
+                if (allBlocks.length === 0) {
+                    // Editor is completely empty, ensure at least one default block exists
                     this.ensureDefaultBlock();
                     return;
+                } else if (allBlocks.length === 1 && this.isEditorEmpty(allBlocks)) {
+                    const onlyBlock = allBlocks[0];
+                    const type = onlyBlock.getAttribute('data-block-type');
+                    // Only enforce default block if the single empty block is a paragraph.
+                    // Treat missing type as paragraph (for legacy/malformed blocks)
+                    // Allow empty non-paragraph blocks (e.g., an empty heading, list, etc.) to persist.
+                    if (!type || type === 'p' || type === 'paragraph') {
+                        this.ensureDefaultBlock();
+                        return;
+                    }
                 }
             }
         
@@ -962,8 +971,9 @@ export class Editor
                 const onlyBlock = blocks[0];
                 const type = onlyBlock.getAttribute('data-block-type');
                 // Only enforce default block if the single empty block is a paragraph.
-                // Allow empty non-paragraph blocks (e.g., an empty heading after typing "# ") to persist.
-                if (type === 'p' || type === 'paragraph') {
+                // Treat missing type as paragraph (for legacy/malformed blocks)
+                // Allow empty non-paragraph blocks (e.g., an empty heading, list, etc.) to persist.
+                if (!type || type === 'p' || type === 'paragraph') {
                     this.ensureDefaultBlock();
                 }
             }
@@ -1061,8 +1071,24 @@ export class Editor
         // Get all current blocks
         const allBlocks = this.instance.querySelectorAll('.block');
         
+        // Decide if we need a default block
+        let needsDefault = false;
+        
+        if (allBlocks.length === 0) {
+            // No blocks at all - definitely need a default
+            needsDefault = true;
+        } else if (allBlocks.length === 1 && this.isEditorEmpty(allBlocks)) {
+            // One empty block - only replace if it's a paragraph
+            const onlyBlock = allBlocks[0];
+            const type = onlyBlock.getAttribute('data-block-type');
+            // Treat missing type as paragraph (for legacy/malformed blocks)
+            if (!type || type === 'p' || type === 'paragraph') {
+                needsDefault = true;
+            }
+        }
+        
         // If editor is empty, create a default block
-        if (allBlocks.length === 0 || this.isEditorEmpty(allBlocks)) {
+        if (needsDefault) {
             // Detach events from existing blocks first
             if (allBlocks.length > 0) {
                 this.detachBlockEvents(allBlocks);
