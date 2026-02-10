@@ -161,6 +161,9 @@ console.log('Hello, world!');
         }
     );
 
+    // Expose editor globally for E2E tests
+    window.editor = editor;
+
     /*editor.on(EVENTS.CONTENT_CHANGED, (event) => {
         console.log(editor.getMarkdown());
     }, { debounce: 500 });*/

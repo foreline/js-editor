@@ -3,4 +3,11 @@
 node_modules
 coverage
 dist
-INSTRUCTIONS.md
+demo-dist
+
+# VS Code workspace settings (optional - uncomment if you want to share settings)
+.vscode/
+
+# Playwright E2E test artifacts
+test-results/
+playwright-report/

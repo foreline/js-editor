@@ -218,14 +218,6 @@ export class Editor
         }
         
         this.setCurrentBlock(this.instance.querySelectorAll('.block')[0]);
-        
-        // Ensure at least one block exists
-        if ( 0 === content.length ) {
-            const block = document.createElement('div');
-            block.classList.add('block')
-            block.innerHTML = '<br />';
-            this.instance.appendChild(block);
-        }
     
         this.addListeners();
         
@@ -436,12 +428,30 @@ export class Editor
                 return;
             }
             
-            // Find the block that contains the input target
-            let block = e.target.closest('.block');
-            
-            // If no block is found but the target is a list item, look for the parent list block
-            if (!block && e.target.tagName === 'LI') {
-                block = e.target.closest('ul, ol, div').closest('.block');
+            // Find the block where the input occurred.
+            // NOTE: e.target for input events in a contenteditable container is the
+            // editing host (the editor container itself), NOT the child block element.
+            // Therefore e.target.closest('.block') would always return null.
+            // Instead, use the current selection to determine which block received input.
+            let block = null;
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                let anchorNode = selection.anchorNode;
+                // Text nodes don't have .closest(), walk up to the parent element
+                if (anchorNode && anchorNode.nodeType === Node.TEXT_NODE) {
+                    anchorNode = anchorNode.parentElement;
+                }
+                if (anchorNode) {
+                    block = anchorNode.closest('.block');
+                    // If no block is found but the anchor is a list item, look for the parent list block
+                    if (!block && anchorNode.tagName === 'LI') {
+                        block = anchorNode.closest('ul, ol, div')?.closest('.block') || null;
+                    }
+                }
+            }
+            // Fallback to the currently tracked block if selection-based lookup failed
+            if (!block) {
+                block = this.currentBlock;
             }
             
             // Check if editor is effectively empty after content deletion
