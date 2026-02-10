@@ -415,6 +415,126 @@ export class Editor
             KeyHandler.handleKeyPress(e, this);
         });
         
+        // BEFOREINPUT Event handler — intercept deletions that cross block boundaries.
+        // The browser's native contenteditable handling can corrupt the block
+        // structure when a deletion spans multiple blocks:
+        //   • Stray text/BR nodes may appear outside .block elements
+        //   • The cursor may land outside any block
+        //   • All blocks may be removed with no recovery
+        //
+        // By intercepting in `beforeinput` we can:
+        //   1. Use range.deleteContents() to remove the selected text cleanly
+        //   2. Merge the surviving content of the first and last blocks
+        //   3. Remove empty/orphaned blocks
+        //   4. Guarantee at least one block always exists
+        //   5. Place the cursor exactly at the merge point
+        this.instance.addEventListener('beforeinput', (e) => {
+            if (!e.inputType.startsWith('delete')) return;
+
+            const selection = window.getSelection();
+            if (!selection || !selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            if (range.collapsed) return; // Single-point deletion — let the browser handle it
+
+            const allBlocks = this.instance.querySelectorAll('.block');
+            if (allBlocks.length === 0) return;
+
+            // Collect the blocks that are touched by the selection
+            const intersectedBlocks = [];
+            for (const block of allBlocks) {
+                if (range.intersectsNode(block)) intersectedBlocks.push(block);
+            }
+
+            // Only take over when the deletion crosses a block boundary
+            if (intersectedBlocks.length < 2) return;
+
+            e.preventDefault();
+            log('beforeinput: intercepted cross-block deletion (' + intersectedBlocks.length + ' blocks)', 'Editor.');
+
+            const firstBlock = intersectedBlocks[0];
+            const lastBlock  = intersectedBlocks[intersectedBlocks.length - 1];
+
+            // --- 1. Insert a <span> cursor marker at the deletion point -------
+            //     We use an element (not a text node) so that normalize() won't
+            //     remove it later when we merge adjacent text nodes.
+            const cursorMarker = document.createElement('span');
+            cursorMarker.setAttribute('data-cursor-marker', '');
+            range.insertNode(cursorMarker);
+
+            // --- 2. Re-create a range that covers the selected content --------
+            //     insertNode() pushes the range start before the marker, so we
+            //     build a fresh range from just after the marker to the original
+            //     selection end (which hasn't moved).
+            const deleteRange = document.createRange();
+            deleteRange.setStartAfter(cursorMarker);
+            deleteRange.setEnd(range.endContainer, range.endOffset);
+            deleteRange.deleteContents();
+
+            // --- 3. Merge the last block's remaining content into the first ---
+            if (firstBlock !== lastBlock && lastBlock.isConnected && firstBlock.isConnected) {
+                while (lastBlock.firstChild) {
+                    firstBlock.appendChild(lastBlock.firstChild);
+                }
+                lastBlock.remove();
+            }
+
+            // --- 4. Remove any remaining intersected blocks -------------------
+            for (const block of intersectedBlocks) {
+                if (block !== firstBlock && block.isConnected) {
+                    block.remove();
+                }
+            }
+
+            // Normalize text nodes around the merge point
+            firstBlock.normalize();
+
+            // --- 5. Place cursor at the marker, then remove it ----------------
+            const restoreRange = document.createRange();
+            if (cursorMarker.isConnected) {
+                restoreRange.setStartAfter(cursorMarker);
+                restoreRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(restoreRange);
+                cursorMarker.remove();
+            }
+
+            // --- 6. Clean up: if firstBlock is empty but other blocks exist,
+            //        remove it and focus the nearest neighbor instead. ----------
+            const firstBlockContent = (firstBlock.textContent || '').trim();
+            let remainingBlocks = this.instance.querySelectorAll('.block');
+
+            if (!firstBlockContent && remainingBlocks.length > 1 && firstBlock.isConnected) {
+                const neighbor = firstBlock.previousElementSibling
+                    || firstBlock.nextElementSibling;
+                firstBlock.remove();
+                remainingBlocks = this.instance.querySelectorAll('.block');
+                if (neighbor && neighbor.isConnected && neighbor.classList.contains('block')) {
+                    this.setCurrentBlock(neighbor);
+                    this.focus(neighbor);
+                } else if (remainingBlocks.length > 0) {
+                    this.setCurrentBlock(remainingBlocks[remainingBlocks.length - 1]);
+                    this.focus(remainingBlocks[remainingBlocks.length - 1]);
+                }
+            }
+
+            // --- 7. Ensure at least one block always exists -------------------
+            remainingBlocks = this.instance.querySelectorAll('.block');
+            if (remainingBlocks.length === 0) {
+                this.currentBlock = null;
+                this.addDefaultBlock();
+            } else if (firstBlock.isConnected) {
+                this.setCurrentBlock(firstBlock);
+            } else {
+                // firstBlock was removed or disconnected — focus nearest remaining
+                const target = remainingBlocks[remainingBlocks.length - 1];
+                this.setCurrentBlock(target);
+                this.focus(target);
+            }
+
+            this.update();
+        });
+
         // PASTE TEXT/HTML Event handler
         this.instance.addEventListener('paste', (e) => {
             this.paste(e);
@@ -1252,20 +1372,13 @@ export class Editor
             timestamp: Date.now()
         }, { source: 'editor.create' });
     
-        // Ensure the block is attached before focusing
-        // Use double requestAnimationFrame to ensure DOM is fully updated
+        // Focus the block synchronously within a single requestAnimationFrame
+        // to avoid timing races where user input arrives before focus lands
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                if (htmlBlock.isConnected) {
-                    this.focus(htmlBlock);
-                }
-                
-                // Clear the flag after a short delay to allow the new block to be focused
-                // and any initial events to be processed
-                setTimeout(() => {
-                    this.isCreatingBlock = false;
-                }, 100);
-            });
+            if (htmlBlock.isConnected) {
+                this.focus(htmlBlock);
+            }
+            this.isCreatingBlock = false;
         });
         
         return htmlBlock;

@@ -108,9 +108,22 @@ export class KeyHandler
     static handleEnterKey(e) {
         log('handleEnterKey()', 'KeyHandler.');
 
-        const currentBlock = Editor.currentBlock;
-        if (!currentBlock) {
-            return;
+        let currentBlock = Editor.currentBlock;
+        
+        // If currentBlock is null or detached, try to recover by finding the last block
+        if (!currentBlock || !currentBlock.isConnected) {
+            const container = Editor.instance;
+            if (container) {
+                const lastBlock = container.querySelector('.block:last-child');
+                if (lastBlock) {
+                    Editor.setCurrentBlock(lastBlock);
+                    currentBlock = lastBlock;
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
         }
 
         // Check for code block creation trigger (triple backticks)
