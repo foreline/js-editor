@@ -477,12 +477,13 @@ export class Editor
                     // Support: headings, unordered (* - +), task [- [ ]], ordered (1. / 1) ), quote, fences
                     if (textContent.match(/^(#{1,6}\s|[\*\-\+]\s|[\*\-]\s*\[[x\s]\]\s*|\d+[\.)]?\s|>\s|```|~~~)/)) {
                         // Check if this block should be converted to a different type
-                        // Use a small timeout to let the DOM update first
-                        setTimeout(() => {
+                        // The input event fires after the character is inserted, so we can check immediately
+                        // Use requestAnimationFrame to ensure DOM is fully updated
+                        requestAnimationFrame(() => {
                             if (this.checkAndConvertBlock(block)) {
                                 this.update();
                             }
-                        }, 50);
+                        });
                     }
                 }
             }
