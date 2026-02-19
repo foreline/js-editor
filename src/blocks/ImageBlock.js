@@ -208,9 +208,11 @@ export class ImageBlock extends BaseBlock
 
     /**
      * Apply image transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
      */
-    applyTransformation() {
-        const currentBlock = Editor.currentBlock;
+    applyTransformation(blockElement = null) {
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
         
         // Prompt for image URL or show file picker

@@ -84,12 +84,14 @@ export class CodeBlock extends BaseBlock
 
     /**
      * Apply code block transformation via toolbar
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
      * @returns {void}
      */
-    applyTransformation() {
+    applyTransformation(blockElement = null) {
         // Perform direct DOM transformation (similar to HeadingBlock)
         // to avoid circular dependency with Toolbar.code()
-        const currentBlock = Editor.currentBlock;
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
         
         // Update block attributes

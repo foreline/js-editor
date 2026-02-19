@@ -183,9 +183,11 @@ export class TableBlock extends BaseBlock
 
     /**
      * Apply table transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
      */
-    applyTransformation() {
-        const currentBlock = Editor.currentBlock;
+    applyTransformation(blockElement = null) {
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
         
         // Create a basic 2x3 table (header + 2 rows, 3 columns)

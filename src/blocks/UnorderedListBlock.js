@@ -46,9 +46,14 @@ export class UnorderedListBlock extends ListBlock
         return text.replace(/^(\*|\-|\+)\s/, '');
     }
 
-    applyTransformation() {
+    /**
+     * Apply unordered list transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform. If not provided, uses Editor.currentBlock for backward compatibility.
+     */
+    applyTransformation(blockElement = null) {
         // Transform current paragraph block into an unordered list block in-place
-        const currentBlock = Editor.currentBlock;
+        // Use provided blockElement if available, otherwise fall back to Editor.currentBlock
+        const currentBlock = blockElement || Editor.currentBlock;
         if (!currentBlock) return;
 
         // Update block attributes/classes

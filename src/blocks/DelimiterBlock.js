@@ -38,7 +38,11 @@ export class DelimiterBlock extends BaseBlock
         return ['---', '***', '___'];
     }
 
-    applyTransformation() {
+    /**
+     * Apply delimiter transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform (currently unused but kept for API consistency).
+     */
+    applyTransformation(blockElement = null) {
         Toolbar.delimiter();
     }
 

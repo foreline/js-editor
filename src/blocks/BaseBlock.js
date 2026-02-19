@@ -148,8 +148,9 @@ export class BaseBlock
     /**
      * Apply this block type transformation via toolbar
      * Should be overridden by subclasses to call appropriate Toolbar method
+     * @param {HTMLElement} [blockElement] - The block element to transform (may be used by subclasses).
      */
-    applyTransformation() {
+    applyTransformation(blockElement = null) {
         // Override in subclasses
     }
 

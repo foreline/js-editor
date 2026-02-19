@@ -38,7 +38,11 @@ export class QuoteBlock extends BaseBlock
         return ['> '];
     }
 
-    applyTransformation() {
+    /**
+     * Apply quote transformation
+     * @param {HTMLElement} [blockElement] - The block element to transform (currently unused but kept for API consistency).
+     */
+    applyTransformation(blockElement = null) {
         Toolbar.quote();
     }
 
