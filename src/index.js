@@ -10,6 +10,7 @@ export { BlockType } from './BlockType.js';
 export { Toolbar } from './Toolbar.js';
 export { Parser } from './Parser.js';
 export { KeyHandler } from './KeyHandler.js';
+export { InlineMarkdownHandler } from './InlineMarkdownHandler.js';
 export { Utils } from './Utils.js';
 export { DebugTooltip } from './DebugTooltip.js';
 

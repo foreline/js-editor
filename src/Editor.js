@@ -10,6 +10,7 @@ import {BlockType} from "@/BlockType.js";
 import {Utils} from "@/Utils.js";
 import {BlockFactory} from "@/blocks/BlockFactory.js";
 import {KeyHandler} from "@/KeyHandler.js";
+import {InlineMarkdownHandler} from "@/InlineMarkdownHandler.js";
 import {DebugTooltip} from "@/DebugTooltip.js";
 import {EditorStateMachine} from "@/utils/EditorStateMachine.js";
 
@@ -269,6 +270,7 @@ export class Editor
         this.setCurrentBlock(this.instance.querySelectorAll('.block')[0]);
     
         this.keyHandler = new KeyHandler(this);
+        this._inlineMarkdownHandler = new InlineMarkdownHandler(this);
         this.addListeners();
         
         // @fixme focus only if empty content
@@ -673,7 +675,20 @@ export class Editor
                                 this.update();
                             }
                         });
+                        // Block-level trigger matched — skip inline check
+                        return;
                     }
+                }
+
+                // Inline markdown pattern check (e.g., **bold**, *italic*, `code`)
+                // Runs for all non-code block types, after block-level triggers
+                const inlineBlockType = block.getAttribute('data-block-type');
+                if (inlineBlockType !== 'code') {
+                    requestAnimationFrame(() => {
+                        if (this._inlineMarkdownHandler.checkAndApply(block)) {
+                            this.update();
+                        }
+                    });
                 }
             }
         });
