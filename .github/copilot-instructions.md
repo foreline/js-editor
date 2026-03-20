@@ -148,4 +148,5 @@ Blocks update a `data-timestamp` attribute on content changes to efficiently det
 
 **Skills**: For specialized tasks, refer to skill files in `.github/skills/`:
 - **proposal-writer**: Architectural proposals and design documents
+- **adr-writer**: Architecture Decision Records (ADRs)
 - **playwright-e2e**: Writing and debugging Playwright E2E tests
