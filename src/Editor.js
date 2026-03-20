@@ -720,7 +720,25 @@ export class Editor
             if ( block ) {
                 this.setCurrentBlock(block);
             } else {
-                // If no block is found but we're in the editor, try to focus on first block
+                // e.target may be the editor container when a paragraph
+                // (contenteditable="true") is nested inside the also-
+                // contenteditable editor.  Use the current selection to
+                // find the correct block before falling back to the first.
+                const sel = window.getSelection();
+                if (sel && sel.anchorNode) {
+                    let anchor = sel.anchorNode;
+                    if (anchor.nodeType === Node.TEXT_NODE) {
+                        anchor = anchor.parentElement;
+                    }
+                    if (anchor) {
+                        const blockFromSel = anchor.closest('.block');
+                        if (blockFromSel) {
+                            this.setCurrentBlock(blockFromSel);
+                            return;
+                        }
+                    }
+                }
+                // Last resort: pick the first block
                 const firstBlock = this.instance.querySelector('.block');
                 if ( firstBlock ) {
                     this.setCurrentBlock(firstBlock);
