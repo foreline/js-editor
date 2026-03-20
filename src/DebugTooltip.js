@@ -24,7 +24,9 @@ export class DebugTooltip {
         // Event listeners references for cleanup
         this.scrollHandler = null;
         this.resizeHandler = null;
-        this.updateInterval = null;
+        this._observer = null;
+        this._focusinHandler = null;
+        this._pendingUpdate = null;
         
         log('DebugTooltip initialized', 'DebugTooltip');
     }
@@ -300,31 +302,57 @@ export class DebugTooltip {
     }
     
     /**
-     * Start debug update loop
+     * Start observing the editor for changes using MutationObserver and focusin.
+     * Replaces the old interval-based polling with reactive DOM observation.
      */
     startUpdateLoop() {
         log('startUpdateLoop()', 'DebugTooltip');
 
-        return;
+        this.stopUpdateLoop();
 
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-        }
-        
-        this.updateInterval = setInterval(() => {
-            this.updateActiveBlockTooltip();
-        }, 1000); // Update every second
+        // Debounced update helper — coalesces rapid mutations into one tooltip refresh
+        const scheduleUpdate = () => {
+            if (this._pendingUpdate) return;
+            this._pendingUpdate = requestAnimationFrame(() => {
+                this._pendingUpdate = null;
+                this.updateActiveBlockTooltip();
+            });
+        };
+
+        // MutationObserver: watches child list, attributes, and character data
+        this._observer = new MutationObserver(scheduleUpdate);
+        this._observer.observe(this.editorInstance, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['data-block-type', 'class', 'data-timestamp'],
+            characterData: true,
+        });
+
+        // focusin bubbles — catches arrow-key navigation between blocks
+        this._focusinHandler = scheduleUpdate;
+        this.editorInstance.addEventListener('focusin', this._focusinHandler);
     }
     
     /**
-     * Stop debug update loop
+     * Stop observing the editor
      */
     stopUpdateLoop() {
         log('stopUpdateLoop()', 'DebugTooltip');
 
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
+        if (this._observer) {
+            this._observer.disconnect();
+            this._observer = null;
+        }
+
+        if (this._focusinHandler) {
+            this.editorInstance.removeEventListener('focusin', this._focusinHandler);
+            this._focusinHandler = null;
+        }
+
+        if (this._pendingUpdate) {
+            cancelAnimationFrame(this._pendingUpdate);
+            this._pendingUpdate = null;
         }
     }
     
