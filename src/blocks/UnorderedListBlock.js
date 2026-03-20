@@ -151,10 +151,20 @@ export class UnorderedListBlock extends ListBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const items = this._element.querySelectorAll('li');
+        this._content = Array.from(items).map(li => li.textContent || '').join('\n');
+    }
+
+    /**
      * Convert this unordered list block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         const items = this._content.split('\n');
         return items.map(item => `- ${item}`).join('\n');
     }
@@ -164,6 +174,7 @@ export class UnorderedListBlock extends ListBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         const items = this._content.split('\n');
         const listItems = items.map(item => `<li>${item}</li>`).join('\n');
         return `<ul>\n${listItems}\n</ul>`;

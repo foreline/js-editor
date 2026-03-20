@@ -120,6 +120,24 @@ export class Block
     }
 
     /**
+     * Get the DOM element associated with this block
+     * @returns {HTMLElement|null}
+     */
+    get element() {
+        return this._blockInstance?.element ?? null;
+    }
+
+    /**
+     * Set the DOM element associated with this block
+     * @param {HTMLElement|null} el
+     */
+    set element(el) {
+        if (this._blockInstance) {
+            this._blockInstance.element = el;
+        }
+    }
+
+    /**
      * Handle key press for this block type
      * @param {KeyboardEvent} event
      * @param {string} text - current text content of the block

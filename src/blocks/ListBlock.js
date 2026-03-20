@@ -166,6 +166,7 @@ export class ListBlock extends BaseBlock
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         // This will be implemented by subclasses
         return this._content;
     }
@@ -175,6 +176,7 @@ export class ListBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         // This will be implemented by subclasses
         return this._html;
     }

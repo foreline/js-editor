@@ -46,6 +46,7 @@ export class Editor
         this.currentBlock = null;
         this.rules = [];
         this.keybuffer = [];
+        this._blockMap = new WeakMap();
         this.debug = options.debug || false;
         this.debugMode = this.debug; // Current debug state (can be toggled)
         
@@ -214,6 +215,12 @@ export class Editor
         for ( let block of blocks ) {
             let html = Parser.html(block);
             this.instance.appendChild(html);
+            // Link typed block instance to its DOM element
+            const typedBlock = block.getBlockInstance ? block.getBlockInstance() : block;
+            if (typedBlock && typedBlock.element !== undefined) {
+                typedBlock.element = html;
+            }
+            this._blockMap.set(html, typedBlock);
         }
         
         this.setCurrentBlock(this.instance.querySelectorAll('.block')[0]);
@@ -395,6 +402,7 @@ export class Editor
         this.instance = null;
         this.blocks = [];
         this.currentBlock = null;
+        this._blockMap = new WeakMap();
         this.rules = [];
         this.keybuffer = [];
     }
@@ -1348,6 +1356,13 @@ export class Editor
         const block = new Block(BlockType.PARAGRAPH);
         const htmlBlock = Parser.html(block);
         
+        // Link block instance to its DOM element
+        const typedBlock = block.getBlockInstance ? block.getBlockInstance() : block;
+        if (typedBlock && typedBlock.element !== undefined) {
+            typedBlock.element = htmlBlock;
+        }
+        this._blockMap.set(htmlBlock, typedBlock);
+        
         // Generate unique block ID
         const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         htmlBlock.setAttribute('data-block-id', blockId);
@@ -1883,6 +1898,10 @@ export class Editor
             // Apply the transformation (this will call the appropriate Toolbar method)
             newBlock.applyTransformation();
             
+            // Link new block to its DOM element
+            newBlock.element = blockElement;
+            this._blockMap.set(blockElement, newBlock);
+            
             // Position cursor appropriately after transformation
             if (wasFocused) {
                 requestAnimationFrame(() => {
@@ -1916,6 +1935,16 @@ export class Editor
             // Always clear the conversion flag
             this.isConvertingBlock = false;
         }
+    }
+
+    /**
+     * Get the block instance associated with a DOM element
+     * @param {HTMLElement} element - The block DOM element
+     * @returns {BaseBlock|null} - The block instance or null
+     */
+    getBlockForElement(element)
+    {
+        return this._blockMap.get(element) || null;
     }
 
     /**
@@ -2081,6 +2110,10 @@ export class Editor
                 return false;
             }
             
+            // Link block instance to its DOM element
+            newBlock.element = htmlBlock;
+            this._blockMap.set(htmlBlock, newBlock);
+            
             // Generate unique block ID
             const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             htmlBlock.setAttribute('data-block-id', blockId);
@@ -2154,6 +2187,7 @@ export class Editor
         // Clear references
         this.blocks = [];
         this.currentBlock = null;
+        this._blockMap = new WeakMap();
         this.debugTooltip = null;
         this.eventEmitter = null;
     }

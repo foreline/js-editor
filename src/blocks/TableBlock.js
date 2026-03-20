@@ -882,10 +882,22 @@ export class TableBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        this._headers = Array.from(this._element.querySelectorAll('th')).map(th => th.textContent || '');
+        this._rows = Array.from(this._element.querySelectorAll('tbody tr')).map(tr =>
+            Array.from(tr.querySelectorAll('td')).map(td => td.textContent || '')
+        );
+    }
+
+    /**
      * Convert this table block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         if (!this._headers.length) return '';
         
         let markdown = '| ' + this._headers.join(' | ') + ' |\n';
@@ -903,6 +915,7 @@ export class TableBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         return this.generateTableHTML();
     }
 

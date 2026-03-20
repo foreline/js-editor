@@ -113,10 +113,20 @@ export class HeadingBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const heading = this._element.querySelector(`h${this.level}`);
+        this._content = heading ? heading.textContent || '' : this._element.textContent || '';
+    }
+
+    /**
      * Convert this heading block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         const hashes = '#'.repeat(this.level);
         return `${hashes} ${this._content}`;
     }
@@ -126,6 +136,7 @@ export class HeadingBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         return `<h${this.level}>${this._content}</h${this.level}>`;
     }
 

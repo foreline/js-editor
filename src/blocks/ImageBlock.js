@@ -282,10 +282,23 @@ export class ImageBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const img = this._element.querySelector('img');
+        if (img) {
+            this._src = img.getAttribute('src') || '';
+            this._alt = img.getAttribute('alt') || '';
+        }
+    }
+
+    /**
      * Convert this image block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         if (!this._src) return '';
         return `![${this._alt}](${this._src})`;
     }
@@ -295,6 +308,7 @@ export class ImageBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         if (!this._src) return '';
         
         const widthAttr = this._width ? ` width="${this._width}"` : '';

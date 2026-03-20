@@ -221,10 +221,31 @@ export class TaskListBlock extends ListBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const items = this._element.querySelectorAll('li');
+        const texts = [];
+        Array.from(items).forEach((li, index) => {
+            const checkbox = li.querySelector('input[type="checkbox"]');
+            const textNode = li.querySelector('.task-text, span') || li;
+            let text = textNode.textContent || '';
+            text = text.replace(/^\s+/, '');
+            texts.push(text);
+            if (index === 0 && checkbox) {
+                this._checked = checkbox.checked;
+            }
+        });
+        this._content = texts.join('\n');
+    }
+
+    /**
      * Convert this task list block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         const tasks = this._content ? this._content.split('\n').filter(task => task.trim()) : [''];
         
         if (tasks.length === 0 || (tasks.length === 1 && !tasks[0].trim())) {
@@ -247,6 +268,7 @@ export class TaskListBlock extends ListBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         const tasks = this._content ? this._content.split('\n').filter(task => task.trim()) : [''];
         
         if (tasks.length === 0 || (tasks.length === 1 && !tasks[0].trim())) {

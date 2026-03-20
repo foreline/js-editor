@@ -13,6 +13,7 @@ export class BaseBlock
     _content = '';
     _html = '';
     _nested = false;
+    _element = null;
     
     /**
      * @param {string} type
@@ -72,6 +73,33 @@ export class BaseBlock
     
     set nested(value) {
         this._nested = value;
+    }
+
+    /**
+     * Get the DOM element associated with this block
+     * @returns {HTMLElement|null}
+     */
+    get element() {
+        return this._element;
+    }
+
+    /**
+     * Set the DOM element associated with this block
+     * @param {HTMLElement|null} el
+     */
+    set element(el) {
+        this._element = el;
+    }
+
+    /**
+     * Sync internal state from the associated DOM element.
+     * Called automatically before serialization to ensure content is current.
+     * Override in subclasses for block-specific DOM structures.
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        this._content = this._element.textContent || '';
+        this._html = this._element.innerHTML || '';
     }
 
     /**
@@ -174,6 +202,7 @@ export class BaseBlock
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         return this._content;
     }
 
@@ -182,6 +211,7 @@ export class BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         return this._html;
     }
 

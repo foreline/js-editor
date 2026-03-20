@@ -3,6 +3,7 @@
 import {BaseBlock} from "@/blocks/BaseBlock";
 import {BlockType} from "@/BlockType";
 import {Toolbar} from "@/Toolbar";
+import showdown from "showdown";
 
 /**
  * Paragraph block type
@@ -62,10 +63,24 @@ export class ParagraphBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        this._content = this._element.textContent || '';
+        this._html = this._element.innerHTML || '';
+    }
+
+    /**
      * Convert this paragraph block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
+        if (this._element && this._html && /<[^>]+>/.test(this._html)) {
+            const converter = new showdown.Converter();
+            return converter.makeMd(`<p>${this._html}</p>`).trim();
+        }
         return this._content;
     }
 
@@ -74,7 +89,8 @@ export class ParagraphBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
-        return `<p>${this._content}</p>`;
+        this.syncFromElement();
+        return `<p>${this._html || this._content}</p>`;
     }
 
     /**

@@ -133,10 +133,28 @@ export class CodeBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const code = this._element.querySelector('code');
+        if (code) {
+            this._content = code.textContent || '';
+            const langMatch = code.className?.match(/language-(\w+)/);
+            if (langMatch) {
+                this._language = langMatch[1];
+            }
+        } else {
+            this._content = this._element.textContent || '';
+        }
+    }
+
+    /**
      * Convert this code block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         const langSuffix = this._language ? this._language : '';
         return `\`\`\`${langSuffix}\n${this._content}\n\`\`\``;
     }
@@ -146,6 +164,7 @@ export class CodeBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         // Handle empty content case
         if (!this._content) {
             return `<pre><code></code></pre>`;

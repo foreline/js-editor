@@ -76,10 +76,20 @@ export class QuoteBlock extends BaseBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const bq = this._element.querySelector('blockquote');
+        this._content = bq ? bq.textContent || '' : this._element.textContent || '';
+    }
+
+    /**
      * Convert this quote block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         return `> ${this._content}`;
     }
 
@@ -88,6 +98,7 @@ export class QuoteBlock extends BaseBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         return `<blockquote>${this._content}</blockquote>`;
     }
 

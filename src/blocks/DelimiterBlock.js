@@ -104,6 +104,7 @@ export class DelimiterBlock extends BaseBlock
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        // Delimiters have no dynamic content to sync
         return '---';
     }
 

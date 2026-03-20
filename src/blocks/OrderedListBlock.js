@@ -149,10 +149,20 @@ export class OrderedListBlock extends ListBlock
     }
 
     /**
+     * Sync internal state from the associated DOM element
+     */
+    syncFromElement() {
+        if (!this._element) return;
+        const items = this._element.querySelectorAll('li');
+        this._content = Array.from(items).map(li => li.textContent || '').join('\n');
+    }
+
+    /**
      * Convert this ordered list block to markdown
      * @returns {string} - markdown representation
      */
     toMarkdown() {
+        this.syncFromElement();
         const items = this._content.split('\n');
         return items.map((item, index) => `${index + 1}. ${item}`).join('\n');
     }
@@ -162,6 +172,7 @@ export class OrderedListBlock extends ListBlock
      * @returns {string} - HTML representation
      */
     toHtml() {
+        this.syncFromElement();
         const items = this._content.split('\n');
         const listItems = items.map(item => `<li>${item}</li>`).join('\n');
         return `<ol>\n${listItems}\n</ol>`;
