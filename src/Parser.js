@@ -294,7 +294,7 @@ export class Parser
         let element = document.createElement('div');
         element.classList.add('block');
         element.setAttribute('data-block-type', block.type);
-        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.setAttribute('data-placeholder', '');
         
         // Add block type specific class
         const typeClass = `block-${block.type.replace(/[^a-z0-9]/gi, '').toLowerCase()}`;

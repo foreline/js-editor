@@ -226,7 +226,7 @@ export class BaseBlock
         let element = document.createElement('div');
         element.classList.add('block');
         element.setAttribute('data-block-type', this._type);
-        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.setAttribute('data-placeholder', '');
         element.innerHTML = this._html || this._content || '';
         return element;
     }

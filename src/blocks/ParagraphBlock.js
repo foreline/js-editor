@@ -57,7 +57,7 @@ export class ParagraphBlock extends BaseBlock
         targetElement.setAttribute('data-block-type', 'p');
         targetElement.className = 'block block-p';
         targetElement.setAttribute('contenteditable', 'true');
-        targetElement.setAttribute('data-placeholder', 'Type "/" to insert block');
+        targetElement.setAttribute('data-placeholder', '');
 
         // Replace content with plain text
         targetElement.innerHTML = existingContent;
@@ -131,7 +131,7 @@ export class ParagraphBlock extends BaseBlock
         element.classList.add('block');
         element.classList.add('block-p');
         element.setAttribute('data-block-type', this._type);
-        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.setAttribute('data-placeholder', '');
         element.innerHTML = this._html || this._content || '';
         return element;
     }

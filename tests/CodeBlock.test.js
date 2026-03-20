@@ -544,7 +544,7 @@ describe('CodeBlock', () => {
       
       expect(element.tagName).toBe('DIV');
       expect(element.getAttribute('data-block-type')).toBe(BlockType.CODE);
-      expect(element.getAttribute('data-placeholder')).toBe('Type "/" to insert block');
+      expect(element.getAttribute('data-placeholder')).toBe('');
       
       // Should contain pre and code elements
       const pre = element.querySelector('pre');

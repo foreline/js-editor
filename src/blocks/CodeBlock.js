@@ -198,7 +198,7 @@ export class CodeBlock extends BaseBlock
         element.classList.add('block');
         element.classList.add('block-code');
         element.setAttribute('data-block-type', this._type);
-        element.setAttribute('data-placeholder', 'Type "/" to insert block');
+        element.setAttribute('data-placeholder', '');
         
         // Create code container
         const pre = document.createElement('pre');
