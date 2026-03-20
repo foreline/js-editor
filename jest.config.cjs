@@ -38,7 +38,7 @@ module.exports = {
     '^@/utils/log.js$': '<rootDir>/tests/mocks/log.js',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-  testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+  testMatch: ['**/__tests__/**/*.js', '**/tests/?(*.)+(spec|test).js'],
   transformIgnorePatterns: ['/node_modules/(?!showdown)/'],
   collectCoverage: true,
   coverageDirectory: 'coverage',
