@@ -11,6 +11,7 @@ import {Utils} from "@/Utils.js";
 import {BlockFactory} from "@/blocks/BlockFactory.js";
 import {KeyHandler} from "@/KeyHandler.js";
 import {DebugTooltip} from "@/DebugTooltip.js";
+import {EditorStateMachine} from "@/utils/EditorStateMachine.js";
 
 /**
  * Editor class
@@ -50,11 +51,9 @@ export class Editor
         this.debug = options.debug || false;
         this.debugMode = this.debug; // Current debug state (can be toggled)
         
-        // Flag to prevent interference during block conversion
-        this.isConvertingBlock = false;
-        
-        // Flag to prevent empty editor check immediately after creating a block
-        this.isCreatingBlock = false;
+        // State machine replaces ad-hoc boolean flags (isCreatingBlock, isConvertingBlock)
+        // with explicit state transitions and an operation queue
+        this._stateMachine = new EditorStateMachine();
         
         // Create instance-specific event emitter
         this.eventEmitter = new EditorEventEmitter({ debug: options.debug || false });
@@ -70,6 +69,50 @@ export class Editor
         
         // Register this instance
         Editor._instances.set(this.instance, this);
+    }
+
+    /**
+     * Backward-compatible getter for isCreatingBlock flag.
+     * Delegates to the state machine.
+     * @returns {boolean}
+     */
+    get isCreatingBlock() {
+        return this._stateMachine.isCreating;
+    }
+
+    /**
+     * Backward-compatible setter for isCreatingBlock flag.
+     * Delegates to the state machine transitions.
+     * @param {boolean} value
+     */
+    set isCreatingBlock(value) {
+        if (value && !this._stateMachine.isCreating) {
+            this._stateMachine.startCreating();
+        } else if (!value && this._stateMachine.isCreating) {
+            this._stateMachine.finishCreating();
+        }
+    }
+
+    /**
+     * Backward-compatible getter for isConvertingBlock flag.
+     * Delegates to the state machine.
+     * @returns {boolean}
+     */
+    get isConvertingBlock() {
+        return this._stateMachine.isConverting;
+    }
+
+    /**
+     * Backward-compatible setter for isConvertingBlock flag.
+     * Delegates to the state machine transitions.
+     * @param {boolean} value
+     */
+    set isConvertingBlock(value) {
+        if (value && !this._stateMachine.isConverting) {
+            this._stateMachine.startConverting();
+        } else if (!value && this._stateMachine.isConverting) {
+            this._stateMachine.finishConverting();
+        }
     }
     
     /**
@@ -582,9 +625,8 @@ export class Editor
             }
             
             // Check if editor is effectively empty after content deletion
-            // Skip this check if a block conversion is in progress to prevent interference
-            // Also skip if we just created a new block to allow empty blocks to persist
-            if (!this.isConvertingBlock && !this.isCreatingBlock) {
+            // Skip this check if a state transition (creating/converting) is in progress
+            if (!this._stateMachine.isBusy()) {
                 const allBlocks = this.instance.querySelectorAll('.block');
                 
                 // Only trigger empty editor protection if:
@@ -1099,9 +1141,9 @@ export class Editor
         // Empty-editor protection: ensure at least one default block exists
         // Only enforce when there are no blocks, or when there's exactly one empty block.
         // Do NOT collapse multiple empty blocks, as users may intentionally create them.
-        // Also skip enforcement while a conversion/creation is in progress to avoid racing with transformations.
+        // Also skip enforcement while a state transition is in progress to avoid racing with transformations.
         const blocks = this.instance.querySelectorAll('.block');
-        if (!this.isConvertingBlock && !this.isCreatingBlock) {
+        if (!this._stateMachine.isBusy()) {
             if (blocks.length === 0) {
                 this.ensureDefaultBlock();
             } else if (blocks.length === 1 && this.isEditorEmpty(blocks)) {
@@ -1350,8 +1392,8 @@ export class Editor
     {
         log('addDefaultBlock()', 'Editor.');
         
-        // Set flag to prevent input event handler from checking empty editor state
-        this.isCreatingBlock = true;
+        // Transition state machine to CREATING to prevent empty-editor checks
+        this._stateMachine.startCreating();
         
         const block = new Block(BlockType.PARAGRAPH);
         const htmlBlock = Parser.html(block);
@@ -1394,7 +1436,7 @@ export class Editor
             if (htmlBlock.isConnected) {
                 this.focus(htmlBlock);
             }
-            this.isCreatingBlock = false;
+            this._stateMachine.finishCreating();
         });
         
         return htmlBlock;
@@ -1861,8 +1903,8 @@ export class Editor
         log('convertBlockType()', 'Editor.');
         
         try {
-            // Set flag to prevent input event handler interference
-            this.isConvertingBlock = true;
+            // Transition state machine to CONVERTING to prevent empty-editor interference
+            this._stateMachine.startConverting();
             
             // Create new block instance
             const newBlock = BlockFactory.createBlock(targetBlockType);
@@ -1932,8 +1974,8 @@ export class Editor
             logWarning('Error converting block type: ' + error.message, 'Editor.convertBlockType()');
             return false;
         } finally {
-            // Always clear the conversion flag
-            this.isConvertingBlock = false;
+            // Always transition back to IDLE
+            this._stateMachine.finishConverting();
         }
     }
 
@@ -2090,8 +2132,8 @@ export class Editor
         log('createNewBlock()', 'Editor.');
 
         try {
-            // Set flag to prevent input event handler from checking empty editor state
-            this.isCreatingBlock = true;
+            // Transition state machine to CREATING to prevent empty-editor checks
+            this._stateMachine.startCreating();
             
             // Ensure there's a current block context
             if (!this.currentBlock) {
@@ -2151,9 +2193,9 @@ export class Editor
             
             console.log('Block creation successful');
             
-            // Clear the flag after a short delay to allow the new block to be processed
+            // Clear the state after a short delay to allow the new block to be processed
             setTimeout(() => {
-                this.isCreatingBlock = false;
+                this._stateMachine.finishCreating();
             }, 100);
             
             return true;
@@ -2161,8 +2203,8 @@ export class Editor
             console.error('Error in createNewBlock:', error);
             logWarning('Error creating new block: ' + error.message, 'Editor.createNewBlock()');
             
-            // Clear the flag even in error case
-            this.isCreatingBlock = false;
+            // Clear the state even in error case
+            this._stateMachine.finishCreating();
             
             return false;
         }

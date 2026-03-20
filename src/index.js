@@ -38,6 +38,9 @@ export { DelimiterBlock } from './blocks/DelimiterBlock.js';
 export { Event } from './Event.js';
 export { EditorEventEmitter, EVENTS } from './utils/eventEmitter.js';
 
+// State machine
+export { EditorStateMachine, EditorState } from './utils/EditorStateMachine.js';
+
 // Interfaces
 export { BlockInterfaceContract as BlockInterface } from './interfaces/BlockInterface.js';
 
