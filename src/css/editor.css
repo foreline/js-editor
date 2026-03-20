@@ -1,10 +1,15 @@
 .editor {
+    --editor-font-size: 1rem;
+    --editor-line-height: 1.5;
     outline: none;
+    font-size: var(--editor-font-size);
+    line-height: var(--editor-line-height);
 }
 
 .editor .block {
     border: 1px dashed transparent;
     margin-bottom: 0.2em;
+    min-height: calc(1em * var(--editor-line-height));
 }
 
 .editor.debug-mode .block {
