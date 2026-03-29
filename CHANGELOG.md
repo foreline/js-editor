@@ -5,6 +5,11 @@ All notable changes to the JS Editor project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- GitLab CI pipeline failure: Added `image: node:20-alpine` to use Node.js in all pipeline jobs. Removed duplicate `npm ci` from global `before_script` to prevent redundant installs. This resolves "node: not found" and "npm: not found" errors in the install stage.
+
 ## [v0.0.28] - 2025-08-28
 
 ### Fixed
