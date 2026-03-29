@@ -3,6 +3,8 @@ stages:
   - test
   - build
 
+image: node:20-alpine
+
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
@@ -11,7 +13,6 @@ cache:
 
 before_script:
   - 'echo Using Node version: $(node -v)'
-  - 'npm ci'
 
 install_dependencies:
   stage: install
