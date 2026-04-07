@@ -9,7 +9,7 @@ Create architectural proposals and design documents following project convention
 
 ## Location
 
-All proposals must be in: `docs/proposals/`
+All proposals must be in: `dev-docs/proposals/`
 
 ## Naming Convention
 
@@ -23,7 +23,7 @@ Where:
 - `SHORT_DESCRIPTION` — brief description in UPPERCASE with underscores
 - English only, underscores between words
 
-Before creating a new proposal, check existing files in `docs/proposals/` and use the next incremental number.
+Before creating a new proposal, check existing files in `dev-docs/proposals/` and use the next incremental number.
 
 ### Examples
 ```
@@ -81,10 +81,10 @@ Brief description of rejected approaches and why.
 
 ## Documentation Impact
 - [ ] `SPECS.md` — sections to add/update
-- [ ] `docs/BLOCK_ARCHITECTURE.md`
-- [ ] `docs/BLOCK_TOOLBAR_INTEGRATION.md`
-- [ ] `docs/EVENT_SYSTEM.md`
-- [ ] `docs/TOOLBAR_GROUPS.md`
+- [ ] `dev-docs/BLOCK_ARCHITECTURE.md`
+- [ ] `dev-docs/BLOCK_TOOLBAR_INTEGRATION.md`
+- [ ] `dev-docs/EVENT_SYSTEM.md`
+- [ ] `dev-docs/TOOLBAR_GROUPS.md`
 - [ ] `ISSUES.md` — mark related items
 - [ ] `CHANGELOG.md`
 - [ ] `README.md`

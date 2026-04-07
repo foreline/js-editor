@@ -9,9 +9,9 @@ Create Architecture Decision Records following project conventions for naming, s
 
 ## Location
 
-All ADRs must be in: `docs/adr/`
+All ADRs must be in: `dev-docs/adr/`
 
-Subdirectories are allowed for grouping related ADRs (e.g., `docs/adr/state_machine/`).
+Subdirectories are allowed for grouping related ADRs (e.g., `dev-docs/adr/state_machine/`).
 
 ## Naming Convention
 
@@ -25,7 +25,7 @@ Where:
 - `SHORT_DESCRIPTION` — brief description in UPPERCASE with underscores
 - English only, underscores between words
 
-Before creating a new ADR, check existing files in `docs/adr/` (and any subdirectories) and use the next incremental number within the target directory.
+Before creating a new ADR, check existing files in `dev-docs/adr/` (and any subdirectories) and use the next incremental number within the target directory.
 
 ### Examples
 ```
@@ -47,7 +47,7 @@ Proposed | Accepted | Deprecated | Superseded by ADR-XX | Resolved
 ## Context
 - What situation or problem prompted this decision?
 - What constraints, requirements, or forces are at play?
-- Link to relevant `ISSUES.md` items, `SPECS.md` sections, or proposals in `docs/proposals/`
+- Link to relevant `ISSUES.md` items, `SPECS.md` sections, or proposals in `dev-docs/proposals/`
 
 ## Decision
 
@@ -77,7 +77,7 @@ Describe the decision that was made and the approach chosen.
 - Side effects that are neither clearly positive nor negative
 
 ## Related
-- **Proposals**: link to `docs/proposals/` documents if applicable
+- **Proposals**: link to `dev-docs/proposals/` documents if applicable
 - **ADRs**: link to related ADRs (superseded, dependent, or complementary)
 - **Issues**: link to `ISSUES.md` items addressed by this decision
 - **Specs**: link to `SPECS.md` sections affected

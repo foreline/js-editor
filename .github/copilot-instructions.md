@@ -106,11 +106,12 @@ Blocks update a `data-timestamp` attribute on content changes to efficiently det
 ## Documentation
 
 - `SPECS.md` — Technical specification (update when behavior changes)
-- `docs/` — Developer documentation:
+- `dev-docs/` — Developer documentation:
   - `BLOCK_ARCHITECTURE.md` — Block system design
   - `BLOCK_TOOLBAR_INTEGRATION.md` — How blocks integrate with toolbar
   - `EVENT_SYSTEM.md` — Event system documentation
   - `TOOLBAR_GROUPS.md` — Toolbar group configuration
+  - `_inbox/` — Temporary backlog for incoming ideas, proposals, issues, and ADRs
 - `ISSUES.md` — Issue/feature tracker with checklists
 - `CHANGELOG.md` — Version history
 
@@ -144,9 +145,27 @@ Blocks update a `data-timestamp` attribute on content changes to efficiently det
 - Use class-based selectors (`.block-h1`, `.editor-toolbar-bold`)
 - Add `await page.waitForTimeout(200)` after markdown trigger conversions
 
+## Inbox & Documentation Pipeline
+
+New ideas, proposals, issues, and bug reports follow a docs-first pipeline:
+
+1. **Capture** → Use `inbox-writer` skill to create a structured item in `dev-docs/_inbox/`
+2. **Triage** → Review frontmatter (`type`, `priority`) and decide the routing
+3. **Route** → Move the item to its destination:
+   - `proposal` → `dev-docs/proposals/` (use `proposal-writer` skill)
+   - `issue` → `dev-docs/issues/` or add to `ISSUES.md`
+   - `bug` → Add to `ISSUES.md` Bugs section
+   - `idea` → Stays in `_inbox/` until refined into a proposal
+4. **Design** → For proposals: record key decisions as ADRs in `dev-docs/adr/` (use `adr-writer` skill)
+5. **Implement** → Execute the implementation plan from the proposal
+6. **Clean up** → Remove processed items from `dev-docs/_inbox/`
+
+This pipeline ensures ideas are captured consistently and nothing is lost between ideation and implementation.
+
 ---
 
 **Skills**: For specialized tasks, refer to skill files in `.github/skills/`:
+- **inbox-writer**: Capture raw ideas and concepts into `dev-docs/_inbox/`
 - **proposal-writer**: Architectural proposals and design documents
 - **adr-writer**: Architecture Decision Records (ADRs)
 - **playwright-e2e**: Writing and debugging Playwright E2E tests

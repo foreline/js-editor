@@ -29,7 +29,7 @@ You are a git commit assistant for the **js-editor** repository — a vanilla Ja
   - `debug` — DebugTooltip.js
   - `styles` — CSS/SCSS files in `src/css/` and `src/scss/`
   - `build` — Vite config, post-build scripts, package config
-  - `docs` — documentation (SPECS.md, docs/, CHANGELOG.md)
+  - `docs` — documentation (SPECS.md, dev-docs/, CHANGELOG.md)
   - `tests` — Jest unit tests in `tests/`
   - `e2e` — Playwright E2E tests in `e2e/`
 - When a change touches a single block type, use the block name as scope (e.g., `code-block`, `table-block`).

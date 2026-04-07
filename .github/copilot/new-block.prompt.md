@@ -34,7 +34,7 @@ You are adding a new block type to the JS Editor. Follow this guide:
 - Use `tests/testUtils.js` for shared test helpers
 
 ## Documentation
-- Update `docs/BLOCK_ARCHITECTURE.md` with the new block type
-- Update `docs/BLOCK_TOOLBAR_INTEGRATION.md` if adding toolbar buttons
+- Update `dev-docs/BLOCK_ARCHITECTURE.md` with the new block type
+- Update `dev-docs/BLOCK_TOOLBAR_INTEGRATION.md` if adding toolbar buttons
 - Update `SPECS.md` block types section
 - Update `CHANGELOG.md`

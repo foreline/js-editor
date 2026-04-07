@@ -9,7 +9,7 @@ You are implementing a new feature for the JS Editor project.
 ## 1. Select Task
 - Check `ISSUES.md` for the next unchecked feature item
 - Prioritize by dependencies and difficulty (easy tasks first)
-- Read related documentation in `docs/` and `SPECS.md`
+- Read related documentation in `dev-docs/` and `SPECS.md`
 
 ## 2. Design
 - Analyze which component should own the new functionality
@@ -33,7 +33,7 @@ You are implementing a new feature for the JS Editor project.
 ## 5. Document
 - Mark the feature as checked (`[x]`) in `ISSUES.md` with a completion note
 - Update `SPECS.md` with new behavior
-- Update relevant files in `docs/`
+- Update relevant files in `dev-docs/`
 - Update `README.md` if the feature is user-facing
 - Update `CHANGELOG.md` with the feature description
 
