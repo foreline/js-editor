@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Introduce Inbox & Documentation Pipeline: Established a structured docs-first workflow for managing ideas, proposals, issues, and bug reports. New directories: `dev-docs/_inbox/`, `dev-docs/adr/`, `dev-docs/issues/`, `dev-docs/proposals/`. New skills: `inbox-writer`, `proposal-writer`, `adr-writer`. New prompts for contributing ideas, issues, and proposals.
+
 ## [v0.0.29] - 2026-03-29
 
 ### Fixed
@@ -179,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated CSS selectors to properly target nested list elements within div wrappers
   - All blocks now follow the consistent pattern: `<div class="block block-[type]" data-block-type="[type]">...</div>`
 
-### ✅ COMPLETED: Instance-Based Architecture
+### ? COMPLETED: Instance-Based Architecture
 
 **MAJOR UPDATE**: Successfully converted Editor from static to instance-based architecture with isolated event systems.
 
@@ -198,25 +201,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Throttling for user interaction events (key presses, focus changes)
   - Structured event types with categories (CONTENT, BLOCK, EDITOR, TOOLBAR, USER)
   - Block content change tracking with timestamps using `data-timestamp` attributes
-  - Events for block creation, deletion, focus changes, content modifications
-  - Toolbar action events for all button interactions
-  - User interaction events for paste operations and key presses
-  - Backward compatibility with legacy `EDITOR.UPDATED_EVENT`
-  - Comprehensive event documentation and usage examples in README
-
-### Changed
-- Enhanced `Editor.update()` method with timestamp tracking and improved event emission
-- Updated `Editor.setCurrentBlock()` to emit focus events with throttling
-- Enhanced `Editor.addEmptyBlock()` to generate unique block IDs and emit creation events
-- Modified `Editor.paste()` to emit paste events with content details
-- Updated `KeyHandler` to emit throttled key press events
-- Enhanced `ToolbarHandlers` with automatic event emission for all toolbar actions
-- Upgraded test suite for new event system with debouncing and throttling tests
-
-### Technical Details
-- Event debouncing prevents excessive backend calls during rapid content changes
-- Event throttling improves performance for high-frequency events like key presses
-- Block timestamps track content changes for potential undo/redo functionality
-- Priority-based event execution allows proper event handling order
-- Memory-efficient event cleanup prevents memory leaks
-- Full test coverage for all new event functionality (456 tests passing)
