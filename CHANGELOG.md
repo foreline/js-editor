@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Introduce Inbox & Documentation Pipeline: Established a structured docs-first workflow for managing ideas, proposals, issues, and bug reports. New directories: `dev-docs/_inbox/`, `dev-docs/adr/`, `dev-docs/issues/`, `dev-docs/proposals/`. New skills: `inbox-writer`, `proposal-writer`, `adr-writer`. New prompts for contributing ideas, issues, and proposals.
 
+### Fixed
+- GitLab CI test failure on Node 20: Fixed jsdom `_version` crash that occurred when integration tests restored the real `document.body` but jsdom's property descriptor was non-configurable. Now properly uses `delete document.body` to restore jsdom's prototype accessor, preventing internal tree tracking corruption. Enables all tests to pass on Node 20 Alpine (CI environment) without affecting unit test mocks.
+
 ## [v0.0.29] - 2026-03-29
 
 ### Fixed
@@ -201,3 +204,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Throttling for user interaction events (key presses, focus changes)
   - Structured event types with categories (CONTENT, BLOCK, EDITOR, TOOLBAR, USER)
   - Block content change tracking with timestamps using `data-timestamp` attributes
+
