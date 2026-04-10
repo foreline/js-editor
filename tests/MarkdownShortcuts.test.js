@@ -32,7 +32,9 @@ describe('Markdown Shortcuts (Issue #45)', () => {
         document.querySelector = global._originalQuerySelector;
         document.querySelectorAll = global._originalQuerySelectorAll;
         document.createTextNode = global._originalCreateTextNode;
-        Object.defineProperty(document, 'body', { value: global._originalBody, writable: true });
+        // Delete the own data property to restore jsdom's prototype accessor
+        // (avoids _version crash in jsdom's named property resolver on Node 20)
+        delete document.body;
 
         // Create container
         container = document.createElement('div');
@@ -56,7 +58,7 @@ describe('Markdown Shortcuts (Issue #45)', () => {
         document.querySelector = savedQuerySelector;
         document.querySelectorAll = savedQuerySelectorAll;
         document.createTextNode = savedCreateTextNode;
-        Object.defineProperty(document, 'body', { value: savedBody, writable: true });
+        Object.defineProperty(document, 'body', { value: savedBody, writable: true, configurable: true });
     });
 
     describe('Header Shortcuts', () => {

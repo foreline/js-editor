@@ -220,14 +220,18 @@ global.document.createTextNode = jest.fn((text) => ({
 }));
 
 // Mock document properties
+// configurable: true allows integration tests to delete the own property
+// and restore jsdom's prototype accessor (fixes _version crash on Node 20)
 Object.defineProperty(global.document, 'body', {
     value: createMockElement('body'),
-    writable: true
+    writable: true,
+    configurable: true
 });
 
 Object.defineProperty(global.document, 'documentElement', {
     value: createMockElement('html'),
-    writable: true
+    writable: true,
+    configurable: true
 });
 
 // Mock window.getSelection

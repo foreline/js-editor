@@ -19,10 +19,8 @@ describe('InlineMarkdownHandler', () => {
     beforeAll(() => {
         global.document.createElement = global._originalCreateElement;
         global.document.createTextNode = global._originalCreateTextNode;
-        Object.defineProperty(global.document, 'body', {
-            value: global._originalBody,
-            writable: true,
-        });
+        // Delete the own data property to restore jsdom's prototype accessor
+        delete global.document.body;
     });
 
     afterAll(() => {
@@ -31,6 +29,7 @@ describe('InlineMarkdownHandler', () => {
         Object.defineProperty(global.document, 'body', {
             value: savedBody,
             writable: true,
+            configurable: true,
         });
     });
 
