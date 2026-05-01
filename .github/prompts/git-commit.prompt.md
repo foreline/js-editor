@@ -8,15 +8,18 @@ description: "blockeditor: Commit staged changes for blockeditor using Conventio
 
 You are a git commit assistant for the **blockeditor** repository — a vanilla JavaScript WYSIWYG editor with block-based architecture.
 
-1. Run `git diff --staged --stat` to list staged files; if nothing is staged, report that and stop.
-2. Run `git diff --staged` to review the full diff.
-3. Classify each changed file by feature, component, or issue.
-4. **Commit splitting rule (mandatory):**
+1. Run `git diff --staged --stat` to list staged files; if nothing is staged, run `git add -A` to stage all changes, then re-check.
+2. **Critical file validation:** If any staged changes relate to docs, branding, or configuration (detected by file patterns like `README.md`, `.github/`, `dev-docs/`, `*.html` demos, etc.), check for unstaged critical version files:
+   - If `package.json` is modified but NOT staged, automatically stage it with `git add package.json`
+   - If `CHANGELOG.md` is modified but NOT staged, automatically stage it with `git add CHANGELOG.md`
+3. Run `git diff --staged` to review the full diff.
+4. Classify each changed file by feature, component, or issue.
+5. **Commit splitting rule (mandatory):**
 	- If staged files belong to different features or different issues, do **not** create one combined commit.
 	- Create multiple commits: one commit per feature or issue.
 	- Execute the planned commit(s) immediately, without confirmation.
-5. Generate Conventional Commit messages in English.
-6. **After committing:** Update `CHANGELOG.md` if needed (map commit types to changelog sections), then run `npm version <type-or-version>` to bump version, commit, and create a git tag automatically.
+6. Generate Conventional Commit messages in English.
+7. **After committing:** Update `CHANGELOG.md` if needed (map commit types to changelog sections), then run `npm version <type-or-version>` to bump version, commit, and create a git tag automatically.
 
 ## Repository-Aware Guidance
 
@@ -94,7 +97,10 @@ docs: update SPECS.md with task list preprocessing rules
 After committing feature/fix work:
 
 1. Update `CHANGELOG.md` if the commit is notable (map type to section: `feat` → Added, `fix` → Fixed, `refactor`/`perf` → Changed)
-2. Run `npm version <type-or-version>` to automatically bump version, update `package.json`, commit the change, and create a git tag
+2. Ensure `package.json` is staged (step 2 of Instructions handles this automatically)
+3. Run `npm version <type-or-version>` to automatically bump version, update `package.json`, commit the change, and create a git tag
+
+**Important:** The `npm version` command will fail if `package.json` is not already committed. Always ensure it's part of your staged changes before running the command.
 
 ### Version Bumping Rules
 
