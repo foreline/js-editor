@@ -2,7 +2,7 @@
 
 WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and block-based content management system.
 
-**Available as a Universal Library!** Install via npm: `npm install blockeditor`
+**Available as a Universal Library!** Install via npm: `npm install @foreline/blockeditor`
 
 📖 **[Library Documentation](./LIBRARY.md)** - Learn how to use BlockEditor as a library in your projects.
 
@@ -26,12 +26,12 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 ### Quick Start
 
 ```bash
-npm install blockeditor
+npm install @foreline/blockeditor
 ```
 
 ```javascript
-import Editor from 'blockeditor';
-import 'blockeditor/css';
+import Editor from '@foreline/blockeditor';
+import '@foreline/blockeditor/css';
 
 const editor = new Editor({
     id: 'my-editor'

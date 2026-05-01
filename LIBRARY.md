@@ -5,7 +5,7 @@ A modern JavaScript WYSIWYG editor with block-based architecture.
 ## Installation
 
 ```bash
-npm install blockeditor
+npm install @foreline/blockeditor
 ```
 
 ## Quick Start
@@ -13,8 +13,8 @@ npm install blockeditor
 ### ES Modules (Recommended)
 
 ```javascript
-import Editor from 'blockeditor';
-import 'blockeditor/css'; // Import styles
+import Editor from '@foreline/blockeditor';
+import '@foreline/blockeditor/css'; // Import styles
 
 // Create editor instance
 const editor = new Editor({
@@ -25,8 +25,8 @@ const editor = new Editor({
 ### CommonJS
 
 ```javascript
-const Editor = require('blockeditor');
-require('blockeditor/css'); // Import styles
+const Editor = require('@foreline/blockeditor');
+require('@foreline/blockeditor/css'); // Import styles
 
 // Create editor instance
 const editor = new Editor({
@@ -40,13 +40,13 @@ const editor = new Editor({
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="node_modules/blockeditor/dist/style.css">
+    <link rel="stylesheet" href="node_modules/@foreline/blockeditor/dist/style.css">
 </head>
 <body>
     <div id="my-editor"></div>
     
     <script type="module">
-        import Editor from './node_modules/blockeditor/dist/blockeditor.es.js';
+        import Editor from './node_modules/@foreline/blockeditor/dist/blockeditor.es.js';
         
         const editor = new Editor({
             id: 'my-editor'
@@ -240,11 +240,11 @@ The library provides separate CSS files for different purposes:
 
 ```javascript
 // All styles (recommended)
-import 'blockeditor/css';
+import '@foreline/blockeditor/css';
 
 // Individual stylesheets
-import 'blockeditor/css/editor';  // Core editor styles
-import 'blockeditor/css/prism';   // Syntax highlighting
+import '@foreline/blockeditor/css/editor';  // Core editor styles
+import '@foreline/blockeditor/css/prism';   // Syntax highlighting
 ```
 
 ### Custom Themes
@@ -274,7 +274,7 @@ npm install @fortawesome/fontawesome-free @popperjs/core bootstrap prismjs showd
 TypeScript definitions are included:
 
 ```typescript
-import Editor, { EditorOptions, BlockData } from 'blockeditor';
+import Editor, { EditorOptions, BlockData } from '@foreline/blockeditor';
 
 const options: EditorOptions = {
     id: 'my-editor',

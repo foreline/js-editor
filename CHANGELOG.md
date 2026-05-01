@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.1.2] - 2026-05-01
+
+### Changed
+- Package published to npm under the scoped name `@foreline/blockeditor`. Update install and import statements: `npm install @foreline/blockeditor` and `import Editor from '@foreline/blockeditor'`.
+
 ## [v0.1.1] - 2026-05-01
 
 ### Changed

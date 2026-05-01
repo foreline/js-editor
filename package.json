@@ -1,8 +1,8 @@
 {
-  "name": "blockeditor",
-  "version": "0.1.1",
+  "name": "@foreline/blockeditor",
+  "version": "0.1.2",
   "type": "module",
-  "description": "A modern JavaScript WYSIWYG editor with block-based architecture",
+  "description": "JavaScript WYSIWYG editor with block-based architecture",
   "main": "dist/blockeditor.cjs.js",
   "module": "dist/blockeditor.es.js",
   "types": "dist/index.d.ts",
