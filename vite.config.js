@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => {
             build: {
                 lib: {
                     entry: path.resolve(__dirname, 'src/index.js'),
-                    name: 'JSEditor',
+                    name: 'BlockEditor',
                     formats: ['es', 'cjs'],
-                    fileName: (format) => `js-editor.${format}.js`
+                    fileName: (format) => `blockeditor.${format}.js`
                 },
                 rollupOptions: {
                     // Keep dependencies external

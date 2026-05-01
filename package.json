@@ -1,16 +1,16 @@
 {
-  "name": "js-editor",
+  "name": "blockeditor",
   "version": "0.0.1",
   "type": "module",
   "description": "A modern JavaScript WYSIWYG editor with block-based architecture",
-  "main": "dist/js-editor.cjs.js",
-  "module": "dist/js-editor.es.js",
+  "main": "dist/blockeditor.cjs.js",
+  "module": "dist/blockeditor.es.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/js-editor.es.js",
-      "require": "./dist/js-editor.cjs.js"
+      "import": "./dist/blockeditor.es.js",
+      "require": "./dist/blockeditor.cjs.js"
     },
     "./css": "./dist/style.css",
     "./css/editor": "./dist/editor.css",
@@ -49,12 +49,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/js-editor.git"
+    "url": "https://github.com/foreline/blockeditor.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/js-editor/issues"
+    "url": "https://github.com/foreline/blockeditor/issues"
   },
-  "homepage": "https://github.com/your-username/js-editor#readme",
+  "homepage": "https://github.com/foreline/blockeditor#readme",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.5.1",
     "@popperjs/core": "^2.11.8",

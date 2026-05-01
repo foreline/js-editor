@@ -2,7 +2,7 @@
 
 WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and block-based content management system.
 
-**Available as a Universal Library!** Install via npm: `npm install js-editor`
+**Available as a Universal Library!** Install via npm: `npm install blockeditor`
 
 📖 **[Library Documentation](./LIBRARY.md)** - Learn how to use JS Editor as a library in your projects.
 
@@ -26,12 +26,12 @@ WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and bloc
 ### Quick Start
 
 ```bash
-npm install js-editor
+npm install blockeditor
 ```
 
 ```javascript
-import Editor from 'js-editor';
-import 'js-editor/css';
+import Editor from 'blockeditor';
+import 'blockeditor/css';
 
 const editor = new Editor({
     id: 'my-editor'

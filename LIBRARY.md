@@ -5,7 +5,7 @@ A modern JavaScript WYSIWYG editor with block-based architecture.
 ## Installation
 
 ```bash
-npm install js-editor
+npm install blockeditor
 ```
 
 ## Quick Start
@@ -13,8 +13,8 @@ npm install js-editor
 ### ES Modules (Recommended)
 
 ```javascript
-import Editor from 'js-editor';
-import 'js-editor/css'; // Import styles
+import Editor from 'blockeditor';
+import 'blockeditor/css'; // Import styles
 
 // Create editor instance
 const editor = new Editor({
@@ -25,8 +25,8 @@ const editor = new Editor({
 ### CommonJS
 
 ```javascript
-const Editor = require('js-editor');
-require('js-editor/css'); // Import styles
+const Editor = require('blockeditor');
+require('blockeditor/css'); // Import styles
 
 // Create editor instance
 const editor = new Editor({
@@ -40,13 +40,13 @@ const editor = new Editor({
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="node_modules/js-editor/dist/style.css">
+    <link rel="stylesheet" href="node_modules/blockeditor/dist/style.css">
 </head>
 <body>
     <div id="my-editor"></div>
     
     <script type="module">
-        import Editor from './node_modules/js-editor/dist/js-editor.es.js';
+        import Editor from './node_modules/blockeditor/dist/blockeditor.es.js';
         
         const editor = new Editor({
             id: 'my-editor'
@@ -240,11 +240,11 @@ The library provides separate CSS files for different purposes:
 
 ```javascript
 // All styles (recommended)
-import 'js-editor/css';
+import 'blockeditor/css';
 
 // Individual stylesheets
-import 'js-editor/css/editor';  // Core editor styles
-import 'js-editor/css/prism';   // Syntax highlighting
+import 'blockeditor/css/editor';  // Core editor styles
+import 'blockeditor/css/prism';   // Syntax highlighting
 ```
 
 ### Custom Themes
@@ -274,7 +274,7 @@ npm install @fortawesome/fontawesome-free @popperjs/core bootstrap prismjs showd
 TypeScript definitions are included:
 
 ```typescript
-import Editor, { EditorOptions, BlockData } from 'js-editor';
+import Editor, { EditorOptions, BlockData } from 'blockeditor';
 
 const options: EditorOptions = {
     id: 'my-editor',

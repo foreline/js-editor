@@ -9,10 +9,10 @@ import fs from 'fs';
 import path from 'path';
 
 const requiredFiles = [
-    'dist/js-editor.es.js',
-    'dist/js-editor.es.js.map',
-    'dist/js-editor.cjs.js', 
-    'dist/js-editor.cjs.js.map',
+    'dist/blockeditor.es.js',
+    'dist/blockeditor.es.js.map',
+    'dist/blockeditor.cjs.js', 
+    'dist/blockeditor.cjs.js.map',
     'dist/index.d.ts',
     'dist/style.css',
     'dist/editor.css',
@@ -36,11 +36,11 @@ requiredFiles.forEach(file => {
 });
 
 console.log('\n📊 Package size analysis:');
-const stats = fs.statSync('dist/js-editor.es.js');
+const stats = fs.statSync('dist/blockeditor.es.js');
 const sizeKB = (stats.size / 1024).toFixed(2);
 console.log(`ES Module: ${sizeKB} KB`);
 
-const cjsStats = fs.statSync('dist/js-editor.cjs.js');
+const cjsStats = fs.statSync('dist/blockeditor.cjs.js');
 const cjsSizeKB = (cjsStats.size / 1024).toFixed(2);
 console.log(`CommonJS: ${cjsSizeKB} KB`);
 
