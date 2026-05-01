@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
                 lib: {
                     entry: path.resolve(__dirname, 'src/index.js'),
                     name: 'BlockEditor',
-                    formats: ['es', 'cjs'],
+                    formats: ['es', 'cjs', 'iife'],
                     fileName: (format) => `blockeditor.${format}.js`
                 },
                 rollupOptions: {
@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => {
                         'showdown'
                     ],
                     output: {
+                        exports: 'named',
                         globals: {
                             '@fortawesome/fontawesome-free': 'FontAwesome',
                             '@popperjs/core': 'Popper',

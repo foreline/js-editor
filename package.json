@@ -6,6 +6,7 @@
   "main": "dist/blockeditor.cjs.js",
   "module": "dist/blockeditor.es.js",
   "types": "dist/index.d.ts",
+  "browser": "dist/blockeditor.iife.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
