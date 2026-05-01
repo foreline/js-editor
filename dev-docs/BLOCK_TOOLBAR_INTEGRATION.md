@@ -1,8 +1,8 @@
-# Block-Toolbar Integration Documentation
+﻿# Block-Toolbar Integration Documentation
 
 ## Overview
 
-The JS Editor supports dynamic toolbar button state management based on the currently active block type. This allows blocks to control which toolbar buttons are available and disabled, providing a context-aware editing experience.
+The BlockEditor supports dynamic toolbar button state management based on the currently active block type. This allows blocks to control which toolbar buttons are available and disabled, providing a context-aware editing experience.
 
 ## Architecture
 

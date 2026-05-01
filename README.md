@@ -1,10 +1,10 @@
-# JS Editor
+﻿# BlockEditor
 
 WYSIWYG editor built with JavaScript, featuring a comprehensive toolbar and block-based content management system.
 
 **Available as a Universal Library!** Install via npm: `npm install blockeditor`
 
-📖 **[Library Documentation](./LIBRARY.md)** - Learn how to use JS Editor as a library in your projects.
+📖 **[Library Documentation](./LIBRARY.md)** - Learn how to use BlockEditor as a library in your projects.
 
 ## Features
 
@@ -314,7 +314,7 @@ Create interactive task lists using markdown syntax:
 
 ## Contribution Guidelines
 
-We welcome contributions to improve the JS Editor. To contribute:
+We welcome contributions to improve the BlockEditor. To contribute:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
- * JS Editor — Select All + Delete (Ctrl+A → Backspace) Bug Tests
+ * BlockEditor — Select All + Delete (Ctrl+A → Backspace) Bug Tests
  *
  * Reproduces the "one_block_issue": after Ctrl+A → Backspace, pressing Enter
  * multiple times does not create new blocks. The editor stays stuck with one

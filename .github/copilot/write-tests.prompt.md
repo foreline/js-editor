@@ -1,10 +1,10 @@
----
+﻿---
 description: "Write or update tests for a specific component following project testing patterns"
 ---
 
 # Write Tests
 
-You are writing or updating tests for the JS Editor project.
+You are writing or updating tests for the BlockEditor project.
 
 ## Setup
 - Test framework: **Jest** with `babel-jest` transform

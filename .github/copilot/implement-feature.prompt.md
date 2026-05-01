@@ -1,10 +1,10 @@
----
+﻿---
 description: "Implement a feature from the ISSUES.md checklist following the project workflow"
 ---
 
 # Implement Feature
 
-You are implementing a new feature for the JS Editor project.
+You are implementing a new feature for the BlockEditor project.
 
 ## 1. Select Task
 - Check `ISSUES.md` for the next unchecked feature item

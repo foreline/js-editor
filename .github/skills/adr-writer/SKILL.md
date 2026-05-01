@@ -1,6 +1,6 @@
----
+﻿---
 name: adr-writer
-description: Create Architecture Decision Records (ADRs) for the JS Editor project. Use this when recording significant architectural decisions, documenting technical trade-offs, capturing the context and rationale behind design choices, or explaining why a particular approach was chosen over alternatives.
+description: Create Architecture Decision Records (ADRs) for the BlockEditor project. Use this when recording significant architectural decisions, documenting technical trade-offs, capturing the context and rationale behind design choices, or explaining why a particular approach was chosen over alternatives.
 ---
 
 # ADR Writer

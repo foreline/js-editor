@@ -1,10 +1,10 @@
----
+﻿---
 description: "Create a new block type following the block architecture patterns"
 ---
 
 # New Block Type
 
-You are adding a new block type to the JS Editor. Follow this guide:
+You are adding a new block type to the BlockEditor. Follow this guide:
 
 ## Block Architecture
 - Create a new block class in `src/blocks/` extending `BaseBlock`

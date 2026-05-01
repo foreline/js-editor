@@ -1,6 +1,6 @@
-# E2E Testing with Playwright
+﻿# E2E Testing with Playwright
 
-This directory contains end-to-end tests for the JS Editor using Playwright.
+This directory contains end-to-end tests for the BlockEditor using Playwright.
 
 ## Running Tests
 

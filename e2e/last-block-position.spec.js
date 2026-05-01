@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
- * JS Editor — Last Block Detection Issue
+ * BlockEditor — Last Block Detection Issue
  *
  * Reproduces: after Ctrl+A → Backspace, creating a heading via markdown
  * trigger (# ), pressing Enter, typing text, and pressing Enter again

@@ -1,10 +1,10 @@
----
+﻿---
 description: "Capture a raw idea into the dev-docs/_inbox/ backlog for later triage"
 ---
 
 # Add Idea
 
-You are capturing a new idea for the JS Editor project.
+You are capturing a new idea for the BlockEditor project.
 
 ## Instructions
 

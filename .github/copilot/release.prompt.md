@@ -1,10 +1,10 @@
----
+﻿---
 description: "Prepare a release: build, test, tag, and update changelog"
 ---
 
 # Release Workflow
 
-Prepare a new release for the JS Editor project.
+Prepare a new release for the BlockEditor project.
 
 ## Steps
 

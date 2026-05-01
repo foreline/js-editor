@@ -1,12 +1,12 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
- * JS Editor — Basic E2E Tests
+ * BlockEditor — Basic E2E Tests
  * 
  * Uses /test-page.html which starts with an empty editor.
  * Waits for window.editorReady before interacting.
  */
-test.describe('JS Editor — Initialization', () => {
+test.describe('BlockEditor — Initialization', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -35,7 +35,7 @@ test.describe('JS Editor — Initialization', () => {
   });
 });
 
-test.describe('JS Editor — Text Input', () => {
+test.describe('BlockEditor — Text Input', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -85,7 +85,7 @@ test.describe('JS Editor — Text Input', () => {
   });
 });
 
-test.describe('JS Editor — Markdown Triggers', () => {
+test.describe('BlockEditor — Markdown Triggers', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -172,7 +172,7 @@ test.describe('JS Editor — Markdown Triggers', () => {
   });
 });
 
-test.describe('JS Editor — Toolbar Formatting', () => {
+test.describe('BlockEditor — Toolbar Formatting', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -281,7 +281,7 @@ test.describe('JS Editor — Toolbar Formatting', () => {
   });
 });
 
-test.describe('JS Editor — Export', () => {
+test.describe('BlockEditor — Export', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -361,7 +361,7 @@ test.describe('JS Editor — Export', () => {
   });
 });
 
-test.describe('JS Editor — Keyboard Shortcuts', () => {
+test.describe('BlockEditor — Keyboard Shortcuts', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });
@@ -416,7 +416,7 @@ test.describe('JS Editor — Keyboard Shortcuts', () => {
   });
 });
 
-test.describe('JS Editor — Multiple Blocks', () => {
+test.describe('BlockEditor — Multiple Blocks', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/test-page.html');
     await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });

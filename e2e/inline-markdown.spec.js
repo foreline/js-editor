@@ -1,12 +1,12 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
- * JS Editor — Inline Markdown Replacement E2E Tests
+ * BlockEditor — Inline Markdown Replacement E2E Tests
  *
  * Verifies that typing inline markdown patterns (e.g., **bold**, *italic*,
  * `code`) inside blocks triggers live formatting replacement.
  */
-test.describe('JS Editor — Inline Markdown Replacements', () => {
+test.describe('BlockEditor — Inline Markdown Replacements', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/test-page.html');
         await page.waitForFunction(() => window.editorReady === true, { timeout: 10000 });

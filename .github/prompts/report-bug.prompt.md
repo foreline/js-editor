@@ -1,10 +1,10 @@
----
+﻿---
 description: "Report a bug and add it to ISSUES.md with reproduction details"
 ---
 
 # Report Bug
 
-You are reporting a bug in the JS Editor project.
+You are reporting a bug in the BlockEditor project.
 
 ## Instructions
 

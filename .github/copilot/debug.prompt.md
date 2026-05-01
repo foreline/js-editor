@@ -1,10 +1,10 @@
----
+﻿---
 description: "Debug an issue using the project's console log tracing and editor inspection tools"
 ---
 
 # Debug Issue
 
-You are debugging an issue in the JS Editor project.
+You are debugging an issue in the BlockEditor project.
 
 ## Approach
 

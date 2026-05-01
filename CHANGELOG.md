@@ -1,6 +1,6 @@
-# Changelog
+﻿# Changelog
 
-All notable changes to the JS Editor project will be documented in this file.
+All notable changes to the BlockEditor project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.1.0] - 2026-05-01
 
 ### Changed
-- Package renamed to `blockeditor` for npm publication. Update import statements from `js-editor` to `blockeditor`: `npm install blockeditor` and `import Editor from 'blockeditor'`.
+- Package renamed to `blockeditor` for npm publication. Update import statements from `BlockEditor` to `blockeditor`: `npm install blockeditor` and `import Editor from 'blockeditor'`.
 - Introduce Inbox & Documentation Pipeline: Established a structured docs-first workflow for managing ideas, proposals, issues, and bug reports. New directories: `dev-docs/_inbox/`, `dev-docs/adr/`, `dev-docs/issues/`, `dev-docs/proposals/`. New skills: `inbox-writer`, `proposal-writer`, `adr-writer`. New prompts for contributing ideas, issues, and proposals.
 
 ### Fixed

@@ -1,8 +1,8 @@
-# GitHub Copilot Instructions for JS Editor
+﻿# GitHub Copilot Instructions for BlockEditor
 
 ## Project Overview
 
-JS Editor is a modern JavaScript WYSIWYG editor with a block-based architecture. It provides rich text editing capabilities including markdown conversion, toolbar-based formatting, event handling, and modular block-based content management.
+BlockEditor is a modern JavaScript WYSIWYG editor with a block-based architecture. It provides rich text editing capabilities including markdown conversion, toolbar-based formatting, event handling, and modular block-based content management.
 
 - **Build tool**: Vite
 - **Test framework**: Jest (with Babel transforms)

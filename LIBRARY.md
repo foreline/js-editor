@@ -1,4 +1,4 @@
-# JS Editor Library
+﻿# BlockEditor Library
 
 A modern JavaScript WYSIWYG editor with block-based architecture.
 

@@ -1,8 +1,8 @@
-# Toolbar Groups Documentation
+﻿# Toolbar Groups Documentation
 
 ## Overview
 
-The JS Editor supports organizing toolbar buttons into logical groups, providing better UX and maintainability. Toolbar groups can be configured to display as regular button groups or as dropdown menus.
+The BlockEditor supports organizing toolbar buttons into logical groups, providing better UX and maintainability. Toolbar groups can be configured to display as regular button groups or as dropdown menus.
 
 ## Configuration Structure
 

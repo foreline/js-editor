@@ -1,5 +1,5 @@
-/**
- * JS Editor - Universal Library Entry Point
+﻿/**
+ * BlockEditor - Universal Library Entry Point
  * A modern WYSIWYG editor with block-based architecture
  */
 

@@ -1,10 +1,10 @@
-# Technical Requirements for JS Editor
+﻿# Technical Requirements for BlockEditor
 
 ## Overview
-The JS Editor project is a web-based rich text editor designed to provide users with advanced text editing capabilities. It supports features such as markdown conversion, toolbar-based formatting, event handling, and block-based content management.
+The BlockEditor project is a web-based rich text editor designed to provide users with advanced text editing capabilities. It supports features such as markdown conversion, toolbar-based formatting, event handling, and block-based content management.
 
 ## Functional Requirements
-# JS Editor Specifications — Logic and Features
+# BlockEditor Specifications — Logic and Features
 
 This document describes the current behavior of the editor based on implemented features and resolved issues. It focuses on editor logic, block architecture, keyboard handling, conversion, clipboard behavior, toolbar integration, and export APIs.
 
@@ -55,7 +55,7 @@ This document describes the current behavior of the editor based on implemented 
    - After Backspace removes an empty block, focus moves to the previous block (caret at end); if none, to the next block.
 
 ## Keyboard Behavior
-# JS Editor Specifications — Logic and Features
+# BlockEditor Specifications — Logic and Features
 
 This document describes the current behavior of the editor based on implemented features and resolved issues. It focuses on editor logic, block architecture, keyboard handling, conversion, clipboard behavior, toolbar integration, and export APIs.
 

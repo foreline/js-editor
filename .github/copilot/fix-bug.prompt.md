@@ -1,10 +1,10 @@
----
+﻿---
 description: "Fix a bug following the project's established workflow: analyze, implement, test, document, commit"
 ---
 
 # Fix Bug Workflow
 
-You are fixing a bug in the JS Editor project. Follow this workflow:
+You are fixing a bug in the BlockEditor project. Follow this workflow:
 
 ## 1. Analyze
 - Read the bug description from `ISSUES.md`

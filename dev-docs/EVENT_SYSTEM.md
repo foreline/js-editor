@@ -1,6 +1,6 @@
-# Event System Documentation
+﻿# Event System Documentation
 
-The JS Editor provides a comprehensive event management system that allows developers to monitor and respond to content changes, user interactions, and system events. The system is **instance-based**, meaning each editor instance has its own isolated event emitter.
+The BlockEditor provides a comprehensive event management system that allows developers to monitor and respond to content changes, user interactions, and system events. The system is **instance-based**, meaning each editor instance has its own isolated event emitter.
 
 ## Overview
 

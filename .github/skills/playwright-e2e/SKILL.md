@@ -1,11 +1,11 @@
----
+﻿---
 name: playwright-e2e
-description: Write, debug, and maintain Playwright E2E tests for the JS Editor. Use this when creating browser automation tests, debugging test failures, adding new test scenarios, or improving test coverage for editor functionality.
+description: Write, debug, and maintain Playwright E2E tests for the BlockEditor. Use this when creating browser automation tests, debugging test failures, adding new test scenarios, or improving test coverage for editor functionality.
 ---
 
 # Playwright E2E Testing
 
-Write and maintain end-to-end tests for the JS Editor using Playwright, following project conventions for test structure, naming, and best practices.
+Write and maintain end-to-end tests for the BlockEditor using Playwright, following project conventions for test structure, naming, and best practices.
 
 ## Test Configuration
 

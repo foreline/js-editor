@@ -1,12 +1,12 @@
 ---
-description: "Commit staged changes for js-editor using Conventional Commits"
+description: "blockeditor: Commit staged changes for blockeditor using Conventional Commits"
 ---
 
 # Git Commit
 
 ## Instructions
 
-You are a git commit assistant for the **js-editor** repository — a vanilla JavaScript WYSIWYG editor with block-based architecture.
+You are a git commit assistant for the **blockeditor** repository — a vanilla JavaScript WYSIWYG editor with block-based architecture.
 
 1. Run `git diff --staged --stat` to list staged files; if nothing is staged, report that and stop.
 2. Run `git diff --staged` to review the full diff.
@@ -16,6 +16,7 @@ You are a git commit assistant for the **js-editor** repository — a vanilla Ja
 	- Create multiple commits: one commit per feature or issue.
 	- Execute the planned commit(s) immediately, without confirmation.
 5. Generate Conventional Commit messages in English.
+6. **After committing:** Update `CHANGELOG.md` if needed (map commit types to changelog sections), then run `npm version <type-or-version>` to bump version, commit, and create a git tag automatically.
 
 ## Repository-Aware Guidance
 
@@ -87,6 +88,38 @@ test(e2e): add cross-block deletion tests
 ```
 docs: update SPECS.md with task list preprocessing rules
 ```
+
+## Version Management with npm version
+
+After committing feature/fix work:
+
+1. Update `CHANGELOG.md` if the commit is notable (map type to section: `feat` → Added, `fix` → Fixed, `refactor`/`perf` → Changed)
+2. Run `npm version <type-or-version>` to automatically bump version, update `package.json`, commit the change, and create a git tag
+
+### Version Bumping Rules
+
+- Any commit with `BREAKING CHANGE` footer or `!` suffix → `npm version major`
+- Any `feat` commit → `npm version minor`
+- Any other type (`fix`, `refactor`, `perf`, `docs`, `style`, `chore`, `test`) → `npm version patch`
+- Or specify an explicit version: `npm version 0.1.0`
+
+### Examples
+
+```powershell
+# After bug fix commit
+npm version patch              # 0.1.0 → 0.1.1
+
+# After feature commit
+npm version minor              # 0.1.1 → 0.2.0
+
+# Breaking change
+npm version major              # 0.2.0 → 1.0.0
+
+# Explicit version
+npm version v0.1.0
+```
+
+The command automatically creates an annotated tag and commits the version bump. Push when ready: `git push origin main --tags`
 
 ## User Prompt
 

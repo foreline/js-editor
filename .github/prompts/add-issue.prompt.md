@@ -1,10 +1,10 @@
----
+﻿---
 description: "Record a new issue or feature request in dev-docs/issues/ or ISSUES.md"
 ---
 
 # Add Issue
 
-You are recording a new issue or feature request for the JS Editor project.
+You are recording a new issue or feature request for the BlockEditor project.
 
 ## Instructions
 

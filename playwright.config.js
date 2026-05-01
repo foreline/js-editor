@@ -1,7 +1,7 @@
-import { defineConfig, devices } from '@playwright/test';
+﻿import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for JS Editor E2E tests
+ * Playwright configuration for BlockEditor E2E tests
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({

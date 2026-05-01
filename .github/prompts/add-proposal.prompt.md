@@ -1,10 +1,10 @@
----
+﻿---
 description: "Create an architectural proposal in dev-docs/proposals/ for a well-defined feature or change"
 ---
 
 # Add Proposal
 
-You are creating an architectural proposal for the JS Editor project.
+You are creating an architectural proposal for the BlockEditor project.
 
 ## Instructions
 

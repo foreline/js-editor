@@ -1,6 +1,6 @@
----
+﻿---
 name: proposal-writer
-description: Create architectural proposals and design documents for the JS Editor project. Use this when suggesting new features, proposing architectural changes, refactoring strategies, documenting design decisions, or discussing complex implementation approaches.
+description: Create architectural proposals and design documents for the BlockEditor project. Use this when suggesting new features, proposing architectural changes, refactoring strategies, documenting design decisions, or discussing complex implementation approaches.
 ---
 
 # Proposal Writer
