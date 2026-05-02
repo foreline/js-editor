@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.1.4] - 2026-05-02
+
+### Changed
+- Improved markdown/html container initialization logic to use editor instance's parentElement reference instead of DOM queries. This enhances compatibility with various hosting environments and iframe-based integrations.
+- Moved Bootstrap, @popperjs/core, and @fortawesome/fontawesome-free from dependencies to peerDependencies (optional). Reduces bundle size for consumers and prevents CSS cascade conflicts in complex host environments.
+
 ## [v0.1.3] - 2026-05-01
 
 ### Added
