@@ -1,15 +1,7 @@
-import { H4Block } from '@/blocks/H4Block.js';
+﻿import { H4Block } from '@/blocks/H4Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h4: jest.fn()
-  }
-}));
 
 describe('H4Block', () => {
   let h4Block;
@@ -64,10 +56,12 @@ describe('H4Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h4 method', () => {
-      h4Block.applyTransformation();
-      expect(Toolbar.h4).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h4).toHaveBeenCalledWith();
+    test('applies h4 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h4Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h4');
+      expect(el.className).toBe('bke-block bke-block--h4');
     });
   });
 
@@ -85,3 +79,6 @@ describe('H4Block', () => {
     });
   });
 });
+
+
+

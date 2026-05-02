@@ -1,3 +1,7 @@
+jest.unmock('../src/blocks/BlockFactory');
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
+
 import { Parser } from '@/Parser.js';
 import { CodeBlock } from '@/blocks/CodeBlock.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';

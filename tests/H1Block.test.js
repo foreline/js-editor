@@ -1,15 +1,7 @@
-import { H1Block } from '@/blocks/H1Block.js';
+﻿import { H1Block } from '@/blocks/H1Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h1: jest.fn()
-  }
-}));
 
 describe('H1Block', () => {
   let h1Block;
@@ -72,18 +64,17 @@ describe('H1Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h1 method', () => {
-      h1Block.applyTransformation();
-      expect(Toolbar.h1).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h1).toHaveBeenCalledWith();
+    test('does nothing when no targetElement provided', () => {
+      expect(() => h1Block.applyTransformation()).not.toThrow();
+      expect(() => h1Block.applyTransformation(null)).not.toThrow();
     });
 
-    test('can be called multiple times', () => {
-      h1Block.applyTransformation();
-      h1Block.applyTransformation();
-      h1Block.applyTransformation();
-      
-      expect(Toolbar.h1).toHaveBeenCalledTimes(3);
+    test('applies h1 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h1Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h1');
+      expect(el.className).toBe('bke-block bke-block--h1');
     });
   });
 
@@ -137,3 +128,5 @@ describe('H1Block', () => {
     });
   });
 });
+
+

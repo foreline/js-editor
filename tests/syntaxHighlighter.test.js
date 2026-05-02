@@ -1,47 +1,49 @@
-'use strict';
+﻿'use strict';
+
+// Mock prismjs and all component imports BEFORE importing SyntaxHighlighter
+// jest.mock is hoisted so factory must be self-contained
+jest.mock('prismjs', () => {
+    const highlight = jest.fn((code) => `<span class="token">${code}</span>`);
+    const languages = {
+        javascript: {}, python: {}, markup: {}, css: {},
+        typescript: {}, java: {}, csharp: {}, php: {},
+        json: {}, sql: {}, bash: {}
+    };
+    return { highlight, languages };
+});
+jest.mock('prismjs/components/prism-markup', () => {});
+jest.mock('prismjs/components/prism-markup-templating', () => {});
+jest.mock('prismjs/components/prism-javascript', () => {});
+jest.mock('prismjs/components/prism-typescript', () => {});
+jest.mock('prismjs/components/prism-python', () => {});
+jest.mock('prismjs/components/prism-java', () => {});
+jest.mock('prismjs/components/prism-csharp', () => {});
+jest.mock('prismjs/components/prism-php', () => {});
+jest.mock('prismjs/components/prism-css', () => {});
+jest.mock('prismjs/components/prism-json', () => {});
+jest.mock('prismjs/components/prism-sql', () => {});
+jest.mock('prismjs/components/prism-bash', () => {});
 
 import { SyntaxHighlighter } from '../src/utils/syntaxHighlighter.js';
-
-// Mock Prism
-global.Prism = {
-    highlight: jest.fn(),
-    languages: {
-        javascript: {},
-        python: {},
-        markup: {},
-        css: {},
-        typescript: {},
-        java: {},
-        csharp: {},
-        php: {},
-        json: {},
-        sql: {},
-        bash: {}
-    }
-};
-
-// Mock document for escapeHtml tests
-global.document = {
-    createElement: jest.fn(() => ({
-        get textContent() { return this._textContent; },
-        set textContent(value) { 
-            this._textContent = value;
-            // Simulate HTML escaping
-            this.innerHTML = value
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        },
-        innerHTML: ''
-    }))
-};
+import Prism from 'prismjs'; // This gets the mocked version
 
 describe('SyntaxHighlighter', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        global.Prism.highlight.mockReturnValue('<span class="token">highlighted</span>');
+        jest.resetAllMocks(); // Reset implementations too, not just call counts
+        Prism.highlight.mockReturnValue('<span class="token">highlighted</span>');
+        // Restore languages in case a test deleted one
+        Prism.languages.javascript = {};
+        Prism.languages.python = {};
+        Prism.languages.markup = {};
+        // Restore document.createElement mock to setup.js default behavior
+        document.createElement.mockImplementation((tag) => {
+            const el = { tagName: tag.toUpperCase(), innerHTML: '', _textContent: '' };
+            Object.defineProperty(el, 'textContent', {
+                get() { return this._textContent; },
+                set(v) { this._textContent = v; this.innerHTML = v; }
+            });
+            return el;
+        });
     });
 
     describe('SUPPORTED_LANGUAGES', () => {
@@ -140,9 +142,9 @@ describe('SyntaxHighlighter', () => {
             const code = 'const x = 10;';
             const result = SyntaxHighlighter.highlight(code, 'javascript');
 
-            expect(global.Prism.highlight).toHaveBeenCalledWith(
+            expect(Prism.highlight).toHaveBeenCalledWith(
                 code,
-                global.Prism.languages.javascript,
+                Prism.languages.javascript,
                 'javascript'
             );
             expect(result).toBe('<span class="token">highlighted</span>');
@@ -152,9 +154,9 @@ describe('SyntaxHighlighter', () => {
             const code = 'const x = 10;';
             const result = SyntaxHighlighter.highlight(code, 'js');
 
-            expect(global.Prism.highlight).toHaveBeenCalledWith(
+            expect(Prism.highlight).toHaveBeenCalledWith(
                 code,
-                global.Prism.languages.javascript,
+                Prism.languages.javascript,
                 'javascript'
             );
             expect(result).toBe('<span class="token">highlighted</span>');
@@ -164,9 +166,9 @@ describe('SyntaxHighlighter', () => {
             const code = '<div>test</div>';
             const result = SyntaxHighlighter.highlight(code, 'html');
 
-            expect(global.Prism.highlight).toHaveBeenCalledWith(
+            expect(Prism.highlight).toHaveBeenCalledWith(
                 code,
-                global.Prism.languages.markup,
+                Prism.languages.markup,
                 'markup'
             );
             expect(result).toBe('<span class="token">highlighted</span>');
@@ -182,117 +184,83 @@ describe('SyntaxHighlighter', () => {
                 },
                 innerHTML: ''
             };
-            global.document.createElement.mockReturnValue(mockDiv);
+            document.createElement = jest.fn().mockReturnValue(mockDiv);
 
             const result = SyntaxHighlighter.highlight(code, 'unknown');
 
             expect(result).toBe('&lt;script&gt;alert(&quot;test&quot;)&lt;/script&gt;');
-            expect(global.Prism.highlight).not.toHaveBeenCalled();
+            expect(Prism.highlight).not.toHaveBeenCalled();
         });
 
         it('should handle empty code', () => {
             const result = SyntaxHighlighter.highlight('', 'javascript');
 
             expect(result).toBe('');
-            expect(global.Prism.highlight).not.toHaveBeenCalled();
+            expect(Prism.highlight).not.toHaveBeenCalled();
         });
 
         it('should handle null/undefined code', () => {
             expect(SyntaxHighlighter.highlight(null, 'javascript')).toBe('');
             expect(SyntaxHighlighter.highlight(undefined, 'javascript')).toBe('');
-            expect(global.Prism.highlight).not.toHaveBeenCalled();
+            expect(Prism.highlight).not.toHaveBeenCalled();
         });
 
         it('should handle missing language parameter', () => {
             const code = 'const x = 10;';
-            const mockDiv = {
-                get textContent() { return this._textContent; },
-                set textContent(value) { 
-                    this._textContent = value;
-                    this.innerHTML = value;
-                },
-                innerHTML: ''
-            };
-            global.document.createElement.mockReturnValue(mockDiv);
-
             const result = SyntaxHighlighter.highlight(code);
 
+            // No language в†’ normalizeLanguage returns '' в†’ fallback to escapeHtml
             expect(result).toBe(code);
-            expect(global.Prism.highlight).not.toHaveBeenCalled();
+            expect(Prism.highlight).not.toHaveBeenCalled();
         });
 
         it('should handle language not available in Prism.languages', () => {
             const code = 'const x = 10;';
-            delete global.Prism.languages.javascript;
-            
-            const mockDiv = {
-                get textContent() { return this._textContent; },
-                set textContent(value) { 
-                    this._textContent = value;
-                    this.innerHTML = value;
-                },
-                innerHTML: ''
-            };
-            global.document.createElement.mockReturnValue(mockDiv);
+            delete Prism.languages.javascript;
 
             const result = SyntaxHighlighter.highlight(code, 'javascript');
 
             expect(result).toBe(code);
-            expect(global.Prism.highlight).not.toHaveBeenCalled();
-
-            // Restore for other tests
-            global.Prism.languages.javascript = {};
+            expect(Prism.highlight).not.toHaveBeenCalled();
         });
 
         it('should handle Prism.highlight throwing error', () => {
             const code = 'const x = 10;';
-            global.Prism.highlight.mockImplementation(() => {
+            Prism.highlight.mockImplementation(() => {
                 throw new Error('Prism error');
             });
 
-            const mockDiv = {
-                get textContent() { return this._textContent; },
-                set textContent(value) { 
-                    this._textContent = value;
-                    this.innerHTML = value;
-                },
-                innerHTML: ''
-            };
-            global.document.createElement.mockReturnValue(mockDiv);
-
             const result = SyntaxHighlighter.highlight(code, 'javascript');
 
+            // Falls back to escapeHtml; 'const x = 10;' has no HTML chars so it's unchanged
             expect(result).toBe(code);
         });
     });
 
     describe('escapeHtml', () => {
         it('should escape HTML entities', () => {
-            const mockDiv = {
-                get textContent() { return this._textContent; },
-                set textContent(value) { 
-                    this._textContent = value;
-                    this.innerHTML = '&lt;script&gt;alert(&quot;test&quot;)&lt;/script&gt;';
+            // Set up a mock div that actually escapes HTML
+            const mockDiv = { _tc: '', innerHTML: '' };
+            Object.defineProperty(mockDiv, 'textContent', {
+                set(v) {
+                    this._tc = v;
+                    this.innerHTML = v
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
                 },
-                innerHTML: ''
-            };
-            global.document.createElement.mockReturnValue(mockDiv);
+                get() { return this._tc; }
+            });
+            document.createElement.mockReturnValue(mockDiv);
 
             const result = SyntaxHighlighter.escapeHtml('<script>alert("test")</script>');
             expect(result).toBe('&lt;script&gt;alert(&quot;test&quot;)&lt;/script&gt;');
         });
 
         it('should handle empty text', () => {
-            const mockDiv = {
-                get textContent() { return this._textContent; },
-                set textContent(value) { 
-                    this._textContent = value;
-                    this.innerHTML = '';
-                },
-                innerHTML: ''
-            };
-            global.document.createElement.mockReturnValue(mockDiv);
-
+            // escapeHtml has early-return for falsy input
             const result = SyntaxHighlighter.escapeHtml('');
             expect(result).toBe('');
         });
@@ -357,3 +325,4 @@ describe('SyntaxHighlighter', () => {
         });
     });
 });
+

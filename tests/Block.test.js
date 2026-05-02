@@ -1,3 +1,7 @@
+jest.unmock('../src/blocks/BlockFactory');
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
+
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
 import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';

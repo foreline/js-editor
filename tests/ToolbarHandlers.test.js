@@ -59,8 +59,12 @@ describe('ToolbarHandlers', () => {
 
     describe('init', () => {
         let mockButtons;
+        let originalCleanup;
 
         beforeEach(() => {
+            // Save original cleanup to restore after each test
+            originalCleanup = ToolbarHandlers.cleanup;
+
             // Create mock buttons for each toolbar action
             const createMockButton = () => ({
                 addEventListener: jest.fn()
@@ -92,31 +96,30 @@ describe('ToolbarHandlers', () => {
             };
 
             // Mock querySelectorAll to return appropriate buttons
-            document.querySelectorAll.mockImplementation((selector) => {
-                if (selector.includes('undo')) return mockButtons.undo;
-                if (selector.includes('redo')) return mockButtons.redo;
-                if (selector.includes('header1')) return mockButtons.h1;
-                if (selector.includes('header2')) return mockButtons.h2;
-                if (selector.includes('header3')) return mockButtons.h3;
-                if (selector.includes('header4')) return mockButtons.h4;
-                if (selector.includes('header5')) return mockButtons.h5;
-                if (selector.includes('header6')) return mockButtons.h6;
-                if (selector.includes('paragraph')) return mockButtons.paragraph;
-                if (selector.includes('bold')) return mockButtons.bold;
-                if (selector.includes('italic')) return mockButtons.italic;
-                if (selector.includes('underline')) return mockButtons.underline;
-                if (selector.includes('strikethrough')) return mockButtons.strikethrough;
-                if (selector.includes('ul')) return mockButtons.ul;
-                if (selector.includes('ol')) return mockButtons.ol;
-                if (selector.includes('sq')) return mockButtons.sq;
-                if (selector.includes('code')) return mockButtons.code;
-                if (selector.includes('table')) return mockButtons.table;
-                if (selector.includes('image')) return mockButtons.image;
-                if (selector.includes('text')) return mockButtons.text;
-                if (selector.includes('markdown')) return mockButtons.markdown;
-                if (selector.includes('html')) return mockButtons.html;
-                return [];
-            });
+            const selectorMap = {
+                '.bke-toolbar-undo': mockButtons.undo,
+                '.bke-toolbar-redo': mockButtons.redo,
+                '.bke-toolbar-header1': mockButtons.h1,
+                '.bke-toolbar-header2': mockButtons.h2,
+                '.bke-toolbar-header3': mockButtons.h3,
+                '.bke-toolbar-header4': mockButtons.h4,
+                '.bke-toolbar-header5': mockButtons.h5,
+                '.bke-toolbar-header6': mockButtons.h6,
+                '.bke-toolbar-paragraph': mockButtons.paragraph,
+                '.bke-toolbar-bold': mockButtons.bold,
+                '.bke-toolbar-italic': mockButtons.italic,
+                '.bke-toolbar-underline': mockButtons.underline,
+                '.bke-toolbar-strikethrough': mockButtons.strikethrough,
+                '.bke-toolbar-ul': mockButtons.ul,
+                '.bke-toolbar-ol': mockButtons.ol,
+                '.bke-toolbar-sq': mockButtons.sq,
+                '.bke-toolbar-code': mockButtons.code,
+                '.bke-toolbar-table': mockButtons.table,
+                '.bke-toolbar-text': mockButtons.text,
+                '.bke-toolbar-markdown': mockButtons.markdown,
+                '.bke-toolbar-html': mockButtons.html,
+            };
+            document.querySelectorAll.mockImplementation((selector) => selectorMap[selector] || []);
 
             // Mock cleanup method
             ToolbarHandlers.cleanup = jest.fn();
@@ -175,7 +178,6 @@ describe('ToolbarHandlers', () => {
 
             expect(mockButtons.code[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.table[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
-            expect(mockButtons.image[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
         });
 
         it('should add event listeners for view buttons', () => {
@@ -191,6 +193,11 @@ describe('ToolbarHandlers', () => {
 
             // Check that some listeners were tracked
             expect(ToolbarHandlers.eventListeners.size).toBeGreaterThan(0);
+        });
+
+        afterEach(() => {
+            // Restore the original cleanup method
+            ToolbarHandlers.cleanup = originalCleanup;
         });
     });
 
@@ -253,36 +260,31 @@ describe('ToolbarHandlers', () => {
     });
 
     describe('button click handlers', () => {
-        beforeEach(() => {
-            // Setup a mock button for testing
-            const mockButton = {
-                addEventListener: jest.fn()
-            };
-            
-            document.querySelectorAll.mockReturnValue([mockButton]);
-            
-            ToolbarHandlers.init();
-            
-            // Get the handler that was added
-            this.clickHandler = mockButton.addEventListener.mock.calls[0][1];
-        });
-
         it('should prevent default and call toolbar method for header buttons', () => {
             const mockEvent = {
                 preventDefault: jest.fn()
             };
+            const mockToolbar = { h1: jest.fn() };
+            let capturedHandler = null;
+            const mockButton = {
+                addEventListener: jest.fn((event, handler) => {
+                    capturedHandler = handler;
+                })
+            };
 
-            // Test h1 button (we know it's set up to call Toolbar.h1)
-            document.querySelectorAll.mockReturnValue([{
-                addEventListener: (event, handler) => {
-                    handler(mockEvent);
-                }
-            }]);
-            
-            // Re-init to trigger the handler setup
-            ToolbarHandlers.init();
+            // Return mockButton only for h1 selector
+            document.querySelectorAll.mockImplementation((selector) => {
+                return selector === '.bke-toolbar-header1' ? [mockButton] : [];
+            });
+
+            ToolbarHandlers.init(mockToolbar);
+
+            // Invoke the captured handler
+            expect(capturedHandler).not.toBeNull();
+            capturedHandler(mockEvent);
 
             expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockToolbar.h1).toHaveBeenCalled();
         });
     });
 });

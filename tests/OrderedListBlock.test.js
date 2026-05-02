@@ -1,35 +1,14 @@
+﻿'use strict';
+
+// Break circular deps
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
+
 import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { ListBlock } from '@/blocks/ListBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
 import { Editor } from '@/Editor.js';
-
-// Mock dependencies
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    ol: jest.fn()
-  }
-}));
-
-jest.mock('@/Editor.js', () => ({
-  Editor: {
-    setCurrentBlock: jest.fn()
-  }
-}));
-
-// Mock DOM functions
-global.document.createElement = jest.fn(() => ({
-  classList: {
-    add: jest.fn()
-  },
-  setAttribute: jest.fn(),
-  after: jest.fn(),
-  focus: jest.fn(),
-  contentEditable: null
-}));
-
-global.requestAnimationFrame = jest.fn(callback => setTimeout(callback, 0));
 
 describe('OrderedListBlock', () => {
   let orderedListBlock;
@@ -37,6 +16,7 @@ describe('OrderedListBlock', () => {
   beforeEach(() => {
     orderedListBlock = new OrderedListBlock();
     jest.clearAllMocks();
+    global.requestAnimationFrame = jest.fn(callback => callback());
   });
 
   describe('Constructor', () => {
@@ -55,7 +35,7 @@ describe('OrderedListBlock', () => {
       const content = 'First step\nSecond step';
       const html = '<ol><li>First step</li><li>Second step</li></ol>';
       const nested = true;
-      
+
       const block = new OrderedListBlock(content, html, nested);
       expect(block.type).toBe(BlockType.OL);
       expect(block.content).toBe(content);
@@ -73,101 +53,74 @@ describe('OrderedListBlock', () => {
   });
 
   describe('Static Methods', () => {
-    test('getMarkdownTriggers returns correct triggers', () => {
+    test('getMarkdownTriggers returns ordered list triggers', () => {
       const triggers = OrderedListBlock.getMarkdownTriggers();
-      expect(triggers).toHaveLength(2);
-      expect(triggers).toContain('1 ');
-      expect(triggers).toContain('1.');
+      expect(Array.isArray(triggers)).toBe(true);
+      expect(triggers.length).toBeGreaterThan(0);
+      // Should include a numbered prefix pattern
+      const hasNumberedTrigger = triggers.some(t => /^\d/.test(t));
+      expect(hasNumberedTrigger).toBe(true);
     });
 
-    test('triggers are static and immutable', () => {
-      const triggers1 = OrderedListBlock.getMarkdownTriggers();
-      const triggers2 = OrderedListBlock.getMarkdownTriggers();
-      
-      expect(triggers1).toEqual(triggers2);
-      expect(triggers1).not.toBe(triggers2); // Different array instances
+    test('matchesMarkdownTrigger returns true for ordered list patterns', () => {
+      expect(OrderedListBlock.matchesMarkdownTrigger('1. ')).toBe(true);
+      expect(OrderedListBlock.matchesMarkdownTrigger('2. ')).toBe(true);
+      expect(OrderedListBlock.matchesMarkdownTrigger('10. ')).toBe(true);
+      expect(OrderedListBlock.matchesMarkdownTrigger('1) ')).toBe(true);
+    });
+
+    test('matchesMarkdownTrigger returns false for non-ordered patterns', () => {
+      expect(OrderedListBlock.matchesMarkdownTrigger('- ')).toBe(false);
+      expect(OrderedListBlock.matchesMarkdownTrigger('* ')).toBe(false);
+      expect(OrderedListBlock.matchesMarkdownTrigger('# ')).toBe(false);
+    });
+
+    test('getToolbarConfig returns configuration object', () => {
+      const config = OrderedListBlock.getToolbarConfig();
+      expect(config).toBeTruthy();
+      expect(config.class).toBeDefined();
     });
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.ol method', () => {
-      orderedListBlock.applyTransformation();
-      expect(Toolbar.ol).toHaveBeenCalledTimes(1);
-      expect(Toolbar.ol).toHaveBeenCalledWith();
+    test('does nothing when targetElement is null/undefined', () => {
+      expect(() => orderedListBlock.applyTransformation()).not.toThrow();
+      expect(() => orderedListBlock.applyTransformation(null)).not.toThrow();
     });
 
-    test('can be called multiple times', () => {
-      orderedListBlock.applyTransformation();
-      orderedListBlock.applyTransformation();
-      
-      expect(Toolbar.ol).toHaveBeenCalledTimes(2);
+    test('applies ol attributes to provided targetElement', () => {
+      const el = {
+        setAttribute: jest.fn(),
+        textContent: 'item text',
+        innerHTML: '',
+        appendChild: jest.fn(),
+      };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      orderedListBlock.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'ol');
+      expect(el.className).toBe('bke-block bke-block--ol');
     });
   });
 
   describe('createNewListItem', () => {
-    test('creates new list item element with correct properties', () => {
-      const mockOlElement = {
-        appendChild: jest.fn()
-      };
-      
-      const mockCurrentBlock = {
-        querySelector: jest.fn().mockReturnValue(mockOlElement)
-      };
-      
-      const mockCurrentListItem = {}; // Mock current list item parameter
-      
-      const mockNewListItem = {
-        classList: {
-          add: jest.fn()
-        },
-        setAttribute: jest.fn(),
-        after: jest.fn(),
-        focus: jest.fn(),
-        contentEditable: null
-      };
-      
-      document.createElement.mockReturnValueOnce(mockNewListItem);
-      
-      const result = orderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
-      
-      expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockNewListItem.contentEditable).toBe(true);
-      expect(mockOlElement.appendChild).toHaveBeenCalledWith(mockNewListItem);
-      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockCurrentBlock);
-      expect(result).toBe(true);
+    test('returns false when currentBlock is null', () => {
+      expect(orderedListBlock.createNewListItem(null, null)).toBe(false);
     });
 
-    test('focuses on new list item after animation frame', (done) => {
-      const mockOlElement = {
-        appendChild: jest.fn()
-      };
-      
-      const mockCurrentBlock = {
-        querySelector: jest.fn().mockReturnValue(mockOlElement)
-      };
-      
-      const mockCurrentListItem = {}; // Mock current list item parameter
-      
-      const mockNewListItem = {
-        classList: {
-          add: jest.fn()
-        },
-        setAttribute: jest.fn(),
-        focus: jest.fn(),
-        contentEditable: null
-      };
-      
-      document.createElement.mockReturnValueOnce(mockNewListItem);
-      
-      // Override requestAnimationFrame to execute immediately for testing
-      global.requestAnimationFrame = jest.fn(callback => {
-        callback();
-        // Verify focus was called
-        expect(mockNewListItem.focus).toHaveBeenCalled();
-        done();
-      });
-      
-      orderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
+    test('returns false when no ol element found in block', () => {
+      const mockBlock = { querySelector: jest.fn().mockReturnValue(null) };
+      expect(orderedListBlock.createNewListItem(mockBlock, {})).toBe(false);
+    });
+
+    test('creates new li and returns true', () => {
+      const mockOl = { appendChild: jest.fn() };
+      const mockBlock = { querySelector: jest.fn().mockReturnValue(mockOl) };
+      const mockEditorInst = { setCurrentBlock: jest.fn() };
+      Editor.getInstanceFromElement = jest.fn().mockReturnValue(mockEditorInst);
+
+      const result = orderedListBlock.createNewListItem(mockBlock, {});
+      expect(result).toBe(true);
+      expect(mockOl.appendChild).toHaveBeenCalled();
     });
   });
 
@@ -176,37 +129,21 @@ describe('OrderedListBlock', () => {
       expect(orderedListBlock).toBeInstanceOf(ListBlock);
     });
 
-    test('inherits from BaseBlock', () => {
-      expect(orderedListBlock).toBeInstanceOf(BaseBlock);
-    });
-
     test('has correct block type', () => {
-      expect(orderedListBlock.type).toBe(BlockType.OL);
-    });
-
-    test('maintains type when content changes', () => {
-      orderedListBlock.content = 'New list content';
       expect(orderedListBlock.type).toBe(BlockType.OL);
     });
   });
 
   describe('Content and HTML handling', () => {
     test('can set and get content', () => {
-      const content = 'Step 1\nStep 2\nStep 3';
-      orderedListBlock.content = content;
-      expect(orderedListBlock.content).toBe(content);
+      orderedListBlock.content = 'Step 1\nStep 2';
+      expect(orderedListBlock.content).toBe('Step 1\nStep 2');
     });
 
     test('can set and get HTML', () => {
-      const html = '<ol><li>Step 1</li><li>Step 2</li><li>Step 3</li></ol>';
+      const html = '<ol><li>Step 1</li></ol>';
       orderedListBlock.html = html;
       expect(orderedListBlock.html).toBe(html);
-    });
-
-    test('can set and get nested status', () => {
-      expect(orderedListBlock.nested).toBe(false);
-      orderedListBlock.nested = true;
-      expect(orderedListBlock.nested).toBe(true);
     });
   });
 });

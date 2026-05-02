@@ -4,19 +4,55 @@ import { ParagraphBlock } from '@/blocks/ParagraphBlock.js';
 import { H1Block } from '@/blocks/H1Block.js';
 import { H2Block } from '@/blocks/H2Block.js';
 import { H3Block } from '@/blocks/H3Block.js';
+import { H4Block } from '@/blocks/H4Block.js';
+import { H5Block } from '@/blocks/H5Block.js';
+import { H6Block } from '@/blocks/H6Block.js';
 import { UnorderedListBlock } from '@/blocks/UnorderedListBlock.js';
 import { OrderedListBlock } from '@/blocks/OrderedListBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 import { CodeBlock } from '@/blocks/CodeBlock.js';
 import { QuoteBlock } from '@/blocks/QuoteBlock.js';
 import { DelimiterBlock } from '@/blocks/DelimiterBlock.js';
+import { TableBlock } from '@/blocks/TableBlock.js';
+import { ImageBlock } from '@/blocks/ImageBlock.js';
 import { BlockType } from '@/BlockType.js';
+
+// Undo the global mock from setup.js so we test the real implementation
+jest.unmock('../src/blocks/BlockFactory');
+// Break the circular dependency: BlockFactory → ListBlock → Editor → BlockFactory
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
 
 describe('BlockFactory', () => {
   test('creates paragraph block by default', () => {
     const block = BlockFactory.createBlock();
     expect(block).toBeInstanceOf(ParagraphBlock);
     expect(block.type).toBe(BlockType.PARAGRAPH);
+  });
+
+  test('creates all block types by type key', () => {
+    const cases = [
+      [BlockType.H1, H1Block],
+      [BlockType.H2, H2Block],
+      [BlockType.H3, H3Block],
+      [BlockType.H4, H4Block],
+      [BlockType.H5, H5Block],
+      [BlockType.H6, H6Block],
+      [BlockType.UL, UnorderedListBlock],
+      [BlockType.OL, OrderedListBlock],
+      [BlockType.SQ, TaskListBlock],
+      [BlockType.CODE, CodeBlock],
+      [BlockType.QUOTE, QuoteBlock],
+      [BlockType.DELIMITER, DelimiterBlock],
+      [BlockType.TABLE, TableBlock],
+      [BlockType.IMAGE, ImageBlock],
+      [BlockType.PARAGRAPH, ParagraphBlock],
+    ];
+    for (const [type, ExpectedClass] of cases) {
+      const block = BlockFactory.createBlock(type);
+      expect(block).toBeInstanceOf(ExpectedClass);
+      expect(block.type).toBe(type);
+    }
   });
 
   test('creates specific block types', () => {
@@ -98,8 +134,9 @@ describe('Block types', () => {
     const triggers = OrderedListBlock.getMarkdownTriggers();
     expect(triggers).toContain('1 ');
     expect(triggers).toContain('1.');
+    // matchesMarkdownTrigger requires a digit followed by optional punctuation then whitespace
     expect(OrderedListBlock.matchesMarkdownTrigger('1 ')).toBe(true);
-    expect(OrderedListBlock.matchesMarkdownTrigger('1.')).toBe(true);
+    expect(OrderedListBlock.matchesMarkdownTrigger('1. ')).toBe(true);
     expect(OrderedListBlock.matchesMarkdownTrigger('* ')).toBe(false);
   });
 

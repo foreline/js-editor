@@ -224,4 +224,76 @@ describe('BaseBlock', () => {
       expect(block.nested).toBe(true);
     });
   });
+
+  describe('syncFromElement', () => {
+    test('does nothing when no element attached', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH);
+      expect(() => block.syncFromElement()).not.toThrow();
+    });
+
+    test('syncs content and html from element when element exists', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH);
+      const el = document.createElement('div');
+      el.textContent = 'Hello';
+      block._element = el;
+      block.syncFromElement();
+      expect(block._content).toBe('Hello');
+    });
+  });
+
+  describe('toMarkdown / toHtml', () => {
+    test('toMarkdown returns content', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH, 'hello');
+      expect(block.toMarkdown()).toBe('hello');
+    });
+
+    test('toHtml returns html', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH, '', '<p>hello</p>');
+      expect(block.toHtml()).toBe('<p>hello</p>');
+    });
+  });
+
+  describe('renderToElement', () => {
+    test('returns a div element', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH, 'text', '<p>text</p>');
+      const el = block.renderToElement();
+      expect(el.tagName).toBe('DIV');
+      expect(el.classList.contains('bke-block')).toBe(true);
+      expect(el.getAttribute('data-block-type')).toBe(BlockType.PARAGRAPH);
+    });
+  });
+
+  describe('static parse/canParse methods', () => {
+    test('parseFromHtml returns null', () => {
+      expect(BaseBlock.parseFromHtml('<p>test</p>')).toBeNull();
+    });
+
+    test('parseFromMarkdown returns null', () => {
+      expect(BaseBlock.parseFromMarkdown('test')).toBeNull();
+    });
+
+    test('canParseHtml returns false', () => {
+      expect(BaseBlock.canParseHtml('<p>test</p>')).toBe(false);
+    });
+
+    test('canParseMarkdown returns false', () => {
+      expect(BaseBlock.canParseMarkdown('test')).toBe(false);
+    });
+  });
+
+  describe('isAtEnd', () => {
+    test('returns false when range or blockElement is null', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH);
+      expect(block.isAtEnd(null, null)).toBe(false);
+      expect(block.isAtEnd(document.createElement('div'), null)).toBe(false);
+    });
+
+    test('returns false when range is not collapsed', () => {
+      const block = new BaseBlock(BlockType.PARAGRAPH);
+      const el = document.createElement('div');
+      el.textContent = 'hello';
+      const range = { collapsed: false };
+      expect(block.isAtEnd(el, range)).toBe(false);
+    });
+  });
 });

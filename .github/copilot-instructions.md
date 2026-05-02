@@ -90,6 +90,73 @@ Blocks update a `data-timestamp` attribute on content changes to efficiently det
 - Use `tests/testUtils.js` for shared test helpers
 - When adding a new block type, add a corresponding test file
 
+### Test Coverage Strategy
+
+The project is published on npm (`@foreline/blockeditor`) and follows a three-tier coverage strategy. Always respect this order when writing or reviewing tests:
+
+#### Tier 1 — File Coverage
+Every source file under `src/` must have an associated test file. Run coverage to find gaps:
+```powershell
+$env:NODE_OPTIONS="--max-old-space-size=4096"; npx jest --coverage --coverageReporters=text --runInBand
+```
+Current coverage targets: **80 % statements / 75 % branches / 80 % functions**.
+
+Files that require test files (zero or near-zero coverage, ordered by priority):
+- `src/blocks/ListBlock.js` — shared base for `UnorderedListBlock` and `OrderedListBlock`; no test file
+- `src/blocks/index.js` — barrel export; needs a smoke test verifying all named exports
+- `src/blocks/CodeBlock.js` — 497-line block, `CodeBlock.test.js` covers < 2 %
+- `src/utils/syntaxHighlighter.js` — `syntaxHighlighter.test.js` covers only the import
+- `src/DebugTooltip.js` — no test file; manages DOM lifecycle and event listeners
+- `src/interfaces/BlockInterface.js` — no test verifying the contract against real block classes
+
+#### Tier 2 — Happy Path Coverage
+Each source file must have tests for its primary use cases. Minimum per-file checklist:
+
+| File | Required happy paths |
+|---|---|
+| `src/Editor.js` | `new Editor({markdown})`, `new Editor({html})`, `setMarkdown/setHtml`, `getMarkdown/getHtml`, `destroy()` removes listeners, `readonly` mode |
+| `src/blocks/HeadingBlock.js` | Enter at end creates paragraph, `toMarkdown` for H1–H6, markdown trigger (`# ` → H1) |
+| `src/blocks/TableBlock.js` | `parseTableContent`, `toMarkdown`, header/row getters |
+| `src/blocks/CodeBlock.js` | Constructor, `toMarkdown`, language selection, Tab indentation, `handleEnterKey` |
+| `src/KeyHandler.js` | Tab indentation, Ctrl+B/I/K shortcuts, Arrow key boundary behavior |
+| `src/Parser.js` | `parseHtml` for all block types, `parseMarkdown` with full markdown samples |
+| `src/Toolbar.js` | Render with default config, button click triggers editor method, dropdown `aria-expanded` toggle |
+| `src/blocks/BlockFactory.js` | `create(type)` for every type key: `p`, `h1`–`h6`, `ul`, `ol`, `sq`, `code`, `table`, `image`, `quote`, `del` |
+
+#### Tier 3 — NPM-Specific Tests
+
+Because the library is published on npm, additional tests guard the published artifact:
+
+**Build artifact smoke tests** — live in `tests/npm/`:
+- `tests/npm/esm-import.test.mjs` — validates `dist/blockeditor.es.js` exports (`default`, named, `init`, `getMarkdown`, `getHtml`, `destroy`, `on`)
+- `tests/npm/cjs-require.test.cjs` — validates `dist/blockeditor.cjs.js` via `require()`
+
+Always run the build before executing npm tests:
+```powershell
+npm run build:lib; npx jest tests/npm/
+```
+
+**README usage examples** — `tests/readme-examples.test.js` must execute every code block from `README.md` and `LIBRARY.md` that does not require a live browser (constructor options, `getMarkdown`, `getHtml`, event subscription patterns).
+
+**Package content verification** — `scripts/verify-package.js` (run by `npm run build:lib`) must assert:
+- `dist/blockeditor.es.js` contains `export`
+- `dist/blockeditor.cjs.js` contains `exports`
+- `dist/index.d.ts` declares `module '@foreline/blockeditor'` (not `js-editor`)
+- `dist/style.css` and `dist/editor.css` are non-empty
+- All paths in `package.json` `exports` map resolve to existing files
+
+**Node version matrix** — a CI workflow (`ci-node-matrix.yml`) must test Node 18, 20, and 22 with both ESM and CJS builds on each release.
+
+#### Tier 4 — Backward Compatibility
+
+These tests must be reviewed and updated on every minor version bump:
+
+- **`tests/api-contract.test.js`** — asserts the exact set of public instance and static methods on `Editor`. Fails if a method is renamed or removed.
+- **`tests/event-contract.test.js`** — asserts `EVENTS` object contains all documented event name keys (`CONTENT_CHANGED`, `BLOCK_FOCUSED`, `TOOLBAR_ACTION`, etc.).
+- **`tests/markdown-roundtrip.test.js`** — a fixture-driven test that ensures `new Editor({ markdown: input }).getMarkdown()` round-trips without loss for H1–H6, UL, OL, blockquote, code block, and table.
+
+Reference document: `dev-docs/proposals/test-coverage-strategy.md`
+
 ## Build & Scripts
 
 | Command | Purpose |

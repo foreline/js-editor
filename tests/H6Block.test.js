@@ -1,15 +1,7 @@
-import { H6Block } from '@/blocks/H6Block.js';
+﻿import { H6Block } from '@/blocks/H6Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h6: jest.fn()
-  }
-}));
 
 describe('H6Block', () => {
   let h6Block;
@@ -64,10 +56,12 @@ describe('H6Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h6 method', () => {
-      h6Block.applyTransformation();
-      expect(Toolbar.h6).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h6).toHaveBeenCalledWith();
+    test('applies h6 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h6Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h6');
+      expect(el.className).toBe('bke-block bke-block--h6');
     });
   });
 
@@ -85,3 +79,6 @@ describe('H6Block', () => {
     });
   });
 });
+
+
+

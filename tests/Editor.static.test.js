@@ -1,9 +1,8 @@
 'use strict';
 
 import { Editor } from '../src/Editor.js';
-import { Parser } from '../src/Parser.js';
 
-// Mock dependencies  
+// Mock dependencies so the Editor module loads without DOM side effects
 jest.mock('../src/Parser.js');
 jest.mock('../src/Toolbar.js');
 jest.mock('../src/KeyHandler.js');
@@ -14,295 +13,201 @@ jest.mock('../src/utils/log.js');
 
 describe('Editor Static Methods', () => {
     let mockElement;
-    let mockEditor;
+    let mockEditorInstance;
 
     beforeEach(() => {
-        // Clear the instances registry
+        // Clear instances between tests
         Editor._instances.clear();
-        Editor._fallbackBlocks = [];
 
         mockElement = {
             id: 'test-editor',
             innerHTML: '<p>Test content</p>',
-            querySelector: jest.fn(),
+            parentElement: null,
+            querySelector: jest.fn().mockReturnValue(null),
             querySelectorAll: jest.fn().mockReturnValue([])
         };
 
-        mockEditor = {
-            keybuffer: ['a', 'b'],
-            currentBlock: mockElement,
-            blocks: [{ type: 'p' }],
-            instance: null,
-            addDefaultBlock: jest.fn().mockReturnValue(mockElement),
-            setCurrentBlock: jest.fn(),
-            update: jest.fn(),
-            getMarkdown: jest.fn().mockReturnValue('# Test Markdown'),
-            getHtml: jest.fn().mockReturnValue('<h1>Test HTML</h1>')
+        mockEditorInstance = {
+            getMarkdown: jest.fn().mockReturnValue('# Test'),
+            getHtml: jest.fn().mockReturnValue('<h1>Test</h1>')
         };
-
-        // Setup document mocks
-        document.getElementById = jest.fn().mockReturnValue(mockElement);
-        document.createElement = jest.fn().mockReturnValue({
-            id: '',
-            className: '',
-            appendChild: jest.fn()
-        });
-        document.querySelector = jest.fn();
-
-        // Setup Parser mocks
-        Parser.md2html = jest.fn().mockReturnValue('<h1>Test HTML</h1>');
-        Parser.html2md = jest.fn().mockReturnValue('# Test Markdown');
     });
 
     afterEach(() => {
         jest.clearAllMocks();
     });
 
-    describe('static property getters with instances', () => {
-        beforeEach(() => {
-            Editor._instances.set(mockElement, mockEditor);
+    // -------------------------------------------------------------------------
+    describe('_instances registry', () => {
+        it('should be a Map', () => {
+            expect(Editor._instances).toBeInstanceOf(Map);
         });
 
-        it('should get instance from first registered editor', () => {
-            const result = Editor.instance;
-            expect(result).toBe(mockElement);
-        });
-
-        it('should set instance on first registered editor', () => {
-            const newElement = { id: 'new-editor' };
-            
-            // The static instance setter only handles clearing instances, not setting them
-            // This test should verify that setting to null clears the instances
-            Editor.instance = null;
-            
+        it('should start empty', () => {
             expect(Editor._instances.size).toBe(0);
         });
 
-        it('should get currentBlock from first registered editor', () => {
-            const result = Editor.currentBlock;
-            expect(result).toBe(mockElement);
+        it('should allow manual registration of instances', () => {
+            Editor._instances.set(mockElement, mockEditorInstance);
+            expect(Editor._instances.size).toBe(1);
+            expect(Editor._instances.get(mockElement)).toBe(mockEditorInstance);
         });
 
-        it('should set currentBlock on first registered editor', () => {
-            const newBlock = { id: 'new-block' };
-            Editor.currentBlock = newBlock;
-            
-            expect(mockEditor.currentBlock).toBe(newBlock);
-        });
-
-        it('should get keybuffer from first registered editor', () => {
-            const result = Editor.keybuffer;
-            expect(result).toEqual(['a', 'b']);
-        });
-
-        it('should set keybuffer on first registered editor', () => {
-            const newBuffer = ['x', 'y', 'z'];
-            Editor.keybuffer = newBuffer;
-            
-            expect(mockEditor.keybuffer).toEqual(newBuffer);
-        });
-
-        it('should get blocks from first registered editor', () => {
-            const result = Editor.blocks;
-            expect(result).toEqual([{ type: 'p' }]);
-        });
-
-        it('should set blocks on first registered editor', () => {
-            const newBlocks = [{ type: 'h1' }];
-            Editor.blocks = newBlocks;
-            
-            expect(mockEditor.blocks).toEqual(newBlocks);
+        it('should allow clearing all instances', () => {
+            Editor._instances.set(mockElement, mockEditorInstance);
+            Editor._instances.clear();
+            expect(Editor._instances.size).toBe(0);
         });
     });
 
-    describe('static property getters without instances', () => {
-        it('should return null for instance when no editors exist', () => {
-            const result = Editor.instance;
-            expect(result).toBeNull();
+    // -------------------------------------------------------------------------
+    describe('getInstance(element)', () => {
+        it('should return the editor instance for a registered element', () => {
+            Editor._instances.set(mockElement, mockEditorInstance);
+            expect(Editor.getInstance(mockElement)).toBe(mockEditorInstance);
         });
 
-        it('should do nothing when setting instance with no editors', () => {
-            Editor.instance = mockElement;
-            // Should not throw error
+        it('should return null when the element is not registered', () => {
+            expect(Editor.getInstance(mockElement)).toBeNull();
         });
 
-        it('should return null for currentBlock when no editors exist', () => {
-            const result = Editor.currentBlock;
-            expect(result).toBeNull();
-        });
-
-        it('should do nothing when setting currentBlock with no editors', () => {
-            Editor.currentBlock = mockElement;
-            // Should not throw error
-        });
-
-        it('should return empty array for keybuffer when no editors exist', () => {
-            const result = Editor.keybuffer;
-            expect(result).toEqual([]);
-        });
-
-        it('should do nothing when setting keybuffer with no editors', () => {
-            Editor.keybuffer = ['a', 'b'];
-            // Should not throw error
-        });
-
-        it('should return fallback blocks when no editors exist', () => {
-            Editor._fallbackBlocks = [{ type: 'fallback' }];
-            const result = Editor.blocks;
-            expect(result).toEqual([{ type: 'fallback' }]);
-        });
-
-        it('should set fallback blocks when no editors exist', () => {
-            const newBlocks = [{ type: 'new-fallback' }];
-            Editor.blocks = newBlocks;
-            expect(Editor._fallbackBlocks).toEqual(newBlocks);
+        it('should return null for undefined input', () => {
+            expect(Editor.getInstance(undefined)).toBeNull();
         });
     });
 
-    describe('static backward compatibility methods', () => {
-        beforeEach(() => {
-            Editor._instances.set(mockElement, mockEditor);
+    // -------------------------------------------------------------------------
+    describe('getInstanceFromElement(element)', () => {
+        it('should return null for null/undefined input', () => {
+            expect(Editor.getInstanceFromElement(null)).toBeNull();
+            expect(Editor.getInstanceFromElement(undefined)).toBeNull();
         });
 
-        it('should call addDefaultBlock on first editor instance', () => {
-            const result = Editor.addDefaultBlock();
-
-            expect(mockEditor.addDefaultBlock).toHaveBeenCalled();
-            expect(result).toBe(mockElement);
+        it('should return the instance when the exact element is registered', () => {
+            Editor._instances.set(mockElement, mockEditorInstance);
+            const result = Editor.getInstanceFromElement(mockElement);
+            expect(result).toBe(mockEditorInstance);
         });
 
-        it('should return undefined when no editor instances exist', () => {
-            Editor._instances.clear();
-
-            const result = Editor.addDefaultBlock();
-
-            expect(result).toBeUndefined();
+        it('should walk up the DOM tree to find an ancestor instance', () => {
+            const childElement = {
+                id: 'child',
+                parentElement: mockElement
+            };
+            Editor._instances.set(mockElement, mockEditorInstance);
+            const result = Editor.getInstanceFromElement(childElement);
+            expect(result).toBe(mockEditorInstance);
         });
 
-        it('should call setCurrentBlock on first editor instance', () => {
-            const newBlock = { id: 'new-block' };
-            
-            Editor.setCurrentBlock(newBlock);
-            
-            expect(mockEditor.setCurrentBlock).toHaveBeenCalledWith(newBlock);
+        it('should return first instance as fallback when no ancestor is found', () => {
+            const unrelatedElement = { id: 'other', parentElement: null };
+            Editor._instances.set(mockElement, mockEditorInstance);
+            const result = Editor.getInstanceFromElement(unrelatedElement);
+            expect(result).toBe(mockEditorInstance);
         });
 
-        it('should do nothing when setCurrentBlock called with no instances', () => {
-            Editor._instances.clear();
-            
-            Editor.setCurrentBlock(mockElement);
-            // Should not throw error
-        });
-
-        it('should call update on first editor instance', () => {
-            Editor.update();
-            
-            expect(mockEditor.update).toHaveBeenCalled();
-        });
-
-        it('should do nothing when update called with no instances', () => {
-            Editor._instances.clear();
-            
-            Editor.update();
-            // Should not throw error
+        it('should return null when no instances exist', () => {
+            const unrelatedElement = { id: 'other', parentElement: null };
+            expect(Editor.getInstanceFromElement(unrelatedElement)).toBeNull();
         });
     });
 
-    describe('getMarkdown', () => {
-        beforeEach(() => {
-            Editor._instances.set(mockElement, mockEditor);
-            mockElement.innerHTML = '<h1>Test HTML</h1>';
+    // -------------------------------------------------------------------------
+    describe('html2md(html)', () => {
+        it('should return empty string for null input', () => {
+            expect(Editor.html2md(null)).toBe('');
         });
 
-        it('should call instance getMarkdown method', () => {
-            const result = Editor.getMarkdown();
-            
-            expect(mockEditor.getMarkdown).toHaveBeenCalled();
-            expect(result).toBe('# Test Markdown');
+        it('should return empty string for non-string input', () => {
+            expect(Editor.html2md(123)).toBe('');
         });
 
-        it('should use instance getMarkdown when available', () => {
-            Editor.getMarkdown();
-            
-            expect(mockEditor.getMarkdown).toHaveBeenCalled();
+        it('should return empty string for empty string input', () => {
+            expect(Editor.html2md('')).toBe('');
         });
 
-        it('should return empty string when no instances', () => {
-            Editor._instances.clear();
-            
-            const result = Editor.getMarkdown();
-            
-            expect(result).toBe('');
+        it('should return a string for valid HTML input', () => {
+            const result = Editor.html2md('<h1>Hello</h1>');
+            expect(typeof result).toBe('string');
+        });
+
+        it('should return a string for HTML with formatting', () => {
+            const result = Editor.html2md('<p><strong>bold</strong></p>');
+            expect(typeof result).toBe('string');
         });
     });
 
-    describe('getHtml', () => {
-        beforeEach(() => {
-            Editor._instances.set(mockElement, mockEditor);
-            mockElement.innerHTML = '<h1>Test HTML</h1>';
+    // -------------------------------------------------------------------------
+    describe('md2html(md)', () => {
+        it('should return empty string for null input', () => {
+            expect(Editor.md2html(null)).toBe('');
         });
 
-        it('should return HTML content from instance', () => {
-            const result = Editor.getHtml();
-            
-            expect(result).toBe('<h1>Test HTML</h1>');
+        it('should return empty string for non-string input', () => {
+            expect(Editor.md2html(42)).toBe('');
         });
 
-        it('should return empty string when no instances', () => {
-            Editor._instances.clear();
-            
-            const result = Editor.getHtml();
-            
-            expect(result).toBe('');
+        it('should return empty string for empty string input', () => {
+            expect(Editor.md2html('')).toBe('');
+        });
+
+        it('should convert a markdown heading to HTML', () => {
+            const result = Editor.md2html('# Hello');
+            expect(result).toContain('Hello');
+            expect(result).toMatch(/<h1/i);
+        });
+
+        it('should convert bold markdown to HTML', () => {
+            const result = Editor.md2html('**bold**');
+            expect(result).toContain('bold');
+            expect(result).toMatch(/<strong>/i);
         });
     });
 
-    describe('getBlockInstance', () => {
-        it('should return block instance for given block type', () => {
-            // Mock the BlockFactory.createBlock method
-            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
-            const mockBlockInstance = { type: 'test' };
-            BlockFactory.createBlock = jest.fn().mockReturnValue(mockBlockInstance);
-            
-            const result = Editor.getBlockInstance('test-block');
-            
-            expect(BlockFactory.createBlock).toHaveBeenCalledWith('test-block', '', '', false);
-            expect(result).toEqual({ type: 'test' });
+    // -------------------------------------------------------------------------
+    describe('getBlockInstance(blockType)', () => {
+        it('should call BlockFactory.createBlock with the block type', () => {
+            const { BlockFactory } = require('../src/blocks/BlockFactory.js');
+            const mockBlock = { type: 'p' };
+            BlockFactory.createBlock = jest.fn().mockReturnValue(mockBlock);
+
+            const result = Editor.getBlockInstance('p');
+
+            expect(BlockFactory.createBlock).toHaveBeenCalledWith('p', '', '', false);
+            expect(result).toBe(mockBlock);
         });
 
-        it('should return null when block class not found', () => {
-            // Mock the BlockFactory.createBlock method to throw an error
-            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
+        it('should return null when BlockFactory.createBlock throws', () => {
+            const { BlockFactory } = require('../src/blocks/BlockFactory.js');
             BlockFactory.createBlock = jest.fn().mockImplementation(() => {
-                throw new Error('Block not found');
+                throw new Error('Unknown block type');
             });
-            
-            const result = Editor.getBlockInstance('unknown-block');
-            
-            expect(BlockFactory.createBlock).toHaveBeenCalledWith('unknown-block', '', '', false);
+
+            const result = Editor.getBlockInstance('unknown');
             expect(result).toBeNull();
         });
     });
 
-    describe('getBlockClass', () => {
-        it('should return block class for paragraph', () => {
-            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
-            const mockParagraphBlock = class ParagraphBlock {};
-            BlockFactory.getBlockClass = jest.fn().mockReturnValue(mockParagraphBlock);
-            
+    // -------------------------------------------------------------------------
+    describe('getBlockClass(blockType)', () => {
+        it('should call BlockFactory.getBlockClass with the block type', () => {
+            const { BlockFactory } = require('../src/blocks/BlockFactory.js');
+            class MockBlock {}
+            BlockFactory.getBlockClass = jest.fn().mockReturnValue(MockBlock);
+
             const result = Editor.getBlockClass('p');
-            
+
             expect(BlockFactory.getBlockClass).toHaveBeenCalledWith('p');
-            expect(result).toBe(mockParagraphBlock);
+            expect(result).toBe(MockBlock);
         });
 
-        it('should return null for unknown block type', () => {
-            const BlockFactory = require('../src/blocks/BlockFactory.js').BlockFactory;
-            BlockFactory.getBlockClass = jest.fn().mockReturnValue(null);
-            
+        it('should return null when BlockFactory.getBlockClass throws', () => {
+            const { BlockFactory } = require('../src/blocks/BlockFactory.js');
+            BlockFactory.getBlockClass = jest.fn().mockImplementation(() => {
+                throw new Error('Not found');
+            });
+
             const result = Editor.getBlockClass('unknown');
-            
-            expect(BlockFactory.getBlockClass).toHaveBeenCalledWith('unknown');
             expect(result).toBeNull();
         });
     });

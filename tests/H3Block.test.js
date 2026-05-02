@@ -1,15 +1,7 @@
-import { H3Block } from '@/blocks/H3Block.js';
+﻿import { H3Block } from '@/blocks/H3Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h3: jest.fn()
-  }
-}));
 
 describe('H3Block', () => {
   let h3Block;
@@ -64,10 +56,12 @@ describe('H3Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h3 method', () => {
-      h3Block.applyTransformation();
-      expect(Toolbar.h3).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h3).toHaveBeenCalledWith();
+    test('applies h3 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h3Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h3');
+      expect(el.className).toBe('bke-block bke-block--h3');
     });
   });
 
@@ -85,3 +79,6 @@ describe('H3Block', () => {
     });
   });
 });
+
+
+

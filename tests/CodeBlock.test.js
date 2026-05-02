@@ -1,4 +1,4 @@
-import { CodeBlock } from '@/blocks/CodeBlock.js';
+﻿import { CodeBlock } from '@/blocks/CodeBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
 import { Toolbar } from '@/Toolbar.js';
@@ -110,7 +110,7 @@ describe('CodeBlock', () => {
   });
 
   describe('handleEnterKey', () => {
-    test('returns false to allow default behavior', () => {
+    test('returns true (handled) to prevent new block creation', () => {
       const event = {
         key: 'Enter',
         preventDefault: jest.fn()
@@ -118,11 +118,12 @@ describe('CodeBlock', () => {
 
       const result = codeBlock.handleEnterKey(event);
 
-      expect(result).toBe(false);
+      // CodeBlock returns true so KeyHandler knows it handled Enter (inserts newline in code)
+      expect(result).toBe(true);
       expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
-    test('handles Enter key consistently', () => {
+    test('handles Enter key consistently across modifier combinations', () => {
       const events = [
         { key: 'Enter' },
         { key: 'Enter', shiftKey: true },
@@ -131,7 +132,7 @@ describe('CodeBlock', () => {
 
       events.forEach(event => {
         const result = codeBlock.handleEnterKey(event);
-        expect(result).toBe(false);
+        expect(result).toBe(true);
       });
     });
   });
@@ -562,10 +563,8 @@ describe('CodeBlock', () => {
       const code = element.querySelector('code');
       expect(code).toBeTruthy();
       
-      // Should contain language selector
-      const selector = element.querySelector('.language-selector');
+      // Should contain language selector (querySelector by 'select' since classList mock doesn't update className)
       const select = element.querySelector('select');
-      expect(selector).toBeTruthy();
       expect(select).toBeTruthy();
     });
 
@@ -578,9 +577,9 @@ describe('CodeBlock', () => {
       const code = element.querySelector('code');
       expect(code).toBeTruthy();
       
-      // Should contain language selector
-      const selector = element.querySelector('.language-selector');
-      expect(selector).toBeTruthy();
+      // Should contain language selector (querySelector by 'select' tag)
+      const select = element.querySelector('select');
+      expect(select).toBeTruthy();
     });
 
     test('handles empty content and HTML', () => {
@@ -593,9 +592,9 @@ describe('CodeBlock', () => {
       expect(pre).toBeTruthy();
       expect(code).toBeTruthy();
       
-      // Should contain language selector
-      const selector = element.querySelector('.language-selector');
-      expect(selector).toBeTruthy();
+      // Should contain language selector (querySelector by 'select' tag)
+      const select = element.querySelector('select');
+      expect(select).toBeTruthy();
     });
 
     test('creates new element instance each time', () => {
@@ -715,3 +714,5 @@ describe('CodeBlock', () => {
     });
   });
 });
+
+

@@ -63,6 +63,33 @@ describe('Utils', () => {
     });
   });
 
+  describe('normalize method', () => {
+    test('should replace double spaces with single space', () => {
+      const result = Utils.normalize('hello  world');
+      expect(result).toBe('hello world');
+    });
+
+    test('should replace <div> with <p>', () => {
+      const result = Utils.normalize('<div>content</div>');
+      expect(result).toBe('<p>content</p>');
+    });
+
+    test('should replace space-dash-space with mdash', () => {
+      const result = Utils.normalize('hello - world');
+      expect(result).toBe('hello &mdash; world');
+    });
+
+    test('should insert newline between closing and opening p tags', () => {
+      const result = Utils.normalize('<p>one</p><p>two</p>');
+      expect(result).toBe('<p>one</p>\n<p>two</p>');
+    });
+
+    test('should handle plain string', () => {
+      const result = Utils.normalize('hello');
+      expect(result).toBe('hello');
+    });
+  });
+
   describe('escapeHTML method', () => {
     test('should escape HTML special characters', () => {
       const input = '<div>Test & "quote" \'single\' </div>';

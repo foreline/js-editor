@@ -3,6 +3,26 @@
  */
 
 // Mock DOM elements with proper classList support
+const createMockClassList = () => {
+    const classes = new Set();
+    return {
+        _classes: classes,
+        add: jest.fn(function(...cls) { cls.forEach(c => classes.add(c)); }),
+        remove: jest.fn(function(...cls) { cls.forEach(c => classes.delete(c)); }),
+        toggle: jest.fn(function(cls, force) {
+            if (force === undefined) { if (classes.has(cls)) classes.delete(cls); else classes.add(cls); }
+            else { force ? classes.add(cls) : classes.delete(cls); }
+        }),
+        contains: jest.fn(function(cls) { return classes.has(cls); }),
+        replace: jest.fn(function(oldCls, newCls) { classes.delete(oldCls); classes.add(newCls); }),
+        get value() { return [...classes].join(' '); },
+        toString() { return [...classes].join(' '); },
+        get length() { return classes.size; },
+        item: jest.fn(i => [...classes][i] || null),
+        forEach: jest.fn(function(fn) { classes.forEach(fn); }),
+    };
+};
+
 const mockClassList = {
     add: jest.fn(),
     remove: jest.fn(),
@@ -47,18 +67,44 @@ const mockStyle = {
 const _mockMatchesSelector = (el, selector) => {
     if (!el || !selector) return false;
     selector = selector.trim();
+
+    // Compound: tag[attr], tag.class, tag[attr="val"]
+    const compoundMatch = selector.match(/^([a-zA-Z][a-zA-Z0-9]*)(\[.+\]|\.[\w-]+)$/);
+    if (compoundMatch) {
+        const [, tag, rest] = compoundMatch;
+        if (!el.tagName || el.tagName.toLowerCase() !== tag.toLowerCase()) return false;
+        return _mockMatchesSelector(el, rest);
+    }
+
     // Class selector: .bke-block, .bke-block--code
     if (selector.startsWith('.')) {
         const cls = selector.substring(1);
+        if (el.classList && typeof el.classList.contains === 'function') {
+            const result = el.classList.contains(cls);
+            if (result) return true;
+        }
         return (el.className || '').split(/\s+/).includes(cls);
     }
+
+    // Attribute selector: [type="checkbox"], [data-block-type="sq"]
+    const attrMatch = selector.match(/^\[([^\]=]+)(?:=["']?([^"'\]]*)["']?)?\]$/);
+    if (attrMatch) {
+        const [, attrName, attrValue] = attrMatch;
+        // Handle special JS properties for common attrs
+        const specialMap = { type: '_type', checked: '_checked', disabled: 'disabled', 'data-block-type': '_dataBlockType' };
+        const prop = specialMap[attrName] || attrName;
+        const elVal = el[prop] !== undefined ? String(el[prop]) : (el.attributes && el.attributes[attrName] !== undefined ? String(el.attributes[attrName]) : undefined);
+        if (attrValue === undefined) return elVal !== undefined;
+        return elVal === attrValue;
+    }
+
     // Tag selector: pre, code, h1, div
     return el.tagName && el.tagName.toLowerCase() === selector.toLowerCase();
 };
 
 const createMockElement = (tagName = 'div') => ({
     tagName: tagName.toUpperCase(),
-    classList: { ...mockClassList },
+    classList: createMockClassList(),
     style: { ...mockStyle },
     innerHTML: '',
     textContent: '',
@@ -178,6 +224,8 @@ const createMockElement = (tagName = 'div') => ({
     }),
     
     // Properties for specific element types
+    get disabled() { return this._disabled || false; },
+    set disabled(value) { this._disabled = value; },
     get checked() { return this._checked || false; },
     set checked(value) { this._checked = value; },
     get value() { return this._value || ''; },

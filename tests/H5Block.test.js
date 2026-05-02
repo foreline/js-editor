@@ -1,15 +1,7 @@
-import { H5Block } from '@/blocks/H5Block.js';
+﻿import { H5Block } from '@/blocks/H5Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h5: jest.fn()
-  }
-}));
 
 describe('H5Block', () => {
   let h5Block;
@@ -64,10 +56,12 @@ describe('H5Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h5 method', () => {
-      h5Block.applyTransformation();
-      expect(Toolbar.h5).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h5).toHaveBeenCalledWith();
+    test('applies h5 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h5Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h5');
+      expect(el.className).toBe('bke-block bke-block--h5');
     });
   });
 
@@ -85,3 +79,6 @@ describe('H5Block', () => {
     });
   });
 });
+
+
+

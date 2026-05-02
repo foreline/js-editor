@@ -1,15 +1,7 @@
-import { H2Block } from '@/blocks/H2Block.js';
+﻿import { H2Block } from '@/blocks/H2Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
-
-// Mock the Toolbar module
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    h2: jest.fn()
-  }
-}));
 
 describe('H2Block', () => {
   let h2Block;
@@ -64,10 +56,12 @@ describe('H2Block', () => {
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.h2 method', () => {
-      h2Block.applyTransformation();
-      expect(Toolbar.h2).toHaveBeenCalledTimes(1);
-      expect(Toolbar.h2).toHaveBeenCalledWith();
+    test('applies h2 attributes to provided targetElement', () => {
+      const el = { setAttribute: jest.fn(), textContent: '', innerHTML: '', appendChild: jest.fn(), contains: jest.fn(() => false) };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      h2Block.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'h2');
+      expect(el.className).toBe('bke-block bke-block--h2');
     });
   });
 
@@ -85,3 +79,6 @@ describe('H2Block', () => {
     });
   });
 });
+
+
+

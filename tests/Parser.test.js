@@ -1,3 +1,7 @@
+jest.unmock('../src/blocks/BlockFactory');
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
+
 import { Parser } from '@/Parser.js';
 import { Block } from '@/Block.js';
 import { BlockType } from '@/BlockType.js';
@@ -6,20 +10,7 @@ import { H1Block } from '@/blocks/H1Block.js';
 import { HeadingBlock } from '@/blocks/HeadingBlock.js';
 import { TaskListBlock } from '@/blocks/TaskListBlock.js';
 
-// Mock DOM for testing
-beforeAll(() => {
-  const mockElement = {
-    classList: {
-      add: jest.fn()
-    },
-    setAttribute: jest.fn(),
-    appendChild: jest.fn(),
-    innerHTML: '',
-    style: {}
-  };
-  
-  global.document.createElement = jest.fn(() => mockElement);
-});
+// Mock DOM for testing - removed: setup.js already handles this
 
 describe('Parser - Block-based parsing', () => {
   describe('Block parsing delegation', () => {

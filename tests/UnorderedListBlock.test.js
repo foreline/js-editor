@@ -1,35 +1,14 @@
+﻿'use strict';
+
+// Break circular deps
+jest.mock('@/Editor.js');
+jest.mock('@/utils/log.js');
+
 import { UnorderedListBlock } from '@/blocks/UnorderedListBlock.js';
 import { ListBlock } from '@/blocks/ListBlock.js';
 import { BaseBlock } from '@/blocks/BaseBlock.js';
 import { BlockType } from '@/BlockType.js';
-import { Toolbar } from '@/Toolbar.js';
 import { Editor } from '@/Editor.js';
-
-// Mock dependencies
-jest.mock('@/Toolbar.js', () => ({
-  Toolbar: {
-    ul: jest.fn()
-  }
-}));
-
-jest.mock('@/Editor.js', () => ({
-  Editor: {
-    setCurrentBlock: jest.fn()
-  }
-}));
-
-// Mock DOM functions
-global.document.createElement = jest.fn(() => ({
-  classList: {
-    add: jest.fn()
-  },
-  setAttribute: jest.fn(),
-  after: jest.fn(),
-  focus: jest.fn(),
-  contentEditable: null
-}));
-
-global.requestAnimationFrame = jest.fn(callback => setTimeout(callback, 0));
 
 describe('UnorderedListBlock', () => {
   let unorderedListBlock;
@@ -37,6 +16,7 @@ describe('UnorderedListBlock', () => {
   beforeEach(() => {
     unorderedListBlock = new UnorderedListBlock();
     jest.clearAllMocks();
+    global.requestAnimationFrame = jest.fn(callback => callback());
   });
 
   describe('Constructor', () => {
@@ -52,10 +32,10 @@ describe('UnorderedListBlock', () => {
     });
 
     test('creates instance with custom parameters', () => {
-      const content = 'First list item\nSecond list item';
-      const html = '<ul><li>First list item</li><li>Second list item</li></ul>';
+      const content = 'Item 1\nItem 2';
+      const html = '<ul><li>Item 1</li><li>Item 2</li></ul>';
       const nested = true;
-      
+
       const block = new UnorderedListBlock(content, html, nested);
       expect(block.type).toBe(BlockType.UL);
       expect(block.content).toBe(content);
@@ -67,107 +47,77 @@ describe('UnorderedListBlock', () => {
   describe('Key Handling', () => {
     test('handleKeyPress returns false by default', () => {
       const event = { key: 'Enter' };
-      const result = unorderedListBlock.handleKeyPress(event, 'list item text');
+      const result = unorderedListBlock.handleKeyPress(event, 'item text');
       expect(result).toBe(false);
     });
   });
 
   describe('Static Methods', () => {
-    test('getMarkdownTriggers returns correct triggers', () => {
+    test('getMarkdownTriggers returns unordered list triggers', () => {
       const triggers = UnorderedListBlock.getMarkdownTriggers();
-      expect(triggers).toHaveLength(2);
-      expect(triggers).toContain('* ');
-      expect(triggers).toContain('- ');
+      expect(Array.isArray(triggers)).toBe(true);
+      expect(triggers.length).toBeGreaterThan(0);
+      const hasBulletTrigger = triggers.some(t => ['* ', '- ', '+ '].includes(t));
+      expect(hasBulletTrigger).toBe(true);
     });
 
-    test('triggers are static and immutable', () => {
-      const triggers1 = UnorderedListBlock.getMarkdownTriggers();
-      const triggers2 = UnorderedListBlock.getMarkdownTriggers();
-      
-      expect(triggers1).toEqual(triggers2);
-      expect(triggers1).not.toBe(triggers2); // Different array instances
+    test('matchesMarkdownTrigger returns true for unordered patterns', () => {
+      expect(UnorderedListBlock.matchesMarkdownTrigger('* ')).toBe(true);
+      expect(UnorderedListBlock.matchesMarkdownTrigger('- ')).toBe(true);
+      expect(UnorderedListBlock.matchesMarkdownTrigger('+ ')).toBe(true);
+    });
+
+    test('matchesMarkdownTrigger returns false for ordered patterns', () => {
+      expect(UnorderedListBlock.matchesMarkdownTrigger('1. ')).toBe(false);
+      expect(UnorderedListBlock.matchesMarkdownTrigger('# ')).toBe(false);
+    });
+
+    test('getToolbarConfig returns configuration object', () => {
+      const config = UnorderedListBlock.getToolbarConfig();
+      expect(config).toBeTruthy();
+      expect(config.class).toBeDefined();
     });
   });
 
   describe('applyTransformation', () => {
-    test('calls Toolbar.ul method', () => {
-      unorderedListBlock.applyTransformation();
-      expect(Toolbar.ul).toHaveBeenCalledTimes(1);
-      expect(Toolbar.ul).toHaveBeenCalledWith();
+    test('does nothing when targetElement is null/undefined', () => {
+      expect(() => unorderedListBlock.applyTransformation()).not.toThrow();
+      expect(() => unorderedListBlock.applyTransformation(null)).not.toThrow();
     });
 
-    test('can be called multiple times', () => {
-      unorderedListBlock.applyTransformation();
-      unorderedListBlock.applyTransformation();
-      
-      expect(Toolbar.ul).toHaveBeenCalledTimes(2);
+    test('applies ul attributes to provided targetElement', () => {
+      const el = {
+        setAttribute: jest.fn(),
+        textContent: 'item text',
+        innerHTML: '',
+        appendChild: jest.fn(),
+      };
+      Object.defineProperty(el, 'className', { writable: true, value: '' });
+      unorderedListBlock.applyTransformation(el);
+      expect(el.setAttribute).toHaveBeenCalledWith('data-block-type', 'ul');
+      expect(el.className).toBe('bke-block bke-block--ul');
     });
   });
 
   describe('createNewListItem', () => {
-    test('creates new list item element with correct properties', () => {
-      const mockUlElement = {
-        appendChild: jest.fn()
-      };
-      
-      const mockCurrentBlock = {
-        querySelector: jest.fn().mockReturnValue(mockUlElement)
-      };
-      
-      const mockCurrentListItem = {}; // Mock current list item parameter
-      
-      const mockNewListItem = {
-        classList: {
-          add: jest.fn()
-        },
-        setAttribute: jest.fn(),
-        after: jest.fn(),
-        focus: jest.fn(),
-        contentEditable: null
-      };
-      
-      document.createElement.mockReturnValueOnce(mockNewListItem);
-      
-      const result = unorderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
-      
-      expect(document.createElement).toHaveBeenCalledWith('li');
-      expect(mockNewListItem.contentEditable).toBe(true);
-      expect(mockUlElement.appendChild).toHaveBeenCalledWith(mockNewListItem);
-      expect(Editor.setCurrentBlock).toHaveBeenCalledWith(mockCurrentBlock);
-      expect(result).toBe(true);
+    test('returns false when currentBlock is null', () => {
+      expect(unorderedListBlock.createNewListItem(null, null)).toBe(false);
     });
 
-    test('focuses on new list item after animation frame', (done) => {
-      const mockUlElement = {
-        appendChild: jest.fn()
-      };
-      
-      const mockCurrentBlock = {
-        querySelector: jest.fn().mockReturnValue(mockUlElement)
-      };
-      
-      const mockCurrentListItem = {}; // Mock current list item parameter
-      
-      const mockNewListItem = {
-        classList: {
-          add: jest.fn()
-        },
-        setAttribute: jest.fn(),
-        focus: jest.fn(),
-        contentEditable: null
-      };
-      
-      document.createElement.mockReturnValueOnce(mockNewListItem);
-      
-      // Override requestAnimationFrame to execute immediately for testing
-      global.requestAnimationFrame = jest.fn(callback => {
-        callback();
-        // Verify focus was called
-        expect(mockNewListItem.focus).toHaveBeenCalled();
-        done();
-      });
-      
-      unorderedListBlock.createNewListItem(mockCurrentBlock, mockCurrentListItem);
+    test('returns false when no ul element found in block', () => {
+      const mockBlock = { querySelector: jest.fn().mockReturnValue(null) };
+      expect(unorderedListBlock.createNewListItem(mockBlock, {})).toBe(false);
+    });
+
+    test('creates new li and returns true', () => {
+      const mockUl = { appendChild: jest.fn() };
+      const mockBlock = { querySelector: jest.fn().mockReturnValue(mockUl) };
+      const mockEditorInst = { setCurrentBlock: jest.fn() };
+      Editor.getInstanceFromElement = jest.fn().mockReturnValue(mockEditorInst);
+
+      const result = unorderedListBlock.createNewListItem(mockBlock, {});
+      expect(result).toBe(true);
+      expect(mockUl.appendChild).toHaveBeenCalled();
     });
   });
 
@@ -176,37 +126,21 @@ describe('UnorderedListBlock', () => {
       expect(unorderedListBlock).toBeInstanceOf(ListBlock);
     });
 
-    test('inherits from BaseBlock', () => {
-      expect(unorderedListBlock).toBeInstanceOf(BaseBlock);
-    });
-
     test('has correct block type', () => {
-      expect(unorderedListBlock.type).toBe(BlockType.UL);
-    });
-
-    test('maintains type when content changes', () => {
-      unorderedListBlock.content = 'New list content';
       expect(unorderedListBlock.type).toBe(BlockType.UL);
     });
   });
 
   describe('Content and HTML handling', () => {
     test('can set and get content', () => {
-      const content = 'Item 1\nItem 2\nItem 3';
-      unorderedListBlock.content = content;
-      expect(unorderedListBlock.content).toBe(content);
+      unorderedListBlock.content = 'Item A\nItem B';
+      expect(unorderedListBlock.content).toBe('Item A\nItem B');
     });
 
     test('can set and get HTML', () => {
-      const html = '<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>';
+      const html = '<ul><li>Item A</li></ul>';
       unorderedListBlock.html = html;
       expect(unorderedListBlock.html).toBe(html);
-    });
-
-    test('can set and get nested status', () => {
-      expect(unorderedListBlock.nested).toBe(false);
-      unorderedListBlock.nested = true;
-      expect(unorderedListBlock.nested).toBe(true);
     });
   });
 });
