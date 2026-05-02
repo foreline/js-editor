@@ -8,6 +8,13 @@ BlockEditor is a modern JavaScript WYSIWYG editor with a block-based architectur
 - **Test framework**: Jest (with Babel transforms)
 - **Language**: Vanilla JavaScript (ES modules)
 - **Package format**: Dual CJS/ESM library output
+- **VCS**: Git (GitHub repository) accessible at https://github.com/foreline/blockeditor
+- **NPMJS**: The project is published as `@foreline/blockeditor` on NPMJS accessible at https://www.npmjs.com/package/@foreline/blockeditor
+
+## Core principles
+- **Modularity**: Each block type is a self-contained class with its own logic and rendering
+- **Instance-based API**: The editor operates on an instance level
+- **ARIA-compliant**: The editor and toolbar are designed with accessibility in mind (ARIA, or Accessible Rich Internet Applications, is a set of attributes designed to enhance the accessibility of web content and applications, particularly for users relying on assistive technologies like screen readers.)
 
 ## Architecture
 

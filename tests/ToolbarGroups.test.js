@@ -57,7 +57,9 @@ describe('Toolbar Groups', () => {
                 id: '',
                 title: '',
                 appendChild: jest.fn(),
-                setAttribute: jest.fn()
+                setAttribute: jest.fn(),
+                getAttribute: jest.fn().mockReturnValue(null),
+                addEventListener: jest.fn()
             };
             mockCreatedElements.push(element);
             return element;
@@ -128,19 +130,19 @@ describe('Toolbar Groups', () => {
 
         createToolbar(config);
 
-        // Should create dropdown div
-        const dropdownDiv = mockCreatedElements.find(el => el.className === 'dropdown');
+        // Should create dropdown wrapper
+        const dropdownDiv = mockCreatedElements.find(el => el.className === 'editor-toolbar-dropdown');
         expect(dropdownDiv).toBeDefined();
 
-        // Should create dropdown button
-        const dropdownButton = mockCreatedElements.find(el => 
-            el.className === 'btn btn-secondary dropdown-toggle'
+        // Should create trigger button
+        const dropdownButton = mockCreatedElements.find(el =>
+            el.className === 'editor-toolbar-btn'
         );
         expect(dropdownButton).toBeDefined();
         expect(dropdownButton.id).toBe('dropdownMenuHeader');
 
         // Should create dropdown menu
-        const dropdownMenu = mockCreatedElements.find(el => el.className === 'dropdown-menu');
+        const dropdownMenu = mockCreatedElements.find(el => el.className === 'editor-toolbar-dropdown-menu');
         expect(dropdownMenu).toBeDefined();
 
         // Should create list items

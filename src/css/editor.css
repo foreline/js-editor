@@ -68,9 +68,71 @@
     padding: 2px 8px;
 }
 
-.editor-toolbar .dropdown li {
-    min-width: auto !important;
-    padding: 0.5rem 0.5rem !important;
+/* Toolbar dropdown — no Bootstrap dependency */
+.editor-toolbar-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Trigger button inside dropdown (inherits base toolbar button styles) */
+.editor-toolbar-dropdown .editor-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Dropdown menu — hidden by default */
+.editor-toolbar-dropdown-menu {
+    /* Base styles applied in both Popover and fallback cases */
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    min-width: 160px;
+    z-index: 9999;
+}
+
+/* Popover API: UA hides [popover] by default; shown via :popover-open */
+.editor-toolbar-dropdown-menu[popover] {
+    /* position set dynamically via JS in the toggle handler */
+}
+
+/* Non-Popover fallback: hidden until --open class is added */
+.editor-toolbar-dropdown-menu:not([popover]) {
+    display: none;
+    position: fixed; /* escapes overflow:hidden ancestors */
+}
+
+.editor-toolbar-dropdown-menu--open {
+    display: block !important;
+}
+
+.editor-toolbar-dropdown-menu li {
+    padding: 0;
+}
+
+.editor-toolbar-dropdown-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 6px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.editor-toolbar-dropdown-menu button:hover {
+    background-color: #f1f1f1;
+}
+
+.editor-toolbar-dropdown-menu button:disabled {
+    color: #bbb;
+    cursor: not-allowed;
 }
 
 /* Task list (checkbox) styles */

@@ -31,8 +31,6 @@ export default defineConfig(({ mode }) => {
                     // Keep dependencies external
                     external: [
                         '@fortawesome/fontawesome-free',
-                        '@popperjs/core',
-                        'bootstrap',
                         'prismjs',
                         'showdown'
                     ],
@@ -40,8 +38,6 @@ export default defineConfig(({ mode }) => {
                         exports: 'named',
                         globals: {
                             '@fortawesome/fontawesome-free': 'FontAwesome',
-                            '@popperjs/core': 'Popper',
-                            'bootstrap': 'bootstrap',
                             'prismjs': 'Prism',
                             'showdown': 'showdown'
                         }

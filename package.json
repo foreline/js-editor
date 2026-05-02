@@ -61,14 +61,10 @@
     "showdown": "^2.1.0"
   },
   "peerDependencies": {
-    "@fortawesome/fontawesome-free": ">=6",
-    "@popperjs/core": ">=2",
-    "bootstrap": ">=5"
+    "@fortawesome/fontawesome-free": ">=6"
   },
   "peerDependenciesMeta": {
-    "@fortawesome/fontawesome-free": { "optional": true },
-    "@popperjs/core": { "optional": true },
-    "bootstrap": { "optional": true }
+    "@fortawesome/fontawesome-free": { "optional": true }
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.0",

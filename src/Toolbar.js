@@ -475,23 +475,35 @@ export class Toolbar
             const group = document.createElement('div');
             group.className = 'editor-toolbar-group';
             if (section.dropdown) {
-                const dropdown = document.createElement('div');
-                dropdown.className = 'dropdown';
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-secondary dropdown-toggle';
-                btn.type = 'button';
-                btn.id = section.id;
-                btn.setAttribute('data-bs-toggle', 'dropdown');
-                btn.setAttribute('aria-expanded', 'false');
-                btn.innerHTML = `<i class="fa ${section.icon}"></i>`;
-                dropdown.appendChild(btn);
+                const menuId = `editor-dropdown-${section.id}`;
+                const supportsPopover = typeof HTMLElement !== 'undefined' && 'popover' in HTMLElement.prototype;
+
+                // Wrapper div (replaces Bootstrap .dropdown)
+                const wrapper = document.createElement('div');
+                wrapper.className = 'editor-toolbar-dropdown';
+
+                // Trigger button (replaces Bootstrap .btn.dropdown-toggle)
+                const trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.id = section.id;
+                trigger.className = 'editor-toolbar-btn';
+                trigger.setAttribute('aria-haspopup', 'true');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.setAttribute('aria-controls', menuId);
+                trigger.innerHTML = `<i class="fa ${section.icon}"></i>`;
+
+                // Menu list (replaces Bootstrap .dropdown-menu)
                 const ul = document.createElement('ul');
-                ul.className = 'dropdown-menu';
+                ul.id = menuId;
+                ul.className = 'editor-toolbar-dropdown-menu';
+                ul.setAttribute('role', 'menu');
                 ul.setAttribute('aria-labelledby', section.id);
+
                 section.group.forEach(item => {
                     const li = document.createElement('li');
                     const button = document.createElement('button');
                     button.className = item.class;
+                    button.setAttribute('role', 'menuitem');
                     button.textContent = item.label || '';
                     if (item.icon) button.innerHTML = `<i class="fa ${item.icon}"></i> ` + button.textContent;
                     if (item.title) button.title = item.title;
@@ -499,8 +511,44 @@ export class Toolbar
                     li.appendChild(button);
                     ul.appendChild(li);
                 });
-                dropdown.appendChild(ul);
-                group.appendChild(dropdown);
+
+                if (supportsPopover) {
+                    // Native Popover API: renders in Top Layer, bypasses overflow/z-index
+                    trigger.setAttribute('popovertarget', menuId);
+                    trigger.setAttribute('popovertargetaction', 'toggle');
+                    ul.setAttribute('popover', 'auto');
+
+                    ul.addEventListener('toggle', (evt) => {
+                        const isOpen = evt.newState === 'open';
+                        trigger.setAttribute('aria-expanded', String(isOpen));
+                        if (isOpen) {
+                            Toolbar._positionDropdown(trigger, ul);
+                        }
+                    });
+                } else {
+                    // Fallback: position:fixed menu appended inside wrapper
+                    trigger.addEventListener('click', (evt) => {
+                        evt.stopPropagation();
+                        const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+                        Toolbar._closeAllDropdowns();
+                        if (!isOpen) {
+                            ul.classList.add('editor-toolbar-dropdown-menu--open');
+                            trigger.setAttribute('aria-expanded', 'true');
+                            Toolbar._positionDropdown(trigger, ul);
+                        }
+                    });
+
+                    // Register document-level fallback handlers once
+                    if (!Toolbar._fallbackListenersAttached) {
+                        Toolbar._fallbackListenersAttached = true;
+                        document.addEventListener('click', Toolbar._onDocumentClick);
+                        document.addEventListener('keydown', Toolbar._onDocumentKeydown);
+                    }
+                }
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(ul);
+                group.appendChild(wrapper);
             } else {
                 section.group.forEach(item => {
                     const button = document.createElement('button');
@@ -530,4 +578,56 @@ export class Toolbar
         
         container.insertBefore(toolbar, container.firstChild);
     }
+
+    /**
+     * Position a dropdown menu below its trigger using fixed coordinates.
+     * Uses requestAnimationFrame for vertical collision detection (flip upward
+     * if the menu would extend below the viewport).
+     * @param {HTMLElement} trigger
+     * @param {HTMLElement} menu
+     */
+    static _positionDropdown(trigger, menu) {
+        const rect = trigger.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.left = `${rect.left}px`;
+        menu.style.top = `${rect.bottom + 4}px`;
+        menu.style.minWidth = `${Math.max(rect.width, 160)}px`;
+
+        // Vertical collision: flip upward if menu overflows viewport bottom
+        requestAnimationFrame(() => {
+            const menuRect = menu.getBoundingClientRect();
+            if (menuRect.bottom > window.innerHeight) {
+                menu.style.top = `${rect.top - menuRect.height - 4}px`;
+            }
+        });
+    }
+
+    /**
+     * Close all open fallback (non-Popover) dropdowns.
+     */
+    static _closeAllDropdowns() {
+        document.querySelectorAll('.editor-toolbar-dropdown-menu--open').forEach(menu => {
+            menu.classList.remove('editor-toolbar-dropdown-menu--open');
+            const triggerId = menu.getAttribute('aria-labelledby');
+            if (triggerId) {
+                const t = document.getElementById(triggerId);
+                if (t) t.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    /** Document-level click handler for the non-Popover fallback. */
+    static _onDocumentClick() {
+        Toolbar._closeAllDropdowns();
+    }
+
+    /** Document-level keydown handler for the non-Popover fallback. */
+    static _onDocumentKeydown(evt) {
+        if (evt.key === 'Escape') {
+            Toolbar._closeAllDropdowns();
+        }
+    }
 }
+
+/** @type {boolean} Prevents duplicate document-level fallback listeners. */
+Toolbar._fallbackListenersAttached = false;
