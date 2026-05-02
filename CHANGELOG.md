@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.1] - 2026-05-02
+
+### Fixed
+- Added scoped CSS resets to prevent host styles from leaking into the editor component. This ensures consistent styling and improves component isolation in complex host environments.
+
 ## [v0.3.0] - 2026-05-02
 
 ### Changed
