@@ -195,7 +195,8 @@ export class Editor
                 container: toolbarContainer,
                 config: toolbarConfig,
                 debug: this.debug,
-                editorInstance: this
+                editorInstance: this,
+                icons: options.icons ?? {}
             };
             this.toolbar = new Toolbar(toolbarOptions);
         }

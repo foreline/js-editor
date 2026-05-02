@@ -1,5 +1,7 @@
 ---
 description: "blockeditor: Commit staged changes for blockeditor using Conventional Commits"
+model: Claude Haiku 4.5 (copilot)
+tools: [execute, read, edit, search]
 ---
 
 # Git Commit
@@ -9,17 +11,15 @@ description: "blockeditor: Commit staged changes for blockeditor using Conventio
 You are a git commit assistant for the **blockeditor** repository — a vanilla JavaScript WYSIWYG editor with block-based architecture.
 
 1. Run `git diff --staged --stat` to list staged files; if nothing is staged, run `git add -A` to stage all changes, then re-check.
-2. **Critical file validation:** If any staged changes relate to docs, branding, or configuration (detected by file patterns like `README.md`, `.github/`, `dev-docs/`, `*.html` demos, etc.), check for unstaged critical version files:
-   - If `package.json` is modified but NOT staged, automatically stage it with `git add package.json`
-   - If `CHANGELOG.md` is modified but NOT staged, automatically stage it with `git add CHANGELOG.md`
-3. Run `git diff --staged` to review the full diff.
-4. Classify each changed file by feature, component, or issue.
-5. **Commit splitting rule (mandatory):**
+2. Run `git diff --staged` to review the full diff.
+3. Classify each changed file by feature, component, or issue.
+4. **Commit splitting rule (mandatory):**
 	- If staged files belong to different features or different issues, do **not** create one combined commit.
 	- Create multiple commits: one commit per feature or issue.
 	- Execute the planned commit(s) immediately, without confirmation.
+5. For each commit: **Update `CHANGELOG.md` before committing code.** Map the commit type to changelog sections (feat → Added, fix → Fixed, refactor/perf → Changed). Stage both code and CHANGELOG.md together in a single commit.
 6. Generate Conventional Commit messages in English.
-7. **After committing:** Update `CHANGELOG.md` if needed (map commit types to changelog sections), then run `npm version <type-or-version>` to bump version, commit, and create a git tag automatically.
+7. **After committing code + CHANGELOG:** Run `npm version <type-or-version>` to automatically bump `package.json`, create a version commit, and generate a git tag. This ensures `npm version` in `package.json` always matches the git tag.
 
 ## Repository-Aware Guidance
 
@@ -92,40 +92,48 @@ test(e2e): add cross-block deletion tests
 docs: update SPECS.md with task list preprocessing rules
 ```
 
-## Version Management with npm version
+## Zero Versioning with Intentional Batching
 
-After committing feature/fix work:
+In the **0.x.y phase**, versions must grow intentionally—not automatically with every commit. Mature releases are infrequent and deliberate.
 
-1. Update `CHANGELOG.md` if the commit is notable (map type to section: `feat` → Added, `fix` → Fixed, `refactor`/`perf` → Changed)
-2. Ensure `package.json` is staged (step 2 of Instructions handles this automatically)
-3. Run `npm version <type-or-version>` to automatically bump version, update `package.json`, commit the change, and create a git tag
+### Workflow: Code + CHANGELOG + Version in One Atomic Flow
 
-**Important:** The `npm version` command will fail if `package.json` is not already committed. Always ensure it's part of your staged changes before running the command.
-
-### Version Bumping Rules
-
-- Any commit with `BREAKING CHANGE` footer or `!` suffix → `npm version major`
-- Any `feat` commit → `npm version minor`
-- Any other type (`fix`, `refactor`, `perf`, `docs`, `style`, `chore`, `test`) → `npm version patch`
-- Or specify an explicit version: `npm version 0.1.0`
+1. **Make commits normally** (feat, fix, refactor, etc.) with code + CHANGELOG updates together
+2. **Batch before versioning**: Review all commits since the last tag:
+   ```powershell
+   git log $(git describe --tags --abbrev=0)..HEAD --oneline
+   ```
+3. **Decide version bump** based on the *batch* of changes, not individual commits:
+   - **PATCH** (default): Bug fixes, refactors, performance improvements, minor enhancements, documentation
+   - **MINOR** (rare in 0.x): Only for significant new feature sets, major architectural improvements, or breaking API refinements
+   - **MAJOR** (only for 1.0+): Not used during 0.x pre-stable phase
+   
+4. **Run npm version** to bump package.json, auto-commit, and create a git tag:
+   ```powershell
+   npm version patch          # 0.3.1 → 0.3.2
+   npm version minor          # 0.3.2 → 0.4.0  (reserved for significant features)
+   ```
 
 ### Examples
 
 ```powershell
-# After bug fix commit
-npm version patch              # 0.1.0 → 0.1.1
+# Typical flow: multiple bug fixes and refactors → one PATCH bump
+npm version patch              # 0.3.0 → 0.3.1
 
-# After feature commit
-npm version minor              # 0.1.1 → 0.2.0
+# Significant feature set added → one MINOR bump
+npm version minor              # 0.3.1 → 0.4.0
 
-# Breaking change
-npm version major              # 0.2.0 → 1.0.0
-
-# Explicit version
-npm version v0.1.0
+# Explicit version (use sparingly)
+npm version 0.5.0
 ```
 
-The command automatically creates an annotated tag and commits the version bump. Push when ready: `git push origin main --tags`
+The command automatically:
+- Bumps `package.json` version
+- Creates a commit with the version change
+- Generates an annotated tag (e.g., `v0.3.1`)
+- Aligns git tag with npm version
+
+**Result:** npm version in `package.json` always matches the git tag. No separate commits. Push when ready: `git push origin main --tags`
 
 ## User Prompt
 

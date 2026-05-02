@@ -75,6 +75,19 @@
     color: #999;
 }
 
+/* Inline SVG icons — match FA's default 1em sizing and inherit button colour */
+.bke-toolbar svg {
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    vertical-align: -0.125em;
+    display: inline-block;
+}
+
+.bke-toolbar button:disabled svg {
+    opacity: 0.4;
+}
+
 .bke-toolbar button {
     color: #777;
     border: 0;
@@ -96,25 +109,27 @@
 }
 
 .bke-toolbar-group {
+    display: flex;
+    align-items: center;
     border-right: 1px solid #ddd;
-
     padding: 2px 8px;
 }
 
 /* Toolbar dropdown — no Bootstrap dependency */
-.bke-toolbar-dropdown {
+.bke-dropdown {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
 }
 
 /* Trigger button inside dropdown (inherits base toolbar button styles) */
-.bke-toolbar-dropdown .bke-toolbar-btn {
+.bke-dropdown .bke-toolbar-btn {
     display: inline-flex;
     align-items: center;
 }
 
 /* Dropdown menu — hidden by default */
-.bke-toolbar-dropdown-menu {
+.bke-dropdown-menu {
     /* Base styles applied in both Popover and fallback cases */
     margin: 0;
     padding: 4px 0;
@@ -128,25 +143,25 @@
 }
 
 /* Popover API: UA hides [popover] by default; shown via :popover-open */
-.bke-toolbar-dropdown-menu[popover] {
+.bke-dropdown-menu[popover] {
     /* position set dynamically via JS in the toggle handler */
 }
 
 /* Non-Popover fallback: hidden until --open class is added */
-.bke-toolbar-dropdown-menu:not([popover]) {
+.bke-dropdown-menu:not([popover]) {
     display: none;
     position: fixed; /* escapes overflow:hidden ancestors */
 }
 
-.bke-toolbar-dropdown-menu--open {
+.bke-dropdown-menu--open {
     display: block !important;
 }
 
-.bke-toolbar-dropdown-menu li {
+.bke-dropdown-menu li {
     padding: 0;
 }
 
-.bke-toolbar-dropdown-menu button {
+.bke-dropdown-menu button {
     display: block;
     width: 100%;
     text-align: left;
@@ -159,11 +174,11 @@
     white-space: nowrap;
 }
 
-.bke-toolbar-dropdown-menu button:hover {
+.bke-dropdown-menu button:hover {
     background-color: #f1f1f1;
 }
 
-.bke-toolbar-dropdown-menu button:disabled {
+.bke-dropdown-menu button:disabled {
     color: #bbb;
     cursor: not-allowed;
 }
@@ -227,12 +242,23 @@
     margin: 0;
 }
 
+/* Override scoped reset for list items inside ul/ol blocks */
+.bke-editor .bke-block[data-block-type="ul"] li {
+    list-style-type: disc;
+    list-style-position: inside;
+}
+
 .bke-editor .bke-block[data-block-type="ol"] ol {
     list-style-type: decimal;
     list-style-position: inside;
     margin-left: 0;
     padding-left: 0;
     margin: 0;
+}
+
+.bke-editor .bke-block[data-block-type="ol"] li {
+    list-style-type: decimal;
+    list-style-position: inside;
 }
 
 /* Table styles */

@@ -6,6 +6,29 @@ import { ToolbarHandlers } from "./ToolbarHandlers.js";
 import { BlockFactory } from "./blocks/BlockFactory.js";
 import {log} from "./utils/log.js";
 import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
+import { ICONS } from "./icons.js";
+
+/**
+ * Render an icon for use inside a toolbar button.
+ *
+ * Resolution order:
+ *   1. Consumer override  — value from the `icons` Editor option keyed by iconSpec
+ *   2. Inline SVG default — looked up in the bundled ICONS map
+ *   3. Raw HTML passthrough — strings that start with '<' are returned as-is
+ *   4. Function — called and its return value used
+ *   5. Legacy FA fallback — rendered as <i class="fa {iconSpec}"></i>
+ *
+ * @param {string|Function} iconSpec - FA class string, raw HTML/SVG, or factory function
+ * @param {Object} [customIcons={}] - Consumer-supplied overrides keyed by iconSpec
+ * @returns {string} HTML string for the icon
+ */
+function renderIcon(iconSpec, customIcons = {}) {
+    if (typeof iconSpec === 'function') return iconSpec();
+    if (customIcons[iconSpec]) return customIcons[iconSpec];
+    if (ICONS[iconSpec]) return ICONS[iconSpec];
+    if (typeof iconSpec === 'string' && iconSpec.startsWith('<')) return iconSpec;
+    return `<i class="fa ${iconSpec}"></i>`;
+}
 
 /**
  * Toolbar class for text formatting and block management.
@@ -23,11 +46,12 @@ export class Toolbar
     constructor(options)
     {
         log('constructor()', 'Toolbar.'); console.log({options});
-        const { container, config, debug, editorInstance } = options;
+        const { container, config, debug, editorInstance, icons } = options;
         
         this.editorInstance = editorInstance;
+        this.customIcons = icons ?? {};
         
-        this.createToolbar(container, config, debug);
+        this.createToolbar(container, config, debug, this.customIcons);
         ToolbarHandlers.init(this);
         
         // Emit toolbar initialization event
@@ -462,7 +486,7 @@ export class Toolbar
      * @param {Array|Object} config 
      * @param {boolean} debug - Whether debug mode is enabled
      */
-    createToolbar(container, config, debug = false)
+    createToolbar(container, config, debug = false, customIcons = {})
     {
         log('createToolbar()', 'Toolbar.'); console.log({container, config, debug});
 
@@ -480,7 +504,7 @@ export class Toolbar
 
                 // Wrapper div (replaces Bootstrap .dropdown)
                 const wrapper = document.createElement('div');
-                wrapper.className = 'bke-toolbar-dropdown';
+                wrapper.className = 'bke-dropdown';
 
                 // Trigger button (replaces Bootstrap .btn.dropdown-toggle)
                 const trigger = document.createElement('button');
@@ -490,12 +514,12 @@ export class Toolbar
                 trigger.setAttribute('aria-haspopup', 'true');
                 trigger.setAttribute('aria-expanded', 'false');
                 trigger.setAttribute('aria-controls', menuId);
-                trigger.innerHTML = `<i class="fa ${section.icon}"></i>`;
+                trigger.innerHTML = renderIcon(section.icon, customIcons);
 
                 // Menu list (replaces Bootstrap .dropdown-menu)
                 const ul = document.createElement('ul');
                 ul.id = menuId;
-                ul.className = 'bke-toolbar-dropdown-menu';
+                ul.className = 'bke-dropdown-menu';
                 ul.setAttribute('role', 'menu');
                 ul.setAttribute('aria-labelledby', section.id);
 
@@ -505,7 +529,7 @@ export class Toolbar
                     button.className = item.class;
                     button.setAttribute('role', 'menuitem');
                     button.textContent = item.label || '';
-                    if (item.icon) button.innerHTML = `<i class="fa ${item.icon}"></i> ` + button.textContent;
+                    if (item.icon) button.innerHTML = renderIcon(item.icon, customIcons) + ' ' + button.textContent;
                     if (item.title) button.title = item.title;
                     if (item.disabled) button.disabled = true;
                     li.appendChild(button);
@@ -532,7 +556,7 @@ export class Toolbar
                         const isOpen = trigger.getAttribute('aria-expanded') === 'true';
                         Toolbar._closeAllDropdowns();
                         if (!isOpen) {
-                            ul.classList.add('bke-toolbar-dropdown-menu--open');
+                            ul.classList.add('bke-dropdown-menu--open');
                             trigger.setAttribute('aria-expanded', 'true');
                             Toolbar._positionDropdown(trigger, ul);
                         }
@@ -553,7 +577,7 @@ export class Toolbar
                 section.group.forEach(item => {
                     const button = document.createElement('button');
                     button.className = item.class;
-                    if (item.icon) button.innerHTML = `<i class="fa ${item.icon}"></i>`;
+                    if (item.icon) button.innerHTML = renderIcon(item.icon, customIcons);
                     if (item.title) button.title = item.title;
                     if (item.disabled) button.disabled = true;
                     group.appendChild(button);
@@ -569,7 +593,7 @@ export class Toolbar
             
             const debugButton = document.createElement('button');
             debugButton.className = 'bke-toolbar-debug active';
-            debugButton.innerHTML = '<i class="fa fa-bug"></i>';
+            debugButton.innerHTML = renderIcon('fa-bug', customIcons);
             debugButton.title = 'отключить режим отладки';
             
             debugGroup.appendChild(debugButton);
@@ -606,8 +630,8 @@ export class Toolbar
      * Close all open fallback (non-Popover) dropdowns.
      */
     static _closeAllDropdowns() {
-        document.querySelectorAll('.bke-toolbar-dropdown-menu--open').forEach(menu => {
-            menu.classList.remove('bke-toolbar-dropdown-menu--open');
+        document.querySelectorAll('.bke-dropdown-menu--open').forEach(menu => {
+            menu.classList.remove('bke-dropdown-menu--open');
             const triggerId = menu.getAttribute('aria-labelledby');
             if (triggerId) {
                 const t = document.getElementById(triggerId);

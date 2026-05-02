@@ -131,7 +131,7 @@ describe('Toolbar Groups', () => {
         createToolbar(config);
 
         // Should create dropdown wrapper
-        const dropdownDiv = mockCreatedElements.find(el => el.className === 'bke-toolbar-dropdown');
+        const dropdownDiv = mockCreatedElements.find(el => el.className === 'bke-dropdown');
         expect(dropdownDiv).toBeDefined();
 
         // Should create trigger button
@@ -142,7 +142,7 @@ describe('Toolbar Groups', () => {
         expect(dropdownButton.id).toBe('dropdownMenuHeader');
 
         // Should create dropdown menu
-        const dropdownMenu = mockCreatedElements.find(el => el.className === 'bke-toolbar-dropdown-menu');
+        const dropdownMenu = mockCreatedElements.find(el => el.className === 'bke-dropdown-menu');
         expect(dropdownMenu).toBeDefined();
 
         // Should create list items
