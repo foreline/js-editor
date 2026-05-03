@@ -7,6 +7,7 @@ import { BlockFactory } from "./blocks/BlockFactory.js";
 import {log} from "./utils/log.js";
 import {eventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 import { ICONS } from "./icons.js";
+import { SyntaxHighlighter } from "./utils/syntaxHighlighter.js";
 
 /**
  * Render an icon for use inside a toolbar button.
@@ -359,16 +360,19 @@ export class Toolbar
     {
         log('text()', 'Toolbar.');
 
-        const noteText = document.querySelector('.note-text');
-        const textMd = document.querySelector('.bke-text-md');
-        const textHtml = document.querySelector('.bke-text-html');
-        const btnText = document.querySelector('.bke-toolbar-text');
-        const btnMarkdown = document.querySelector('.bke-toolbar-markdown');
-        const btnHtml = document.querySelector('.bke-toolbar-html');
+        const contentArea = this.editorInstance?.contentArea;
+        const textMd = this.container?.querySelector('.bke-editor-markdown');
+        const textHtml = this.container?.querySelector('.bke-editor-html');
+        const btnText = this.container?.querySelector('.bke-toolbar-text');
+        const btnMarkdown = this.container?.querySelector('.bke-toolbar-markdown');
+        const btnHtml = this.container?.querySelector('.bke-toolbar-html');
 
-        noteText?.classList.remove('visually-hidden');
-        textMd?.classList.add('visually-hidden');
-        textHtml?.classList.add('visually-hidden');
+        contentArea?.classList.remove('bke-hidden');
+        textMd?.classList.add('bke-hidden');
+        textHtml?.classList.add('bke-hidden');
+
+        // Re-show debug tooltips now that the content area is visible again
+        this.editorInstance?.debugTooltip?.show();
 
         if (btnText) {
             btnText.disabled = true;
@@ -388,20 +392,26 @@ export class Toolbar
     {
         log('markdown()', 'Toolbar.');
 
-        const noteText = document.querySelector('.note-text');
-        const textMd = document.querySelector('.bke-text-md');
-        const textHtml = document.querySelector('.bke-text-html');
+        const contentArea = this.editorInstance?.contentArea;
+        const textMd = this.container?.querySelector('.bke-editor-markdown');
+        const textHtml = this.container?.querySelector('.bke-editor-html');
+        const btnText = this.container?.querySelector('.bke-toolbar-text');
+        const btnMarkdown = this.container?.querySelector('.bke-toolbar-markdown');
+        const btnHtml = this.container?.querySelector('.bke-toolbar-html');
 
-        const btnText = document.querySelector('.bke-toolbar-text');
-        const btnMarkdown = document.querySelector('.bke-toolbar-markdown');
-        const btnHtml = document.querySelector('.bke-toolbar-html');
+        contentArea?.classList.add('bke-hidden');
+        textMd?.classList.remove('bke-hidden');
+        textHtml?.classList.add('bke-hidden');
 
-        noteText?.classList.add('visually-hidden');
-        textMd?.classList.remove('visually-hidden');
-        textHtml?.classList.add('visually-hidden');
+        // Hide debug tooltips — blocks are no longer visible
+        this.editorInstance?.debugTooltip?.hide();
 
         if (textMd && this.editorInstance) {
-            textMd.textContent = this.editorInstance.getMarkdown();
+            const markdownContent = this.editorInstance.getMarkdown();
+            const codeEl = textMd.querySelector('code');
+            if (codeEl) {
+                codeEl.innerHTML = SyntaxHighlighter.highlight(markdownContent, 'markdown');
+            }
         }
 
         if (btnText) {
@@ -422,19 +432,26 @@ export class Toolbar
     {
         log('html()', 'Toolbar.');
 
-        const noteText = document.querySelector('.note-text');
-        const textMd = document.querySelector('.bke-text-md');
-        const textHtml = document.querySelector('.bke-text-html');
-        const btnText = document.querySelector('.bke-toolbar-text');
-        const btnMarkdown = document.querySelector('.bke-toolbar-markdown');
-        const btnHtml = document.querySelector('.bke-toolbar-html');
+        const contentArea = this.editorInstance?.contentArea;
+        const textMd = this.container?.querySelector('.bke-editor-markdown');
+        const textHtml = this.container?.querySelector('.bke-editor-html');
+        const btnText = this.container?.querySelector('.bke-toolbar-text');
+        const btnMarkdown = this.container?.querySelector('.bke-toolbar-markdown');
+        const btnHtml = this.container?.querySelector('.bke-toolbar-html');
 
-        noteText?.classList.add('visually-hidden');
-        textMd?.classList.add('visually-hidden');
-        textHtml?.classList.remove('visually-hidden');
+        contentArea?.classList.add('bke-hidden');
+        textMd?.classList.add('bke-hidden');
+        textHtml?.classList.remove('bke-hidden');
+
+        // Hide debug tooltips — blocks are no longer visible
+        this.editorInstance?.debugTooltip?.hide();
 
         if (textHtml && this.editorInstance) {
-            textHtml.textContent = this.editorInstance.getHtml();
+            const htmlContent = this.editorInstance.getHtml();
+            const codeEl = textHtml.querySelector('code');
+            if (codeEl) {
+                codeEl.innerHTML = SyntaxHighlighter.highlight(htmlContent, 'html');
+            }
         }
 
         if (btnText) {

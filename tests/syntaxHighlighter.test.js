@@ -7,7 +7,7 @@ jest.mock('prismjs', () => {
     const languages = {
         javascript: {}, python: {}, markup: {}, css: {},
         typescript: {}, java: {}, csharp: {}, php: {},
-        json: {}, sql: {}, bash: {}
+        json: {}, sql: {}, bash: {}, markdown: {}
     };
     return { highlight, languages };
 });
@@ -23,6 +23,7 @@ jest.mock('prismjs/components/prism-css', () => {});
 jest.mock('prismjs/components/prism-json', () => {});
 jest.mock('prismjs/components/prism-sql', () => {});
 jest.mock('prismjs/components/prism-bash', () => {});
+jest.mock('prismjs/components/prism-markdown', () => {});
 
 import { SyntaxHighlighter } from '../src/utils/syntaxHighlighter.js';
 import Prism from 'prismjs'; // This gets the mocked version

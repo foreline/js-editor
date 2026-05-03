@@ -654,7 +654,7 @@ describe('Editor Instance Methods', () => {
         it('should initialize markdown container if present', () => {
             const result = editor.initMarkdownContainer();
             expect(result).toBe(true);
-            expect(document.createElement).toHaveBeenCalledWith('textarea');
+            expect(document.createElement).toHaveBeenCalledWith('div');
         });
 
         it('should initialize html container if present', () => {
@@ -668,8 +668,7 @@ describe('Editor Instance Methods', () => {
             logWarningSpy.mockClear();
 
             // Make querySelector return a non-null element (simulates container already exists)
-            const mockParent = { querySelector: jest.fn().mockReturnValue({ id: 'editor-markdown' }), appendChild: jest.fn() };
-            Object.defineProperty(editor.instance, 'parentElement', { value: mockParent, configurable: true });
+            editor.instance.querySelector = jest.fn().mockReturnValue({ className: 'bke-editor-markdown' });
 
             editor.initMarkdownContainer();
 

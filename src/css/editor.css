@@ -6,6 +6,11 @@
     box-sizing: border-box;
 }
 
+/* Utility: hide elements without Bootstrap dependency */
+.bke-hidden {
+    display: none !important;
+}
+
 .bke-editor ul,
 .bke-editor ol {
     list-style: none;
@@ -477,4 +482,62 @@
 
 .bke-editor * {
     outline: none;
+}
+
+/* View mode containers — markdown and html views */
+.bke-editor-markdown,
+.bke-editor-html {
+    width: 100%;
+    min-height: 300px;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+    font-size: 14px;
+}
+
+.bke-editor-markdown pre,
+.bke-editor-html pre {
+    margin: 0;
+    padding: 1em;
+    background: #f6f8fa;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* View header with label and copy button */
+.bke-view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #f1f3f4;
+    border-bottom: 1px solid #e1e4e8;
+}
+
+.bke-view-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #586069;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: inherit;
+}
+
+.bke-copy-btn {
+    font-size: 12px;
+    color: #586069;
+    background: none;
+    border: 1px solid #d1d5da;
+    border-radius: 4px;
+    padding: 2px 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    font-family: inherit;
+}
+
+.bke-copy-btn:hover {
+    background: #e1e4e8;
+    color: #24292e;
 }

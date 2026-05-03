@@ -172,6 +172,25 @@ export class DebugTooltip {
     }
     
     /**
+     * Hide all debug tooltips (without disabling or stopping the observer).
+     * Called when switching to a non-edit view mode.
+     */
+    hide() {
+        const tooltips = document.querySelectorAll('.bke-debug-tooltip');
+        tooltips.forEach(t => t.classList.add('bke-hidden'));
+    }
+
+    /**
+     * Show debug tooltips and refresh their position.
+     * Called when switching back to edit view mode.
+     */
+    show() {
+        const tooltips = document.querySelectorAll('.bke-debug-tooltip');
+        tooltips.forEach(t => t.classList.remove('bke-hidden'));
+        this.updateActiveBlockTooltip();
+    }
+
+    /**
      * Position debug tooltip relative to block
      * @param {HTMLElement} tooltip - The tooltip element
      * @param {HTMLElement} blockElement - The block element
@@ -180,6 +199,15 @@ export class DebugTooltip {
         log('positionTooltip()', 'DebugTooltip');
 
         const blockRect = blockElement.getBoundingClientRect();
+
+        // Block is not visible (content area hidden during markdown/html view) —
+        // hide the tooltip rather than snapping it to (0, 0).
+        if (blockRect.width === 0 && blockRect.height === 0) {
+            tooltip.classList.add('bke-hidden');
+            return;
+        }
+        tooltip.classList.remove('bke-hidden');
+
         const tooltipWidth = 280;
         const gap = 10;
         

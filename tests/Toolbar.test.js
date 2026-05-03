@@ -12,6 +12,11 @@ jest.mock('../src/blocks/BlockFactory.js');
 jest.mock('../src/utils/log.js');
 jest.mock('../src/utils/eventEmitter.js');
 jest.mock('../src/icons.js', () => ({ ICONS: {} }));
+jest.mock('../src/utils/syntaxHighlighter.js', () => ({
+    SyntaxHighlighter: {
+        highlight: jest.fn((code) => code)
+    }
+}));
 
 // Mock document.execCommand
 document.execCommand = jest.fn();
@@ -19,18 +24,37 @@ document.execCommand = jest.fn();
 // Helper: build a Toolbar instance without real DOM side effects
 function makeToolbar(editorOverrides = {}) {
     const createToolbarSpy = jest.spyOn(Toolbar.prototype, 'createToolbar').mockImplementation(() => {});
+    const mockContentArea = {
+        classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn().mockReturnValue(false) }
+    };
+    const mockViewContainer = {
+        classList: { add: jest.fn(), remove: jest.fn(), contains: jest.fn().mockReturnValue(false) },
+        querySelector: jest.fn().mockReturnValue({ innerHTML: '' })
+    };
+    const mockBtn = { disabled: false };
+    const mockContainer = {
+        appendChild: jest.fn(),
+        querySelector: jest.fn().mockImplementation((selector) => {
+            if (selector === '.bke-editor-markdown' || selector === '.bke-editor-html') {
+                return mockViewContainer;
+            }
+            return mockBtn;
+        })
+    };
     const mockEditorInstance = {
         convertCurrentBlockOrCreate: jest.fn().mockReturnValue(false),
         currentBlock: { id: 'block-1' },
         update: jest.fn(),
         getMarkdown: jest.fn().mockReturnValue('# Test'),
         getHtml: jest.fn().mockReturnValue('<h1>Test</h1>'),
+        contentArea: mockContentArea,
         ...editorOverrides
     };
-    const toolbar = new Toolbar({ container: { appendChild: jest.fn() }, config: [], editorInstance: mockEditorInstance });
+    const toolbar = new Toolbar({ container: mockContainer, config: [], editorInstance: mockEditorInstance });
     toolbar.editorInstance = mockEditorInstance;
+    toolbar.container = mockContainer;
     createToolbarSpy.mockRestore();
-    return { toolbar, mockEditorInstance };
+    return { toolbar, mockEditorInstance, mockContainer, mockContentArea, mockViewContainer };
 }
 
 describe('Toolbar', () => {
@@ -184,15 +208,43 @@ describe('Toolbar', () => {
     });
 
     describe('view methods', () => {
-        it('text() queries .note-text', () => {
-            const { toolbar } = makeToolbar();
+        it('text() shows contentArea and hides view containers', () => {
+            const { toolbar, mockContentArea } = makeToolbar();
             toolbar.text();
-            expect(document.querySelector).toHaveBeenCalledWith('.note-text');
+            expect(mockContentArea.classList.remove).toHaveBeenCalledWith('bke-hidden');
+        });
+        it('text() calls debugTooltip.show() if present', () => {
+            const mockDebugTooltip = { show: jest.fn(), hide: jest.fn() };
+            const { toolbar } = makeToolbar({ debugTooltip: mockDebugTooltip });
+            toolbar.text();
+            expect(mockDebugTooltip.show).toHaveBeenCalled();
+        });
+        it('markdown() hides contentArea', () => {
+            const { toolbar, mockContentArea } = makeToolbar();
+            toolbar.markdown();
+            expect(mockContentArea.classList.add).toHaveBeenCalledWith('bke-hidden');
+        });
+        it('markdown() calls debugTooltip.hide() if present', () => {
+            const mockDebugTooltip = { show: jest.fn(), hide: jest.fn() };
+            const { toolbar } = makeToolbar({ debugTooltip: mockDebugTooltip });
+            toolbar.markdown();
+            expect(mockDebugTooltip.hide).toHaveBeenCalled();
         });
         it('markdown() calls editorInstance.getMarkdown', () => {
             const { toolbar, mockEditorInstance } = makeToolbar();
             toolbar.markdown();
             expect(mockEditorInstance.getMarkdown).toHaveBeenCalled();
+        });
+        it('html() hides contentArea', () => {
+            const { toolbar, mockContentArea } = makeToolbar();
+            toolbar.html();
+            expect(mockContentArea.classList.add).toHaveBeenCalledWith('bke-hidden');
+        });
+        it('html() calls debugTooltip.hide() if present', () => {
+            const mockDebugTooltip = { show: jest.fn(), hide: jest.fn() };
+            const { toolbar } = makeToolbar({ debugTooltip: mockDebugTooltip });
+            toolbar.html();
+            expect(mockDebugTooltip.hide).toHaveBeenCalled();
         });
         it('html() calls editorInstance.getHtml', () => {
             const { toolbar, mockEditorInstance } = makeToolbar();

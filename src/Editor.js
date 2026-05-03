@@ -1117,20 +1117,52 @@ export class Editor
         log('initMarkdownContainer()', 'Editor.');
 
         try {
-            const markdownContainer = document.createElement('textarea');
-            markdownContainer.id = 'editor-markdown';
-            markdownContainer.className = 'bke-text-md visually-hidden';
-            markdownContainer.style.width = '100%';
-            markdownContainer.style.minHeight = '300px';
-
-            const container = this.instance?.parentElement ?? document.body;
+            const container = this.instance;
             // Check if container already exists to avoid duplicates
-            const existing = container.querySelector('#editor-markdown');
+            const existing = container.querySelector('.bke-editor-markdown');
             if (existing) {
                 logWarning('Markdown container already exists, skipping initialization.', 'Editor.initMarkdownContainer()');
                 return true;
             }
-            container.appendChild(markdownContainer);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bke-editor-markdown bke-hidden';
+
+            const header = document.createElement('div');
+            header.className = 'bke-view-header';
+
+            const label = document.createElement('span');
+            label.className = 'bke-view-label';
+            label.textContent = 'Markdown';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'bke-copy-btn';
+            copyBtn.title = 'Copy to clipboard';
+            copyBtn.setAttribute('type', 'button');
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', () => {
+                const codeEl = wrapper.querySelector('code');
+                if (codeEl && navigator.clipboard) {
+                    navigator.clipboard.writeText(codeEl.textContent).then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+                    }).catch(() => {});
+                }
+            });
+
+            header.appendChild(label);
+            header.appendChild(copyBtn);
+
+            const pre = document.createElement('pre');
+            pre.className = 'language-markdown';
+
+            const code = document.createElement('code');
+            code.className = 'language-markdown';
+            pre.appendChild(code);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(pre);
+            container.appendChild(wrapper);
             return true;
         } catch (error) {
             logWarning('Error initializing markdown container: ' + error.message, 'Editor.initMarkdownContainer()');
@@ -1147,20 +1179,52 @@ export class Editor
         log('initHtmlContainer()', 'Editor.');
         
         try {
-            const htmlContainer = document.createElement('div');
-            htmlContainer.id = 'editor-html';
-            htmlContainer.className = 'bke-text-html visually-hidden';
-            htmlContainer.style.width = '100%';
-            htmlContainer.style.minHeight = '300px';
-
-            const container = this.instance?.parentElement ?? document.body;
+            const container = this.instance;
             // Check if container already exists to avoid duplicates
-            const existing = container.querySelector('#editor-html');
+            const existing = container.querySelector('.bke-editor-html');
             if (existing) {
                 logWarning('HTML container already exists, skipping initialization.', 'Editor.initHtmlContainer()');
                 return true;
             }
-            container.appendChild(htmlContainer);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bke-editor-html bke-hidden';
+
+            const header = document.createElement('div');
+            header.className = 'bke-view-header';
+
+            const label = document.createElement('span');
+            label.className = 'bke-view-label';
+            label.textContent = 'HTML';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'bke-copy-btn';
+            copyBtn.title = 'Copy to clipboard';
+            copyBtn.setAttribute('type', 'button');
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', () => {
+                const codeEl = wrapper.querySelector('code');
+                if (codeEl && navigator.clipboard) {
+                    navigator.clipboard.writeText(codeEl.textContent).then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+                    }).catch(() => {});
+                }
+            });
+
+            header.appendChild(label);
+            header.appendChild(copyBtn);
+
+            const pre = document.createElement('pre');
+            pre.className = 'language-markup';
+
+            const code = document.createElement('code');
+            code.className = 'language-markup';
+            pre.appendChild(code);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(pre);
+            container.appendChild(wrapper);
             return true;
         } catch (error) {
             logWarning('Error initializing HTML container: ' + error.message, 'Editor.initHtmlContainer()');

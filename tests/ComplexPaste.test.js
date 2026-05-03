@@ -39,7 +39,7 @@ describe('Complex Paste Functionality', () => {
 
         // Mock document methods
         document.getElementById = jest.fn().mockReturnValue(mockElement);
-        document.createElement = jest.fn().mockReturnValue({
+        document.createElement = jest.fn().mockImplementation(() => ({
             classList: { 
                 add: jest.fn(), 
                 remove: jest.fn(),
@@ -57,7 +57,7 @@ describe('Complex Paste Functionality', () => {
             },
             after: jest.fn(),
             style: {}
-        });
+        }));
 
         // Mock Parser
         Parser.parse = jest.fn().mockReturnValue([]);

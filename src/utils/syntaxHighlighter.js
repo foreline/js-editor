@@ -15,6 +15,7 @@ import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-markdown';
 
 /**
  * Syntax Highlighter utility using Prism.js
@@ -35,7 +36,8 @@ export class SyntaxHighlighter {
         'markup': { name: 'HTML', aliases: ['html'] },
         'json': { name: 'JSON', aliases: [] },
         'sql': { name: 'SQL', aliases: [] },
-        'bash': { name: 'Bash', aliases: ['sh', 'shell'] }
+        'bash': { name: 'Bash', aliases: ['sh', 'shell'] },
+        'markdown': { name: 'Markdown', aliases: ['md'] }
     };
 
     /**
