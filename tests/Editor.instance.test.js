@@ -47,6 +47,12 @@ describe('Editor Instance Methods', () => {
             focus: jest.fn(),
             closest: jest.fn(),
             after: jest.fn(),
+            classList: {
+                add: jest.fn(),
+                remove: jest.fn(),
+                toggle: jest.fn(),
+                contains: jest.fn().mockReturnValue(false),
+            },
         };
 
         mockContainer = {

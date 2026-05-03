@@ -68,7 +68,7 @@ export class Editor
         this.debugTooltip = null;
 
         // Cursor and selection management
-        this.cursor = new CursorManager();
+        this.cursor = new CursorManager({ scrollOnFocus: options.scrollOnFocus ?? false });
 
         // Content serialization (markdown/HTML output)
         this.serializer = new ContentSerializer();
@@ -192,6 +192,12 @@ export class Editor
         }
 
         this.instance = document.getElementById(options.id);
+        // Ensure the mount element always carries the .bke-editor class so all
+        // library CSS (scoped to .bke-editor) applies when using the id: API
+        // without a container: option.
+        if (this.instance) {
+            this.instance.classList.add('bke-editor');
+        }
         this._readonly = !!options.readonly;
 
         // Read initial content BEFORE we modify the mount element's DOM.
@@ -350,6 +356,26 @@ export class Editor
         this.eventEmitter.emit(eventType, data, options);
     }
     
+    /**
+     * Mount the editor onto an existing DOM element directly.
+     * Equivalent to `new Editor({ id, ...options })` but accepts an element
+     * reference instead of an id string, adding the id automatically if absent.
+     *
+     * @param {HTMLElement} element - The DOM element to mount the editor on
+     * @param {object} [options={}] - Editor options (same as constructor, without `id`)
+     * @returns {Editor} The new editor instance
+     */
+    static mount(element, options = {})
+    {
+        if (!element || !(element instanceof HTMLElement)) {
+            throw new Error('Editor.mount() requires a valid HTMLElement as its first argument.');
+        }
+        if (!element.id) {
+            element.id = 'bke-' + Math.random().toString(36).slice(2, 9);
+        }
+        return new Editor({ ...options, id: element.id });
+    }
+
     /**
      * Get the editor instance from a DOM element
      * @param {HTMLElement} element - The editor DOM element

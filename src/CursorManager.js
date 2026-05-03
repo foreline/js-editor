@@ -9,6 +9,15 @@ import {log} from "./utils/log.js";
 export class CursorManager
 {
     /**
+     * @param {object} [options]
+     * @param {boolean} [options.scrollOnFocus=false] - Whether to scroll the active block into view on focus.
+     */
+    constructor({ scrollOnFocus = false } = {})
+    {
+        this.scrollOnFocus = scrollOnFocus;
+    }
+
+    /**
      * Helper method to focus on an element without recursion
      * @param {HTMLElement} element - The element to focus on
      */
@@ -33,8 +42,10 @@ export class CursorManager
         // Set the selection
         selection.addRange(range);
     
-        // Ensure element is visible
-        element.scrollIntoView({ behavior: 'smooth' });
+        // Optionally scroll the element into view
+        if (this.scrollOnFocus) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     /**

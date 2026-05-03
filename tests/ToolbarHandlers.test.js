@@ -59,6 +59,7 @@ describe('ToolbarHandlers', () => {
 
     describe('init', () => {
         let mockButtons;
+        let mockToolbarInstance;
         let originalCleanup;
 
         beforeEach(() => {
@@ -119,33 +120,50 @@ describe('ToolbarHandlers', () => {
                 '.bke-toolbar-markdown': mockButtons.markdown,
                 '.bke-toolbar-html': mockButtons.html,
             };
-            document.querySelectorAll.mockImplementation((selector) => selectorMap[selector] || []);
+
+            // Create a mock toolbar with a container that uses the selectorMap
+            mockToolbarInstance = {
+                container: {
+                    querySelectorAll: jest.fn((selector) => selectorMap[selector] || [])
+                },
+                undo: jest.fn(),
+                redo: jest.fn(),
+                h1: jest.fn(), h2: jest.fn(), h3: jest.fn(),
+                h4: jest.fn(), h5: jest.fn(), h6: jest.fn(),
+                paragraph: jest.fn(),
+                bold: jest.fn(), italic: jest.fn(),
+                underline: jest.fn(), strikethrough: jest.fn(),
+                ul: jest.fn(), ol: jest.fn(), sq: jest.fn(),
+                code: jest.fn(), table: jest.fn(), image: jest.fn(),
+                text: jest.fn(), markdown: jest.fn(), html: jest.fn(),
+                debug: jest.fn()
+            };
 
             // Mock cleanup method
             ToolbarHandlers.cleanup = jest.fn();
         });
 
         it('should set default paragraph separator', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(document.execCommand).toHaveBeenCalledWith('defaultParagraphSeparator', false, 'p');
         });
 
         it('should call cleanup before adding new listeners', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(ToolbarHandlers.cleanup).toHaveBeenCalled();
         });
 
         it('should add event listeners for undo/redo buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.undo[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.redo[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
         });
 
         it('should add event listeners for header buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.h1[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.h2[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
@@ -157,7 +175,7 @@ describe('ToolbarHandlers', () => {
         });
 
         it('should add event listeners for formatting buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.bold[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.italic[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
@@ -166,7 +184,7 @@ describe('ToolbarHandlers', () => {
         });
 
         it('should add event listeners for list buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.ul[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.ol[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
@@ -174,14 +192,14 @@ describe('ToolbarHandlers', () => {
         });
 
         it('should add event listeners for other buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.code[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.table[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
         });
 
         it('should add event listeners for view buttons', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             expect(mockButtons.text[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockButtons.markdown[0].addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
@@ -189,7 +207,7 @@ describe('ToolbarHandlers', () => {
         });
 
         it('should track event listeners for cleanup', () => {
-            ToolbarHandlers.init();
+            ToolbarHandlers.init(mockToolbarInstance);
 
             // Check that some listeners were tracked
             expect(ToolbarHandlers.eventListeners.size).toBeGreaterThan(0);
@@ -206,15 +224,17 @@ describe('ToolbarHandlers', () => {
             const mockElement = {
                 addEventListener: jest.fn()
             };
+            const mockContainer = {};
             const mockHandler = jest.fn();
 
-            ToolbarHandlers.addEventListenerWithTracking(mockElement, 'click', mockHandler);
+            ToolbarHandlers.addEventListenerWithTracking(mockElement, 'click', mockHandler, mockContainer);
 
             expect(mockElement.addEventListener).toHaveBeenCalledWith('click', mockHandler);
-            expect(ToolbarHandlers.eventListeners.get(mockElement)).toEqual({
+            expect(ToolbarHandlers.eventListeners.get(mockContainer)).toEqual([{
+                element: mockElement,
                 event: 'click',
                 handler: mockHandler
-            });
+            }]);
         });
     });
 
@@ -229,9 +249,9 @@ describe('ToolbarHandlers', () => {
             const mockHandler1 = jest.fn();
             const mockHandler2 = jest.fn();
 
-            // Add some tracked listeners
-            ToolbarHandlers.eventListeners.set(mockElement1, { event: 'click', handler: mockHandler1 });
-            ToolbarHandlers.eventListeners.set(mockElement2, { event: 'change', handler: mockHandler2 });
+            // Add some tracked listeners (map from container to array of {element, event, handler})
+            ToolbarHandlers.eventListeners.set(mockElement1, [{ element: mockElement1, event: 'click', handler: mockHandler1 }]);
+            ToolbarHandlers.eventListeners.set(mockElement2, [{ element: mockElement2, event: 'change', handler: mockHandler2 }]);
 
             ToolbarHandlers.cleanup();
 
@@ -248,7 +268,7 @@ describe('ToolbarHandlers', () => {
                 })
             };
 
-            ToolbarHandlers.eventListeners.set(mockElement, { event: 'click', handler: jest.fn() });
+            ToolbarHandlers.eventListeners.set(mockElement, [{ element: mockElement, event: 'click', handler: jest.fn() }]);
 
             ToolbarHandlers.cleanup();
 
@@ -264,18 +284,20 @@ describe('ToolbarHandlers', () => {
             const mockEvent = {
                 preventDefault: jest.fn()
             };
-            const mockToolbar = { h1: jest.fn() };
             let capturedHandler = null;
             const mockButton = {
                 addEventListener: jest.fn((event, handler) => {
                     capturedHandler = handler;
                 })
             };
-
-            // Return mockButton only for h1 selector
-            document.querySelectorAll.mockImplementation((selector) => {
-                return selector === '.bke-toolbar-header1' ? [mockButton] : [];
-            });
+            const mockToolbar = {
+                h1: jest.fn(),
+                container: {
+                    querySelectorAll: jest.fn((selector) => {
+                        return selector === '.bke-toolbar-header1' ? [mockButton] : [];
+                    })
+                }
+            };
 
             ToolbarHandlers.init(mockToolbar);
 

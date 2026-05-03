@@ -29,6 +29,7 @@ declare module '@foreline/blockeditor' {
 
   export interface EditorOptions {
     id: string;
+    container?: HTMLElement | HTMLElement[];
     placeholder?: string;
     debug?: boolean;
     autofocus?: boolean;
@@ -36,6 +37,7 @@ declare module '@foreline/blockeditor' {
     minHeight?: string;
     maxHeight?: string;
     toolbar?: boolean | ToolbarOptions;
+    scrollOnFocus?: boolean;
     markdown?: string;
     html?: string;
   }
@@ -56,6 +58,7 @@ declare module '@foreline/blockeditor' {
     constructor(options: EditorOptions);
     
     // Static methods
+    static mount(element: HTMLElement, options?: Omit<EditorOptions, 'id'>): Editor;
     static getInstance(id: string): Editor | null;
     static getAllInstances(): Map<string, Editor>;
     static destroyInstance(id: string): boolean;

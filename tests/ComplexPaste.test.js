@@ -34,7 +34,13 @@ describe('Complex Paste Functionality', () => {
             closest: jest.fn(),
             parentNode: {
                 replaceChild: jest.fn()
-            }
+            },
+            classList: {
+                add: jest.fn(),
+                remove: jest.fn(),
+                toggle: jest.fn(),
+                contains: jest.fn().mockReturnValue(false),
+            },
         };
 
         // Mock document methods

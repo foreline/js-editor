@@ -37,12 +37,32 @@
 }
 
 .bke-editor {
-    --editor-font-size: 1rem;
-    --editor-line-height: 1.5;
+    --bke-font-family: inherit;
+    --bke-font-size: 1rem;
+    --bke-line-height: 1.5;
+    --bke-h1-size: 1.5em;
+    --bke-h2-size: 1.25em;
+    --bke-h3-size: 1.1em;
+    --bke-h4-size: 1em;
+    --bke-h5-size: 0.9em;
+    --bke-h6-size: 0.85em;
+
+    /* Keep legacy variable names as aliases for backward compatibility */
+    --editor-font-size: var(--bke-font-size);
+    --editor-line-height: var(--bke-line-height);
+
     outline: none;
-    font-size: var(--editor-font-size);
-    line-height: var(--editor-line-height);
+    font-family: var(--bke-font-family);
+    font-size: var(--bke-font-size);
+    line-height: var(--bke-line-height);
 }
+
+.bke-editor .bke-block[data-block-type="h1"] h1 { font-size: var(--bke-h1-size); }
+.bke-editor .bke-block[data-block-type="h2"] h2 { font-size: var(--bke-h2-size); }
+.bke-editor .bke-block[data-block-type="h3"] h3 { font-size: var(--bke-h3-size); }
+.bke-editor .bke-block[data-block-type="h4"] h4 { font-size: var(--bke-h4-size); }
+.bke-editor .bke-block[data-block-type="h5"] h5 { font-size: var(--bke-h5-size); }
+.bke-editor .bke-block[data-block-type="h6"] h6 { font-size: var(--bke-h6-size); }
 
 .bke-editor[aria-readonly="true"] {
     pointer-events: none;
