@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.6.1] - 2026-05-03
+
+### Fixed
+- Improved view mode containers: Restructured markdown and HTML view containers with proper accessibility headers, copy-to-clipboard buttons, and syntax highlighting support. Replaced id-based selectors with class-based selectors to support multiple editor instances on the same page without ID conflicts. Fixed debug tooltip positioning and visibility when switching between view modes.
+
 ## [v0.6.0] - 2026-05-03
 
 ### Changed
