@@ -7,6 +7,7 @@
  */
 
 import { Editor } from '../src/Editor.js';
+import { BlockManager } from '../src/BlockManager.js';
 import { Utils } from '../src/Utils.js';
 
 describe('Empty Editor Edge Case Fix', () => {
@@ -62,11 +63,13 @@ describe('Empty Editor Edge Case Fix', () => {
         // Mock querySelectorAll to return our mock blocks
         editorElement.querySelectorAll = jest.fn().mockReturnValue(mockBlocks);
         
+        const boundCtx = { eventEmitter: mockEventEmitter };
+        boundCtx._blockManager = new BlockManager({ editor: boundCtx });
         mockEditor = {
             instance: editorElement,
             eventEmitter: mockEventEmitter,
-            isEditorEmpty: Editor.prototype.isEditorEmpty.bind({ eventEmitter: mockEventEmitter }),
-            detachBlockEvents: Editor.prototype.detachBlockEvents.bind({ eventEmitter: mockEventEmitter }),
+            isEditorEmpty: Editor.prototype.isEditorEmpty.bind(boundCtx),
+            detachBlockEvents: Editor.prototype.detachBlockEvents.bind(boundCtx),
         };
     });
 

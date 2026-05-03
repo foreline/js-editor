@@ -50,6 +50,8 @@ describe('Complex Paste Functionality', () => {
             textContent: '',
             setAttribute: jest.fn(),
             getAttribute: jest.fn(),
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
             parentNode: {
                 replaceChild: jest.fn()
             },
@@ -332,11 +334,11 @@ describe('Complex Paste Functionality', () => {
             ];
 
             Parser.parseHtml.mockReturnValue(mockBlocks);
-            editor.insertMultipleBlocks = jest.fn();
+            editor._pasteHandler._insertMultipleBlocks = jest.fn();
 
             editor.paste(mockClipboardEvent);
 
-            expect(editor.insertMultipleBlocks).toHaveBeenCalledWith(mockBlocks);
+            expect(editor._pasteHandler._insertMultipleBlocks).toHaveBeenCalledWith(mockBlocks);
             expect(editor.eventEmitter.emit).toHaveBeenCalledWith(
                 EVENTS.USER_PASTE,
                 expect.objectContaining({
@@ -357,7 +359,7 @@ Third line of text`;
                 .mockReturnValueOnce(multiLineText)  // First call: text
                 .mockReturnValueOnce('');  // Second call: text/html (empty)
 
-            editor.insertMultipleLinesAsBlocks = jest.fn();
+            editor._pasteHandler._insertMultipleLinesAsBlocks = jest.fn();
 
             editor.paste(mockClipboardEvent);
 
@@ -367,7 +369,7 @@ Third line of text`;
             expect(mockClipboardEvent.clipboardData.getData).toHaveBeenNthCalledWith(2, 'text/html');
 
             // Should be called with the split lines
-            expect(editor.insertMultipleLinesAsBlocks).toHaveBeenCalledWith([
+            expect(editor._pasteHandler._insertMultipleLinesAsBlocks).toHaveBeenCalledWith([
                 'First line of text',
                 'Second line of text', 
                 'Third line of text'
@@ -384,11 +386,11 @@ Third line of text`;
             // Mock Parser.parseHtml to return single block
             const mockBlock = { type: 'p', content: 'Single paragraph', html: '<p>Single paragraph</p>' };
             Parser.parseHtml.mockReturnValue([mockBlock]);
-            editor.insertInlineContent = jest.fn();
+            editor._pasteHandler._insertInlineContent = jest.fn();
 
             editor.paste(mockClipboardEvent);
 
-            expect(editor.insertInlineContent).toHaveBeenCalledWith(
+            expect(editor._pasteHandler._insertInlineContent).toHaveBeenCalledWith(
                 '<p>Single paragraph</p>',
                 expect.any(Object)
             );

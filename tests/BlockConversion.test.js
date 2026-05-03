@@ -4,6 +4,7 @@ jest.unmock('../src/blocks/BlockFactory');
 jest.mock('@/utils/log.js');
 
 import { BlockFactory } from '../src/blocks/BlockFactory.js';
+import { BlockConverter } from '../src/BlockConverter.js';
 import { ParagraphBlock } from '../src/blocks/ParagraphBlock.js';
 import { H1Block } from '../src/blocks/H1Block.js';
 import { UnorderedListBlock } from '../src/blocks/UnorderedListBlock.js';
@@ -68,6 +69,7 @@ describe('Block Conversion Feature', () => {
                 findEditableElementInBlock: jest.fn().mockReturnValue(mockBlock),
                 placeCursorAtEnd: jest.fn(),
             };
+            mockEditor._blockConverter = new BlockConverter({ editor: mockEditor });
             const EditorModule = require('../src/Editor.js');
             const EditorClass = EditorModule.Editor;
             mockEditor.checkAndConvertBlock = EditorClass.prototype.checkAndConvertBlock.bind(mockEditor);
@@ -128,6 +130,7 @@ describe('Block Conversion Feature', () => {
                 findEditableElementInBlock: jest.fn().mockReturnValue(mockBlock),
                 placeCursorAtEnd: jest.fn(),
             };
+            mockEditor._blockConverter = new BlockConverter({ editor: mockEditor });
             const EditorModule = require('../src/Editor.js');
             const EditorClass = EditorModule.Editor;
             mockEditor.convertBlockType = EditorClass.prototype.convertBlockType.bind(mockEditor);

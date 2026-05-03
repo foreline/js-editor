@@ -98,7 +98,9 @@ describe('Insert Preceding Block', () => {
             mockEditor.eventEmitter = mockEventEmitter;
             mockEditor._blockMap = new WeakMap();
             mockEditor.instance = mockInstance;
+            mockEditor.contentArea = mockInstance; // contentArea is the editable surface
             mockEditor.currentBlock = mockCurrentBlock;
+            mockEditor._blockManager = new (require('../src/BlockManager.js').BlockManager)({ editor: mockEditor });
         });
 
         afterEach(() => {

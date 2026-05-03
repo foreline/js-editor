@@ -48,6 +48,7 @@ export class Toolbar
         log('constructor()', 'Toolbar.'); console.log({options});
         const { container, config, debug, editorInstance, icons } = options;
         
+        this.container = container;
         this.editorInstance = editorInstance;
         this.customIcons = icons ?? {};
         
@@ -601,6 +602,52 @@ export class Toolbar
         }
         
         container.insertBefore(toolbar, container.firstChild);
+    }
+
+    /**
+     * Update toolbar button states based on the active block type.
+     * Disables buttons that are not applicable for the given block type
+     * and re-enables all others.
+     * @param {string} blockType
+     */
+    updateButtonStates(blockType)
+    {
+        log('updateButtonStates()', 'Toolbar.', { blockType });
+
+        if (!blockType) return;
+
+        const blockClass = BlockFactory.getBlockClass(blockType);
+        if (!blockClass) return;
+
+        const disabledButtons = blockClass.getDisabledButtons();
+        this.resetButtonStates();
+
+        disabledButtons.forEach(buttonClass => {
+            const button = this.container.querySelector(`.${buttonClass}`);
+            if (button) {
+                button.disabled = true;
+                button.classList.add('disabled');
+            }
+        });
+    }
+
+    /**
+     * Re-enable all toolbar buttons (except view-toggle buttons).
+     */
+    resetButtonStates()
+    {
+        log('resetButtonStates()', 'Toolbar.');
+
+        this.container.querySelectorAll('button').forEach(button => {
+            const isViewButton = button.classList.contains('bke-toolbar-text') ||
+                button.classList.contains('bke-toolbar-markdown') ||
+                button.classList.contains('bke-toolbar-html');
+
+            if (!isViewButton) {
+                button.disabled = false;
+                button.classList.remove('disabled');
+            }
+        });
     }
 
     /**

@@ -6,6 +6,7 @@
  */
 
 import { Editor } from '../src/Editor.js';
+import { BlockManager } from '../src/BlockManager.js';
 
 // Mock the log utility
 jest.mock('../src/utils/log.js', () => ({
@@ -51,6 +52,15 @@ describe('Empty Editor Fix', () => {
         // Create mock editor with minimal setup
         mockEditor = {
             instance: mockInstance,
+            contentArea: {
+                innerHTML: '',
+                appendChild: jest.fn(),
+                querySelector: jest.fn().mockReturnValue(null),
+                querySelectorAll: jest.fn().mockReturnValue([]),
+                setAttribute: jest.fn(),
+                isConnected: true,
+                focus: jest.fn(),
+            },
             eventEmitter: mockEventEmitter,
             currentBlock: null,
             debugMode: false,
@@ -63,6 +73,7 @@ describe('Empty Editor Fix', () => {
         mockEditor.detachBlockEvents = Editor.prototype.detachBlockEvents.bind(mockEditor);
         mockEditor.focus = Editor.prototype.focus.bind(mockEditor);
         mockEditor.focusElement = Editor.prototype.focusElement.bind(mockEditor);
+        mockEditor._blockManager = new BlockManager({ editor: mockEditor });
     });
 
     afterEach(() => {

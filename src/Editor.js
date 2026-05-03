@@ -2,7 +2,6 @@
 
 import {Toolbar} from "./Toolbar.js";
 import {log, logWarning} from "./utils/log.js";
-import showdown from "showdown";
 import {EditorEventEmitter, EVENTS} from "@/utils/eventEmitter.js";
 import {Block} from "@/Block.js";
 import {Parser} from "@/Parser.js";
@@ -13,6 +12,12 @@ import {KeyHandler} from "@/KeyHandler.js";
 import {InlineMarkdownHandler} from "@/InlineMarkdownHandler.js";
 import {DebugTooltip} from "@/DebugTooltip.js";
 import {EditorStateMachine} from "@/utils/EditorStateMachine.js";
+import {defaultToolbarConfig} from "./config/defaultToolbarConfig.js";
+import {CursorManager} from "./CursorManager.js";
+import {ContentSerializer, html2md as _html2md, md2html as _md2html} from "./ContentSerializer.js";
+import {PasteHandler} from "./PasteHandler.js";
+import {BlockConverter} from "./BlockConverter.js";
+import {BlockManager} from "./BlockManager.js";
 
 /**
  * Editor class
@@ -61,6 +66,21 @@ export class Editor
         
         // Initialize debug tooltip instance
         this.debugTooltip = null;
+
+        // Cursor and selection management
+        this.cursor = new CursorManager();
+
+        // Content serialization (markdown/HTML output)
+        this.serializer = new ContentSerializer();
+
+        // Paste handling
+        this._pasteHandler = new PasteHandler({ editor: this });
+
+        // Block type conversion
+        this._blockConverter = new BlockConverter({ editor: this });
+
+        // Block lifecycle management
+        this._blockManager = new BlockManager({ editor: this });
         
         // Initialize the editor first
         this.init(options);
@@ -126,63 +146,8 @@ export class Editor
 
         if (options.readonly) { return; }
 
-        // Initialize toolbar - use the editor instance element's parent as container
-        const toolbarContainer = this.instance.parentElement || this.instance;
-        const defaultToolbarConfig = [
-            {
-                group: [
-                    { class: 'bke-toolbar-undo', icon: 'fa-undo', title: 'undo' },
-                    { class: 'bke-toolbar-redo', icon: 'fa-redo', title: 'redo' }
-                ]
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-header1', label: 'Header 1' },
-                    { class: 'bke-toolbar-header2', label: 'Header 2' },
-                    { class: 'bke-toolbar-header3', label: 'Header 3' },
-                    { class: 'bke-toolbar-header4', label: 'Header 4' },
-                    { class: 'bke-toolbar-header5', label: 'Header 5' },
-                    { class: 'bke-toolbar-header6', label: 'Header 6' },
-                    { class: 'bke-toolbar-paragraph', label: 'Paragraph' }
-                ],
-                dropdown: true,
-                icon: 'fa-heading',
-                id: 'dropdownMenuHeader'
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-bold', icon: 'fa-bold', title: 'bold' },
-                    { class: 'bke-toolbar-italic', icon: 'fa-italic', title: 'italic' },
-                    { class: 'bke-toolbar-underline', icon: 'fa-underline', title: 'underline' },
-                    { class: 'bke-toolbar-strikethrough', icon: 'fa-strikethrough', title: 'strikethrough' }
-                ]
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-ul', icon: 'fa-list', title: 'unordered list' },
-                    { class: 'bke-toolbar-ol', icon: 'fa-list-ol', title: 'ordered list' },
-                    { class: 'bke-toolbar-sq', icon: 'fa-list-check', title: 'task list' }
-                ]
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-table', icon: 'fa-table', title: 'insert table' },
-                    { class: 'bke-toolbar-image', icon: 'fa-image', title: 'insert image' }
-                ]
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-code', icon: 'fa-code', title: 'code block' }
-                ]
-            },
-            {
-                group: [
-                    { class: 'bke-toolbar-text', icon: 'fa-paragraph', title: 'text view', disabled: true },
-                    { class: 'bke-toolbar-markdown', icon: 'fa-brands fa-markdown', title: 'markdown view' },
-                    { class: 'bke-toolbar-html', icon: 'fa-brands fa-html5', title: 'html view' }
-                ]
-            }
-        ];
+        // Initialize toolbar - use the editor instance element itself as container
+        const toolbarContainer = this.instance;
         
         // Use provided toolbar config or default, only initialize if toolbar is not disabled
         const toolbarConfig = options.toolbar === false ? null : (
@@ -229,15 +194,28 @@ export class Editor
         this.instance = document.getElementById(options.id);
         this._readonly = !!options.readonly;
 
+        // Read initial content BEFORE we modify the mount element's DOM.
+        const _initialContent = options.text || this.instance.innerHTML || '';
+
+        // Create a dedicated content area inside the mount element.
+        // The toolbar (inserted later by initializeToolbar) becomes a sibling of
+        // this div, NOT a child of the contenteditable surface. This prevents
+        // Ctrl+A + Delete from removing the toolbar.
+        this.contentArea = document.createElement('div');
+        this.contentArea.className = 'bke-content-area';
+
         if (this._readonly) {
-            this.instance.removeAttribute('contenteditable');
-            this.instance.setAttribute('aria-readonly', 'true');
-            this.instance.style.userSelect = 'text';
+            this.contentArea.style.userSelect = 'text';
+            this.instance.setAttribute('aria-readonly', 'true'); // kept on instance for CSS selector
         } else {
-            this.instance.setAttribute('contenteditable', 'true');
+            this.contentArea.setAttribute('contenteditable', 'true');
         }
 
-        let content = options.text || this.instance.innerHTML || '';
+        // Clear the mount element and insert the content area.
+        this.instance.innerHTML = '';
+        this.instance.appendChild(this.contentArea);
+
+        let content = _initialContent;
         let blocks = Parser.parse(content);
         
         this.blocks = blocks;
@@ -246,30 +224,9 @@ export class Editor
             blocks = [new Block()];
         }
 
-        // @fixme use timestamp(content) for tracking changes
-        
-        /*$(element).on('focus', (e) => {
-            const currentTarget = e.currentTarget;
-            currentTarget.data('before', $(this).html());
-        }).on('blur keyup paste input', (e) => {
-            const currentTarget = e.currentTarget;
-            if ( $(this).data('before') !== $(this).html() ) {
-                $(this).data('before', $(this).html());
-                $(this).trigger('change');
-            }
-        });*/
-        
-        //Editor.html2md($(element).html());
-        
-        /*$(element).on('change', () => {
-            Editor.update();
-        });*/
-    
-        //Editor.update();
-        
         for ( let block of blocks ) {
             let html = Parser.html(block);
-            this.instance.appendChild(html);
+            this.contentArea.appendChild(html);
             // Link typed block instance to its DOM element
             const typedBlock = block.getBlockInstance ? block.getBlockInstance() : block;
             if (typedBlock && typedBlock.element !== undefined) {
@@ -284,11 +241,6 @@ export class Editor
         this._inlineMarkdownHandler = new InlineMarkdownHandler(this);
         if (!this._readonly) {
             this.addListeners();
-        }
-        
-        // @fixme focus only if empty content
-        if ( 0 ) {
-            this.focus();
         }
 
         this.initMarkdownContainer();
@@ -443,12 +395,12 @@ export class Editor
         this._boundHandlers.keydown = (e) => {
             this.keyHandler.handleSpecialKeys(e);
         };
-        this.instance.addEventListener('keydown', this._boundHandlers.keydown);
+        this.contentArea.addEventListener('keydown', this._boundHandlers.keydown);
     
         this._boundHandlers.keyup = (e) => {
             this.keyHandler.handleKeyPress(e);
         };
-        this.instance.addEventListener('keyup', this._boundHandlers.keyup);
+        this.contentArea.addEventListener('keyup', this._boundHandlers.keyup);
         
         // BEFOREINPUT Event handler — intercept deletions that cross block boundaries.
         // The browser's native contenteditable handling can corrupt the block
@@ -463,120 +415,12 @@ export class Editor
         //   3. Remove empty/orphaned blocks
         //   4. Guarantee at least one block always exists
         //   5. Place the cursor exactly at the merge point
-        this._boundHandlers.beforeinput = (e) => {
-            if (!e.inputType.startsWith('delete')) return;
-
-            const selection = window.getSelection();
-            if (!selection || !selection.rangeCount) return;
-
-            const range = selection.getRangeAt(0);
-            if (range.collapsed) return; // Single-point deletion — let the browser handle it
-
-            const allBlocks = this.instance.querySelectorAll('.bke-block');
-            if (allBlocks.length === 0) return;
-
-            // Collect the blocks that are touched by the selection
-            const intersectedBlocks = [];
-            for (const block of allBlocks) {
-                if (range.intersectsNode(block)) intersectedBlocks.push(block);
-            }
-
-            // Only take over when the deletion crosses a block boundary
-            if (intersectedBlocks.length < 2) return;
-
-            e.preventDefault();
-            log('beforeinput: intercepted cross-block deletion (' + intersectedBlocks.length + ' blocks)', 'Editor.');
-
-            const firstBlock = intersectedBlocks[0];
-            const lastBlock  = intersectedBlocks[intersectedBlocks.length - 1];
-
-            // --- 1. Insert a <span> cursor marker at the deletion point -------
-            //     We use an element (not a text node) so that normalize() won't
-            //     remove it later when we merge adjacent text nodes.
-            const cursorMarker = document.createElement('span');
-            cursorMarker.setAttribute('data-cursor-marker', '');
-            range.insertNode(cursorMarker);
-
-            // --- 2. Re-create a range that covers the selected content --------
-            //     insertNode() pushes the range start before the marker, so we
-            //     build a fresh range from just after the marker to the original
-            //     selection end (which hasn't moved).
-            const deleteRange = document.createRange();
-            deleteRange.setStartAfter(cursorMarker);
-            deleteRange.setEnd(range.endContainer, range.endOffset);
-            deleteRange.deleteContents();
-
-            // --- 3. Merge the last block's remaining content into the first ---
-            if (firstBlock !== lastBlock && lastBlock.isConnected && firstBlock.isConnected) {
-                while (lastBlock.firstChild) {
-                    firstBlock.appendChild(lastBlock.firstChild);
-                }
-                lastBlock.remove();
-            }
-
-            // --- 4. Remove any remaining intersected blocks -------------------
-            for (const block of intersectedBlocks) {
-                if (block !== firstBlock && block.isConnected) {
-                    block.remove();
-                }
-            }
-
-            // Normalize text nodes around the merge point
-            firstBlock.normalize();
-
-            // --- 5. Place cursor at the marker, then remove it ----------------
-            const restoreRange = document.createRange();
-            if (cursorMarker.isConnected) {
-                restoreRange.setStartAfter(cursorMarker);
-                restoreRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(restoreRange);
-                cursorMarker.remove();
-            }
-
-            // --- 6. Clean up: if firstBlock is empty but other blocks exist,
-            //        remove it and focus the nearest neighbor instead. ----------
-            const firstBlockContent = (firstBlock.textContent || '').trim();
-            let remainingBlocks = this.instance.querySelectorAll('.bke-block');
-
-            if (!firstBlockContent && remainingBlocks.length > 1 && firstBlock.isConnected) {
-                const neighbor = firstBlock.previousElementSibling
-                    || firstBlock.nextElementSibling;
-                firstBlock.remove();
-                remainingBlocks = this.instance.querySelectorAll('.bke-block');
-                if (neighbor && neighbor.isConnected && neighbor.classList.contains('bke-block')) {
-                    this.setCurrentBlock(neighbor);
-                    this.focus(neighbor);
-                } else if (remainingBlocks.length > 0) {
-                    this.setCurrentBlock(remainingBlocks[remainingBlocks.length - 1]);
-                    this.focus(remainingBlocks[remainingBlocks.length - 1]);
-                }
-            }
-
-            // --- 7. Ensure at least one block always exists -------------------
-            remainingBlocks = this.instance.querySelectorAll('.bke-block');
-            if (remainingBlocks.length === 0) {
-                this.currentBlock = null;
-                this.addDefaultBlock();
-            } else if (firstBlock.isConnected) {
-                this.setCurrentBlock(firstBlock);
-            } else {
-                // firstBlock was removed or disconnected — focus nearest remaining
-                const target = remainingBlocks[remainingBlocks.length - 1];
-                this.setCurrentBlock(target);
-                this.focus(target);
-            }
-
-            this.update();
-        };
-        this.instance.addEventListener('beforeinput', this._boundHandlers.beforeinput);
+        this._boundHandlers.beforeinput = (e) => this._handleCrossBlockDelete(e);
+        this.contentArea.addEventListener('beforeinput', this._boundHandlers.beforeinput);
 
         // PASTE TEXT/HTML Event handler
-        this._boundHandlers.paste = (e) => {
-            this.paste(e);
-            e.preventDefault();
-        };
-        this.instance.addEventListener('paste', this._boundHandlers.paste);
+        this._boundHandlers.paste = (e) => this._pasteHandler.handle(e);
+        this.contentArea.addEventListener('paste', this._boundHandlers.paste);
         
         // INPUT Event handler - catch content changes for block conversion
         this._boundHandlers.input = (e) => {
@@ -676,7 +520,7 @@ export class Editor
                 }
             }
         };
-        this.instance.addEventListener('input', this._boundHandlers.input);
+        this.contentArea.addEventListener('input', this._boundHandlers.input);
         
         // Primary handler for setting current block - handles both click and focus events
         this._boundHandlers.click = (e) => {
@@ -696,7 +540,7 @@ export class Editor
                 this.setCurrentBlock(block);
             }
         };
-        this.instance.addEventListener('click', this._boundHandlers.click);
+        this.contentArea.addEventListener('click', this._boundHandlers.click);
 
         // Handle focus events for keyboard navigation (only when not caused by mouse interaction)
         this._boundHandlers.focusin = (e) => {
@@ -746,7 +590,7 @@ export class Editor
                 }
             }
         };
-        this.instance.addEventListener('focusin', this._boundHandlers.focusin);
+        this.contentArea.addEventListener('focusin', this._boundHandlers.focusin);
 
         // Track mouse clicks to prevent duplicate focus handling
         // and reset sticky column offset
@@ -756,7 +600,120 @@ export class Editor
                 this.keyHandler._desiredOffset = null;
             }
         };
-        this.instance.addEventListener('mousedown', this._boundHandlers.mousedown);
+        this.contentArea.addEventListener('mousedown', this._boundHandlers.mousedown);
+    }
+
+    /**
+     * Handles cross-block deletion initiated by beforeinput events.
+     * Intercepts delete operations that span multiple blocks to prevent
+     * browser from corrupting the block structure.
+     * @param {InputEvent} e
+     */
+    _handleCrossBlockDelete(e) {
+        if (!e.inputType.startsWith('delete')) return;
+
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) return; // Single-point deletion — let the browser handle it
+
+        const allBlocks = this.instance.querySelectorAll('.bke-block');
+        if (allBlocks.length === 0) return;
+
+        // Collect the blocks that are touched by the selection
+        const intersectedBlocks = [];
+        for (const block of allBlocks) {
+            if (range.intersectsNode(block)) intersectedBlocks.push(block);
+        }
+
+        // Only take over when the deletion crosses a block boundary
+        if (intersectedBlocks.length < 2) return;
+
+        e.preventDefault();
+        log('beforeinput: intercepted cross-block deletion (' + intersectedBlocks.length + ' blocks)', 'Editor.');
+
+        const firstBlock = intersectedBlocks[0];
+        const lastBlock  = intersectedBlocks[intersectedBlocks.length - 1];
+
+        // --- 1. Insert a <span> cursor marker at the deletion point -------
+        //     We use an element (not a text node) so that normalize() won't
+        //     remove it later when we merge adjacent text nodes.
+        const cursorMarker = document.createElement('span');
+        cursorMarker.setAttribute('data-cursor-marker', '');
+        range.insertNode(cursorMarker);
+
+        // --- 2. Re-create a range that covers the selected content --------
+        //     insertNode() pushes the range start before the marker, so we
+        //     build a fresh range from just after the marker to the original
+        //     selection end (which hasn't moved).
+        const deleteRange = document.createRange();
+        deleteRange.setStartAfter(cursorMarker);
+        deleteRange.setEnd(range.endContainer, range.endOffset);
+        deleteRange.deleteContents();
+
+        // --- 3. Merge the last block's remaining content into the first ---
+        if (firstBlock !== lastBlock && lastBlock.isConnected && firstBlock.isConnected) {
+            while (lastBlock.firstChild) {
+                firstBlock.appendChild(lastBlock.firstChild);
+            }
+            lastBlock.remove();
+        }
+
+        // --- 4. Remove any remaining intersected blocks -------------------
+        for (const block of intersectedBlocks) {
+            if (block !== firstBlock && block.isConnected) {
+                block.remove();
+            }
+        }
+
+        // Normalize text nodes around the merge point
+        firstBlock.normalize();
+
+        // --- 5. Place cursor at the marker, then remove it ----------------
+        const restoreRange = document.createRange();
+        if (cursorMarker.isConnected) {
+            restoreRange.setStartAfter(cursorMarker);
+            restoreRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(restoreRange);
+            cursorMarker.remove();
+        }
+
+        // --- 6. Clean up: if firstBlock is empty but other blocks exist,
+        //        remove it and focus the nearest neighbor instead. ----------
+        const firstBlockContent = (firstBlock.textContent || '').trim();
+        let remainingBlocks = this.instance.querySelectorAll('.bke-block');
+
+        if (!firstBlockContent && remainingBlocks.length > 1 && firstBlock.isConnected) {
+            const neighbor = firstBlock.previousElementSibling
+                || firstBlock.nextElementSibling;
+            firstBlock.remove();
+            remainingBlocks = this.instance.querySelectorAll('.bke-block');
+            if (neighbor && neighbor.isConnected && neighbor.classList.contains('bke-block')) {
+                this.setCurrentBlock(neighbor);
+                this.focus(neighbor);
+            } else if (remainingBlocks.length > 0) {
+                this.setCurrentBlock(remainingBlocks[remainingBlocks.length - 1]);
+                this.focus(remainingBlocks[remainingBlocks.length - 1]);
+            }
+        }
+
+        // --- 7. Ensure at least one block always exists -------------------
+        remainingBlocks = this.instance.querySelectorAll('.bke-block');
+        if (remainingBlocks.length === 0) {
+            this.currentBlock = null;
+            this.addDefaultBlock();
+        } else if (firstBlock.isConnected) {
+            this.setCurrentBlock(firstBlock);
+        } else {
+            // firstBlock was removed or disconnected — focus nearest remaining
+            const target = remainingBlocks[remainingBlocks.length - 1];
+            this.setCurrentBlock(target);
+            this.focus(target);
+        }
+
+        this.update();
     }
 
     /**
@@ -786,8 +743,8 @@ export class Editor
                 return;
             } else {
                 // No blocks available, focus on editor instance itself
-                if (this.instance && this.instance.isConnected) {
-                    this.instance.focus();
+                if (this.contentArea && this.contentArea.isConnected) {
+                    this.contentArea.focus();
                 }
                 return;
             }
@@ -802,28 +759,7 @@ export class Editor
      */
     focusElement(element)
     {
-        log('focusElement()', 'Editor.');
-
-        if (!element || !element.isConnected) {
-            return;
-        }
-        
-        const range = document.createRange();
-        const selection = window.getSelection();
-    
-        // Clear existing selections
-        selection.removeAllRanges();
-        
-        //range.selectNode(element);
-        // Create and set the range
-        range.selectNodeContents(element);
-        range.collapse(false);
-        
-        // Set the selection
-        selection.addRange(range);
-    
-        // Ensure element is visible
-        element.scrollIntoView({ behavior: 'smooth' });
+        return this.cursor.focusElement(element);
     }
     
     /**
@@ -832,94 +768,8 @@ export class Editor
      */
     paste(e)
     {
-        log('paste()', 'Editor.'); console.log({e});
-        
-        e.preventDefault(); // Prevent default paste behavior
-        
-        let text = (e.clipboardData || window.clipboardData).getData('text');
-        let htmlData = (e.clipboardData || window.clipboardData).getData('text/html');
-        
-        const selection = window.getSelection();
-        
-        if ( !selection.rangeCount ) {
-            return false;
-        }
-        
-        // If HTML data is available, handle complex content properly
-        if ( htmlData && htmlData.trim() !== '' ) {
-            // Basic HTML sanitization - remove script tags and event handlers
-            htmlData = htmlData
-                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                .replace(/on\w+="[^"]*"/gi, '')
-                .replace(/on\w+='[^']*'/gi, '')
-                .replace(/javascript:/gi, '');
-            
-            // Use Parser to properly parse HTML into blocks
-            try {
-                const blocks = Parser.parseHtml(htmlData);
-                if ( blocks.length > 1 ) {
-                    // Complex content with multiple blocks - insert as separate blocks
-                    this.transaction(() => {
-                        this.insertMultipleBlocks(blocks);
-                    });
-                    
-                    // Emit paste event
-                    this.eventEmitter.emit(EVENTS.USER_PASTE, {
-                        text: text,
-                        html: htmlData,
-                        blocksCount: blocks.length,
-                        timestamp: Date.now()
-                    }, { source: 'user.paste' });
-                    
-                    return;
-                } else if ( blocks.length === 1 ) {
-                    // Single block - handle as inline content
-                    const block = blocks[0];
-                    this.insertInlineContent(block.html || block.content, selection);
-                } else {
-                    // Fallback to markdown conversion
-                    const finalHtml = Editor.md2html(Utils.escapeHTML(text));
-                    this.insertInlineContent(finalHtml, selection);
-                }
-            } catch (error) {
-                logWarning('Error parsing HTML data, falling back to markdown conversion', 'Editor.paste()');
-                const finalHtml = Editor.md2html(Utils.escapeHTML(text));
-                this.insertInlineContent(finalHtml, selection);
-            }
-        } else {
-            // Handle plain text - check for multiple lines that could be separate blocks
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            if (lines.length > 1) {
-                // Multiple lines - create separate blocks for each line
-                this.transaction(() => {
-                    this.insertMultipleLinesAsBlocks(lines);
-                });
-                
-                // Emit paste event
-                this.eventEmitter.emit(EVENTS.USER_PASTE, {
-                    text: text,
-                    html: htmlData,
-                    linesCount: lines.length,
-                    timestamp: Date.now()
-                }, { source: 'user.paste' });
-                
-                return;
-            } else {
-                // Single line - convert markdown to HTML and insert inline
-                const finalHtml = Editor.md2html(Utils.escapeHTML(text));
-                this.insertInlineContent(finalHtml, selection);
-            }
-        }
-        
-        // Emit paste event for single content
-        this.eventEmitter.emit(EVENTS.USER_PASTE, {
-            text: text,
-            html: htmlData,
-            timestamp: Date.now()
-        }, { source: 'user.paste' });
-        
-        // Update editor after paste
-        this.update();
+        log('paste()', 'Editor.');
+        return this._pasteHandler.handle(e);
     }
 
     /**
@@ -928,202 +778,44 @@ export class Editor
      */
     insertMultipleBlocks(blocks) {
         log('insertMultipleBlocks()', 'Editor.');
-        
-        // Get current block
-        const currentBlock = this.currentBlock;
-        let insertAfterBlock = currentBlock;
-        
-        // Clear current block if it's empty (to replace it with first pasted block)
-        if (currentBlock && this.isBlockEmpty(currentBlock)) {
-            // Replace empty block with first pasted block
-            const firstBlock = blocks[0];
-            const firstBlockElement = this.createBlockElement(firstBlock);
-            
-            if (firstBlockElement) {
-                currentBlock.parentNode.replaceChild(firstBlockElement, currentBlock);
-                this.setCurrentBlock(firstBlockElement);
-                insertAfterBlock = firstBlockElement;
-                
-                // Remove first block from array since it replaced the current block
-                blocks = blocks.slice(1);
-            }
-        }
-        
-        // Insert remaining blocks after the current/replaced block
-        blocks.forEach((block, index) => {
-            const blockElement = this.createBlockElement(block);
-            if (blockElement && insertAfterBlock) {
-                insertAfterBlock.after(blockElement);
-                insertAfterBlock = blockElement;
-                
-                // Set focus to the last inserted block
-                if (index === blocks.length - 1) {
-                    this.setCurrentBlock(blockElement);
-                    this.focus(blockElement);
-                }
-            }
-        });
+        return this._pasteHandler._insertMultipleBlocks(blocks);
     }
 
-    /**
-     * Insert multiple lines as separate paragraph blocks
-     * @param {Array} lines - Array of text lines
-     */
     insertMultipleLinesAsBlocks(lines) {
         log('insertMultipleLinesAsBlocks()', 'Editor.');
-        
-        // Get current block
-        const currentBlock = this.currentBlock;
-        let insertAfterBlock = currentBlock;
-        
-        // Clear current block if it's empty (to replace it with first line)
-        if (currentBlock && this.isBlockEmpty(currentBlock)) {
-            // Replace empty block with first line
-            const firstLineHtml = Editor.md2html(Utils.escapeHTML(lines[0]));
-            const firstBlockElement = this.createParagraphBlock(firstLineHtml);
-            
-            if (firstBlockElement) {
-                currentBlock.parentNode.replaceChild(firstBlockElement, currentBlock);
-                this.setCurrentBlock(firstBlockElement);
-                insertAfterBlock = firstBlockElement;
-                
-                // Remove first line from array since it replaced the current block
-                lines = lines.slice(1);
-            }
-        }
-        
-        // Insert remaining lines as new paragraph blocks
-        lines.forEach((line, index) => {
-            const lineHtml = Editor.md2html(Utils.escapeHTML(line));
-            const blockElement = this.createParagraphBlock(lineHtml);
-            
-            if (blockElement && insertAfterBlock) {
-                insertAfterBlock.after(blockElement);
-                insertAfterBlock = blockElement;
-                
-                // Set focus to the last inserted block
-                if (index === lines.length - 1) {
-                    this.setCurrentBlock(blockElement);
-                    this.focus(blockElement);
-                }
-            }
-        });
+        return this._pasteHandler._insertMultipleLinesAsBlocks(lines);
     }
 
     /**
      * Create a block element from a parsed block object
-     * @param {Object} block - Parsed block object
-     * @returns {HTMLElement|null} - Created block element
+     * @param {Object} block
+     * @returns {HTMLElement|null}
      */
     createBlockElement(block) {
-        try {
-            // Create block instance
-            const blockInstance = block._blockInstance || BlockFactory.createBlock(
-                block.type, 
-                block.content, 
-                block.html, 
-                block.nested
-            );
-            
-            if (!blockInstance) {
-                return null;
-            }
-            
-            // Render to element
-            const blockElement = blockInstance.renderToElement();
-            
-            if (blockElement) {
-                // Generate unique block ID
-                const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                blockElement.setAttribute('data-block-id', blockId);
-                blockElement.setAttribute('data-timestamp', Date.now().toString());
-                
-                // Emit block creation event
-                this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
-                    blockId: blockId,
-                    blockType: block.type,
-                    timestamp: Date.now()
-                }, { source: 'paste.create' });
-            }
-            
-            return blockElement;
-        } catch (error) {
-            logWarning('Error creating block element', 'Editor.createBlockElement()');
-            return null;
-        }
+        return this._blockManager.createBlockElement(block);
     }
 
     /**
      * Create a paragraph block element with given HTML content
-     * @param {string} html - HTML content for the paragraph
-     * @returns {HTMLElement|null} - Created paragraph block element
+     * @param {string} html
+     * @returns {HTMLElement|null}
      */
     createParagraphBlock(html) {
-        try {
-            const paragraphBlock = BlockFactory.createBlock(BlockType.PARAGRAPH, '', html);
-            const blockElement = paragraphBlock.renderToElement();
-            
-            if (blockElement) {
-                // Generate unique block ID
-                const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                blockElement.setAttribute('data-block-id', blockId);
-                blockElement.setAttribute('data-timestamp', Date.now().toString());
-                
-                // Emit block creation event
-                this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
-                    blockId: blockId,
-                    blockType: BlockType.PARAGRAPH,
-                    timestamp: Date.now()
-                }, { source: 'paste.create' });
-            }
-            
-            return blockElement;
-        } catch (error) {
-            logWarning('Error creating paragraph block', 'Editor.createParagraphBlock()');
-            return null;
-        }
+        return this._blockManager.createParagraphBlock(html);
     }
 
-    /**
-     * Insert content inline within the current selection
-     * @param {string} html - HTML content to insert
-     * @param {Selection} selection - Current selection object
-     */
     insertInlineContent(html, selection) {
-        if ( selection.rangeCount ) {
-            const range = selection.getRangeAt(0);
-            
-            try {
-                const node = document.createRange().createContextualFragment(html);
-                range.deleteContents(); // Clear selected content first
-                range.insertNode(node);
-                
-                // Move cursor to end of inserted content
-                range.collapse(false);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            } catch (error) {
-                logWarning('Error inserting inline content', 'Editor.insertInlineContent()');
-                // Fallback to execCommand if modern approach fails
-                document.execCommand('insertHTML', false, html);
-            }
-        }
+        log('insertInlineContent()', 'Editor.');
+        return this._pasteHandler._insertInlineContent(html, selection);
     }
 
     /**
-     * Check if a block is effectively empty
-     * @param {HTMLElement} block - Block element to check
-     * @returns {boolean} - True if block is empty
+     * Check if a block element is effectively empty.
+     * @param {HTMLElement} block
+     * @returns {boolean}
      */
     isBlockEmpty(block) {
-        if (!block) return true;
-        
-        const textContent = block.textContent || '';
-        const cleanText = textContent.trim();
-        const innerHTML = block.innerHTML || '';
-        
-        // Consider block empty if it only contains whitespace or common empty elements
-        return cleanText === '' || cleanText === '\n' || innerHTML === '<br>' || innerHTML === '<br/>' || innerHTML === '<br />';
+        return this._blockManager.isBlockEmpty(block);
     }
     
     /**
@@ -1152,7 +844,7 @@ export class Editor
     {
         log('_performUpdate()', 'Editor.');
 
-        let editorHtml = this.instance.innerHTML;
+        let editorHtml = this.contentArea.innerHTML;
         
         // Only compute markdown if it's actually needed (performance optimization)
         let markdownContent = '';
@@ -1195,12 +887,6 @@ export class Editor
             markdown: markdownContent,
             timestamp: Date.now()
         }, { debounce: 500, source: 'editor.update' });
-        
-        // Update debug tooltips if debug mode is active
-        /*if (this.debugMode && this.debugTooltip) {
-            // Use a slight delay to ensure DOM updates are complete
-            setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
-        }*/
     }
 
     /**
@@ -1230,11 +916,6 @@ export class Editor
                     previousContent: lastContent,
                     timestamp: currentTimestamp
                 }, { throttle: 200, source: 'block.content' });
-                
-                // Update debug tooltip if this is the active block
-                /*if (this.debugMode && this.debugTooltip && block === this.currentBlock) {
-                    setTimeout(() => this.debugTooltip.updateActiveBlockTooltip(), 10);
-                }*/
             }
         });
     }
@@ -1246,10 +927,7 @@ export class Editor
      */
     isParagraphBlock(block)
     {
-        if (!block) return false;
-        const type = block.getAttribute('data-block-type');
-        // Treat missing type as paragraph (for legacy/malformed blocks)
-        return !type || type === 'p' || type === 'paragraph';
+        return this._blockManager.isParagraphBlock(block);
     }
 
     /**
@@ -1259,21 +937,7 @@ export class Editor
      */
     isEditorEmpty(blocks)
     {
-        log('isEditorEmpty()', 'Editor.');
-        
-        if (blocks.length === 0) {
-            return true;
-        }
-        
-        // Check if all blocks are empty (contain only whitespace or no content)
-        for (let block of blocks) {
-            const textContent = Utils.stripTags(block.innerHTML).trim();
-            if (textContent.length > 0) {
-                return false; // Found non-empty block
-            }
-        }
-        
-        return true; // All blocks are empty
+        return this._blockManager.isEditorEmpty(blocks);
     }
 
     /**
@@ -1282,48 +946,7 @@ export class Editor
      */
     ensureDefaultBlock()
     {
-        log('ensureDefaultBlock()', 'Editor.');
-        
-        // Get all current blocks
-        const allBlocks = this.instance.querySelectorAll('.bke-block');
-        
-        // Decide if we need a default block
-        let needsDefault = false;
-        
-        if (allBlocks.length === 0) {
-            // No blocks at all - definitely need a default
-            needsDefault = true;
-        } else if (allBlocks.length === 1 && this.isEditorEmpty(allBlocks)) {
-            // One empty block - only replace if it's a paragraph
-            const onlyBlock = allBlocks[0];
-            if (this.isParagraphBlock(onlyBlock)) {
-                needsDefault = true;
-            }
-        }
-        
-        // If editor is empty, create a default block
-        if (needsDefault) {
-            // Detach events from existing blocks first
-            if (allBlocks.length > 0) {
-                this.detachBlockEvents(allBlocks);
-            }
-            
-            // Clear the editor content
-            this.instance.innerHTML = '';
-            
-            // Reset current block reference to prevent focus issues
-            this.currentBlock = null;
-            
-            // Create and add a new default block
-            const newBlock = this.addDefaultBlock();
-            
-            // No need to call update() here as this method is already called from within the update cycle
-            // The newly created block will be processed by the current update cycle
-            
-            return newBlock;
-        }
-        
-        return null;
+        return this._blockManager.ensureDefaultBlock();
     }
 
     /**
@@ -1332,26 +955,7 @@ export class Editor
      */
     detachBlockEvents(blocks)
     {
-        log('detachBlockEvents()', 'Editor.');
-        
-        blocks.forEach(block => {
-            // Clone the block to remove all event listeners
-            const clonedBlock = block.cloneNode(true);
-            
-            // Emit a block destroy event for any cleanup needed
-            if (block.getAttribute('data-block-id')) {
-                this.eventEmitter.emit(EVENTS.BLOCK_DESTROYED, {
-                    blockId: block.getAttribute('data-block-id'),
-                    blockType: block.getAttribute('data-block-type'),
-                    timestamp: Date.now()
-                }, { source: 'editor.cleanup' });
-            }
-            
-            // Replace the block with its clone (removes all event listeners)
-            if (block.parentNode) {
-                block.parentNode.replaceChild(clonedBlock, block);
-            }
-        });
+        this._blockManager.detachBlockEvents(blocks);
     }
 
       /**
@@ -1361,22 +965,7 @@ export class Editor
      */
     static html2md(html)
     {
-        log('html2md()', 'Editor.'); //console.log({html});
-        
-        try {
-            // Validate input
-            if ( !html || typeof html !== 'string' ) {
-                logWarning('Invalid HTML input for conversion', 'Editor.html2md()');
-                return '';
-            }
-            
-            let converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
-            
-            return converter.makeMd(html);
-        } catch (error) {
-            logWarning('Error converting HTML to markdown: ' + error.message, 'Editor.html2md()');
-            return html; // Return original HTML as fallback
-        }
+        return _html2md(html);
     }
 
     /**
@@ -1386,27 +975,7 @@ export class Editor
      */
     static md2html(md)
     {
-        log('md2html()', 'Editor.');
-        
-        try {
-            // Validate input
-            if ( !md || typeof md !== 'string' ) {
-                logWarning('Invalid markdown input for conversion', 'Editor.md2html()');
-                return '';
-            }
-    
-            const converter = new showdown.Converter({ ghCompatibleHeaderId: false, headerIds: false });
-            
-            let html = converter.makeHtml(md);
-            
-            //html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<p><br></p>');
-            html = html.replace(/(<\/code><\/pre>$(?![\r\n]))/gm, '$1<br>');
-            
-            return html;
-        } catch (error) {
-            logWarning('Error converting markdown to HTML: ' + error.message, 'Editor.md2html()');
-            return Utils.escapeHTML(md); // Return escaped markdown as fallback
-        }
+        return _md2html(md);
     }
     
 
@@ -1416,168 +985,47 @@ export class Editor
      */
     addDefaultBlock()
     {
-        log('addDefaultBlock()', 'Editor.');
-        
-        // Transition state machine to CREATING to prevent empty-editor checks
-        this._stateMachine.startCreating();
-        
-        const block = new Block(BlockType.PARAGRAPH);
-        const htmlBlock = Parser.html(block);
-        
-        // Link block instance to its DOM element
-        const typedBlock = block.getBlockInstance ? block.getBlockInstance() : block;
-        if (typedBlock && typedBlock.element !== undefined) {
-            typedBlock.element = htmlBlock;
-        }
-        this._blockMap.set(htmlBlock, typedBlock);
-        
-        // Generate unique block ID
-        const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        htmlBlock.setAttribute('data-block-id', blockId);
-        htmlBlock.setAttribute('data-timestamp', Date.now().toString());
-        
-        const currentBlock = this.currentBlock;
-    
-        // Ensure currentBlock exists
-        if ( !currentBlock ) {
-            this.instance.appendChild(htmlBlock);
-        } else {
-            currentBlock.after(htmlBlock);
-        }
-    
-        // Update currentBlock reference
-        this.setCurrentBlock(htmlBlock);
-    
-        // Emit block creation event
-        this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
-            blockId: blockId,
-            blockType: BlockType.PARAGRAPH,
-            position: Array.from(this.instance.querySelectorAll('.bke-block')).indexOf(htmlBlock),
-            timestamp: Date.now()
-        }, { source: 'editor.create' });
-    
-        // Focus the block synchronously within a single requestAnimationFrame
-        // to avoid timing races where user input arrives before focus lands
-        requestAnimationFrame(() => {
-            if (htmlBlock.isConnected) {
-                this.focus(htmlBlock);
-            }
-            this._stateMachine.finishCreating();
-        });
-        
-        return htmlBlock;
+        return this._blockManager.addDefaultBlock();
     }
 
     /**
      * Insert a new default (paragraph) block BEFORE the current block.
-     * Focus remains on the current block; the new empty block appears above.
      * @return HTMLElement
      */
     addDefaultBlockBefore()
     {
-        log('addDefaultBlockBefore()', 'Editor.');
-
-        this._stateMachine.startCreating();
-
-        const block = new Block(BlockType.PARAGRAPH);
-        const htmlBlock = Parser.html(block);
-
-        // Link block instance to its DOM element
-        const typedBlock = block.getBlockInstance ? block.getBlockInstance() : block;
-        if (typedBlock && typedBlock.element !== undefined) {
-            typedBlock.element = htmlBlock;
-        }
-        this._blockMap.set(htmlBlock, typedBlock);
-
-        // Generate unique block ID
-        const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        htmlBlock.setAttribute('data-block-id', blockId);
-        htmlBlock.setAttribute('data-timestamp', Date.now().toString());
-
-        const currentBlock = this.currentBlock;
-
-        if (!currentBlock) {
-            this.instance.insertBefore(htmlBlock, this.instance.firstChild);
-        } else {
-            currentBlock.parentNode.insertBefore(htmlBlock, currentBlock);
-        }
-
-        // Emit block creation event
-        this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
-            blockId: blockId,
-            blockType: BlockType.PARAGRAPH,
-            position: Array.from(this.instance.querySelectorAll('.bke-block')).indexOf(htmlBlock),
-            timestamp: Date.now()
-        }, { source: 'editor.create' });
-
-        // Keep focus on the current block — the user's cursor stays where it was
-        requestAnimationFrame(() => {
-            this._stateMachine.finishCreating();
-        });
-
-        return htmlBlock;
+        return this._blockManager.addDefaultBlockBefore();
     }
 
     /**
-     * Updates toolbar button states based on the current block
+     * Updates toolbar button states based on the current block.
+     * Delegates to Toolbar.updateButtonStates() when a toolbar is present.
      */
     updateToolbarButtonStates()
     {
         log('updateToolbarButtonStates()', 'Editor.');
 
-        if (!this.currentBlock) {
-            return;
-        }
+        if (!this.currentBlock) return;
 
         const blockType = this.currentBlock.getAttribute('data-block-type');
-        if (!blockType) {
-            return;
+        if (!blockType) return;
+
+        if (this.toolbar) {
+            this.toolbar.updateButtonStates(blockType);
         }
-
-        // Get the block class to access its static methods
-        const blockClass = Editor.getBlockClass(blockType);
-        if (!blockClass) {
-            return;
-        }
-
-        // Get disabled buttons for this block type (static method)
-        const disabledButtons = blockClass.getDisabledButtons();
-        
-        // Reset all toolbar buttons to enabled state
-        this.enableAllToolbarButtons();
-        
-        // Disable buttons that shouldn't be available for this block type
-        disabledButtons.forEach(buttonClass => {
-            const button = document.querySelector(`.${buttonClass}`);
-            if (button) {
-                button.disabled = true;
-                button.classList.add('disabled');
-            }
-        });
-
-        log('updateToolbarButtonStates()', 'Editor.', { blockType, disabledButtons });
     }
 
     /**
-     * Enables all toolbar buttons (resets their state)
+     * Enables all toolbar buttons (resets their state).
+     * Delegates to Toolbar.resetButtonStates() when a toolbar is present.
      */
     enableAllToolbarButtons()
     {
         log('enableAllToolbarButtons()', 'Editor.');
 
-        const toolbarButtons = document.querySelectorAll('.bke-toolbar button');
-        toolbarButtons.forEach(button => {
-            // Don't re-enable view buttons that are currently disabled for good reason
-            const isViewButton = button.classList.contains('bke-toolbar-text') || 
-                               button.classList.contains('bke-toolbar-markdown') || 
-                               button.classList.contains('bke-toolbar-html');
-            
-            // Enable all non-view buttons, but preserve view button states
-            if (!isViewButton) {
-                button.disabled = false;
-                button.classList.remove('disabled');
-            }
-        });
+        if (this.toolbar) {
+            this.toolbar.resetButtonStates();
+        }
     }
 
     /**
@@ -1722,185 +1170,22 @@ export class Editor
 
     /**
      * Get all editor content as markdown
-     * Reads directly from the DOM to ensure current content is serialized
-     * @returns {string} - markdown representation of all content
+     * @returns {string}
      */
     getMarkdown()
     {
         log('getMarkdown()', 'Editor.');
-        
-        try {
-            const blockElements = this.instance.querySelectorAll('.bke-block');
-            if (blockElements.length === 0) return '';
-
-            const markdownParts = [];
-            for (const blockEl of blockElements) {
-                const blockType = blockEl.getAttribute('data-block-type');
-                const md = this._blockElementToMarkdown(blockEl, blockType);
-                if (md !== null) markdownParts.push(md);
-            }
-
-            return markdownParts.join('\n\n').trim();
-        } catch (error) {
-            logWarning('Error getting markdown content: ' + error.message, 'Editor.getMarkdown()');
-            return '';
-        }
-    }
-
-    /**
-     * Extract markdown from a single block DOM element
-     * @param {HTMLElement} blockEl - The block element
-     * @param {string} blockType - The block type attribute value
-     * @returns {string|null} - Markdown string or null
-     * @private
-     */
-    _blockElementToMarkdown(blockEl, blockType)
-    {
-        switch (blockType) {
-            case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': {
-                const level = parseInt(blockType[1]);
-                const heading = blockEl.querySelector(`h${level}`) || blockEl;
-                return '#'.repeat(level) + ' ' + (heading.textContent || '');
-            }
-            case 'p': case 'paragraph': {
-                const innerHTML = blockEl.innerHTML || '';
-                // Convert inline HTML formatting to markdown
-                if (/<[^>]+>/.test(innerHTML)) {
-                    return Editor.html2md(`<p>${innerHTML}</p>`).trim();
-                }
-                return blockEl.textContent || '';
-            }
-            case 'ul': {
-                const items = blockEl.querySelectorAll('li');
-                return Array.from(items).map(li => `- ${li.textContent || ''}`).join('\n');
-            }
-            case 'ol': {
-                const items = blockEl.querySelectorAll('li');
-                return Array.from(items).map((li, i) => `${i + 1}. ${li.textContent || ''}`).join('\n');
-            }
-            case 'sq': {
-                const items = blockEl.querySelectorAll('li');
-                return Array.from(items).map(li => {
-                    const checkbox = li.querySelector('input[type="checkbox"]');
-                    const checked = checkbox?.checked ? 'x' : ' ';
-                    // Get text content excluding the checkbox
-                    const textNode = li.querySelector('.task-text, span') || li;
-                    let text = textNode.textContent || '';
-                    // Remove leading whitespace from checkbox label
-                    text = text.replace(/^\s+/, '');
-                    return `- [${checked}] ${text}`;
-                }).join('\n');
-            }
-            case 'code': {
-                const code = blockEl.querySelector('code');
-                const text = code?.textContent || blockEl.textContent || '';
-                const langMatch = code?.className?.match(/language-(\w+)/);
-                const lang = langMatch ? langMatch[1] : '';
-                return '```' + lang + '\n' + text + '\n```';
-            }
-            case 'quote': {
-                const bq = blockEl.querySelector('blockquote') || blockEl;
-                return '> ' + (bq.textContent || '');
-            }
-            case 'delimiter':
-                return '---';
-            case 'table': {
-                const headers = Array.from(blockEl.querySelectorAll('th')).map(th => th.textContent || '');
-                const rows = Array.from(blockEl.querySelectorAll('tbody tr')).map(tr =>
-                    Array.from(tr.querySelectorAll('td')).map(td => td.textContent || '')
-                );
-                if (headers.length === 0) return '';
-                let md = '| ' + headers.join(' | ') + ' |\n';
-                md += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
-                rows.forEach(row => {
-                    md += '| ' + row.join(' | ') + ' |\n';
-                });
-                return md.trim();
-            }
-            case 'image': {
-                const img = blockEl.querySelector('img');
-                if (!img) return '';
-                const src = img.getAttribute('src') || '';
-                const alt = img.getAttribute('alt') || '';
-                return `![${alt}](${src})`;
-            }
-            default:
-                return blockEl.textContent || '';
-        }
+        return this.serializer.getMarkdown(this.instance);
     }
 
     /**
      * Get all editor content as HTML
-     * Reads directly from the DOM to ensure current content is serialized
-     * @returns {string} - HTML representation of all content
+     * @returns {string}
      */
     getHtml()
     {
         log('getHtml()', 'Editor.');
-        
-        try {
-            const blockElements = this.instance.querySelectorAll('.bke-block');
-            if (blockElements.length === 0) return '';
-
-            const htmlParts = [];
-            for (const blockEl of blockElements) {
-                const blockType = blockEl.getAttribute('data-block-type');
-                const html = this._blockElementToHtml(blockEl, blockType);
-                if (html) htmlParts.push(html);
-            }
-
-            return htmlParts.join('\n').trim();
-        } catch (error) {
-            logWarning('Error getting HTML content: ' + error.message, 'Editor.getHtml()');
-            return '';
-        }
-    }
-
-    /**
-     * Extract semantic HTML from a single block DOM element
-     * @param {HTMLElement} blockEl - The block element
-     * @param {string} blockType - The block type attribute value
-     * @returns {string} - Semantic HTML string
-     * @private
-     */
-    _blockElementToHtml(blockEl, blockType)
-    {
-        switch (blockType) {
-            case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': {
-                const heading = blockEl.querySelector('h1,h2,h3,h4,h5,h6');
-                return heading ? heading.outerHTML : `<${blockType}>${blockEl.textContent || ''}</${blockType}>`;
-            }
-            case 'p': case 'paragraph':
-                return `<p>${blockEl.innerHTML}</p>`;
-            case 'ul': case 'ol': {
-                const list = blockEl.querySelector(blockType === 'ol' ? 'ol' : 'ul');
-                return list ? list.outerHTML : '';
-            }
-            case 'sq': {
-                const list = blockEl.querySelector('ul');
-                return list ? list.outerHTML : '';
-            }
-            case 'code': {
-                const pre = blockEl.querySelector('pre');
-                return pre ? pre.outerHTML : `<pre><code>${Utils.escapeHTML(blockEl.textContent || '')}</code></pre>`;
-            }
-            case 'quote': {
-                const bq = blockEl.querySelector('blockquote');
-                return bq ? bq.outerHTML : `<blockquote>${blockEl.textContent || ''}</blockquote>`;
-            }
-            case 'delimiter':
-                return '<hr>';
-            case 'table': {
-                const table = blockEl.querySelector('table');
-                return table ? table.outerHTML : '';
-            }
-            case 'image': {
-                const img = blockEl.querySelector('img');
-                return img ? img.outerHTML : '';
-            }
-            default:
-                return `<p>${blockEl.innerHTML}</p>`;
-        }
+        return this.serializer.getHtml(this.instance);
     }
 
     /**
@@ -1908,53 +1193,10 @@ export class Editor
      * @param {HTMLElement} blockElement - The block element to check
      * @returns {boolean} - true if block was converted, false otherwise
      */
-    checkAndConvertBlock(blockElement) 
+    checkAndConvertBlock(blockElement)
     {
         log('checkAndConvertBlock()', 'Editor.');
-        
-        if (!blockElement || !blockElement.hasAttribute('data-block-type')) {
-            return false;
-        }
-
-        const currentBlockType = blockElement.getAttribute('data-block-type');
-        // Preserve trailing space to allow triggers like "# " to match
-        // but ignore leading whitespace so triggers at the start still detect
-        const rawText = Utils.stripTags(blockElement.innerHTML);
-        // Normalize non-breaking spaces (&nbsp; and \u00A0) to regular spaces before checking triggers
-        const normalizedText = rawText.replace(/&nbsp;/g, ' ').replace(/\u00A0|\xA0|\u00a0/g, ' ');
-        // Decode HTML entities that browsers inject in contenteditable (e.g. > becomes &gt;)
-        const decodedText = normalizedText.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-        const textContent = decodedText.replace(/^\s+/, '');
-        
-        // Find matching block class for the current text content
-        const matchingBlockClass = BlockFactory.findBlockClassForTrigger(textContent);
-        
-        // Only skip conversion if content is empty AND no markdown trigger was found
-        // This allows triggers like "# " to work even in "empty" blocks
-        if (!textContent && !matchingBlockClass) {
-            return false;
-        }
-        
-        if (!matchingBlockClass) {
-            return false;
-        }
-
-        // Get the block type that should be created
-        const targetBlockType = new matchingBlockClass().type;
-        
-        // Don't convert if it's already the correct type
-        if (currentBlockType === targetBlockType) {
-            return false;
-        }
-
-        // Don't convert non-paragraph blocks (to avoid conflicts)
-        // Handle both 'p' (legacy/HTML) and 'paragraph' (current) formats
-        if (currentBlockType !== 'p' && currentBlockType !== 'paragraph') {
-            return false;
-        }
-
-        // Perform the conversion
-        return this.convertBlockType(blockElement, targetBlockType, textContent);
+        return this._blockConverter.checkAndConvert(blockElement);
     }
 
     /**
@@ -2001,90 +1243,15 @@ export class Editor
 
     /**
      * Convert a block from one type to another
-     * @param {HTMLElement} blockElement - The block element to convert
-     * @param {string} targetBlockType - The target block type
-     * @param {string} triggerText - The text that triggered the conversion
-     * @returns {boolean} - true if conversion was successful, false otherwise
+     * @param {HTMLElement} blockElement
+     * @param {string} targetBlockType
+     * @param {string} triggerText
+     * @returns {boolean}
      */
-    convertBlockType(blockElement, targetBlockType, triggerText) 
+    convertBlockType(blockElement, targetBlockType, triggerText)
     {
         log('convertBlockType()', 'Editor.');
-        
-        try {
-            // Transition state machine to CONVERTING to prevent empty-editor interference
-            this._stateMachine.startConverting();
-            
-            // Create new block instance
-            const newBlock = BlockFactory.createBlock(targetBlockType);
-            
-            if (!newBlock) {
-                return false;
-            }
-
-            // Calculate remaining content after removing the trigger
-            const blockClass = newBlock.constructor;
-            let remainingContent = triggerText;
-            
-            // Prefer class-provided computation (supports regex triggers)
-            if (typeof blockClass.computeRemainingContent === 'function') {
-                remainingContent = blockClass.computeRemainingContent(triggerText);
-            } else {
-                const triggers = blockClass.getMarkdownTriggers ? blockClass.getMarkdownTriggers() : [];
-                for (const trigger of triggers) {
-                    if (triggerText.startsWith(trigger)) {
-                        remainingContent = triggerText.substring(trigger.length);
-                        break;
-                    }
-                }
-            }
-
-            // Store the cursor position before applying transformation
-            const wasFocused = blockElement === this.currentBlock;
-            
-            // Set the block content to just the remaining content (without trigger)
-            // so that applyTransformation can read the correct content
-            blockElement.textContent = remainingContent.trim();
-            
-            // Apply the transformation (this will call the appropriate Toolbar method)
-            newBlock.applyTransformation(blockElement, this);
-            
-            // Link new block to its DOM element
-            newBlock.element = blockElement;
-            this._blockMap.set(blockElement, newBlock);
-            
-            // Position cursor appropriately after transformation
-            if (wasFocused) {
-                requestAnimationFrame(() => {
-                    const editableElement = this.findEditableElementInBlock(blockElement);
-                    if (editableElement) {
-                        editableElement.focus();
-                        // If there's content, place cursor at the end
-                        if (remainingContent.trim()) {
-                            this.placeCursorAtEnd(editableElement);
-                        }
-                    }
-                });
-            }
-            
-            // Emit block conversion event
-            this.eventEmitter.emit(EVENTS.BLOCK_CONVERTED, {
-                blockId: blockElement.getAttribute('data-block-id') || blockElement.id,
-                fromType: blockElement.getAttribute('data-block-type'),
-                toType: targetBlockType,
-                triggerText: triggerText,
-                remainingContent: remainingContent,
-                timestamp: Date.now()
-            });
-            
-            return true;
-            
-        } catch (error) {
-            logWarning('Error converting block type: ' + error.message, 'Editor.convertBlockType()');
-            return false;
-        } finally {
-            // Always transition back to IDLE
-            this._stateMachine.finishConverting();
-        }
+        return this._blockConverter.convertType(blockElement, targetBlockType, triggerText);
     }
 
     /**
@@ -2104,28 +1271,7 @@ export class Editor
      */
     findEditableElementInBlock(blockElement)
     {
-        log('findEditableElementInBlock()', 'Editor.');
-
-        // 1) For list blocks, prefer the first list item (or its editable child)
-        const firstListItem = blockElement.querySelector('li');
-        if (firstListItem) {
-            const editableInLi = firstListItem.querySelector('[contenteditable="true"]');
-            return editableInLi || firstListItem;
-        }
-
-        // 2) Prefer any explicitly editable descendant (e.g., <h1 contenteditable="true">)
-        const editableChild = blockElement.querySelector('[contenteditable="true"]');
-        if (editableChild) {
-            return editableChild;
-        }
-
-        // 3) If the block itself is contenteditable, use it
-        if (blockElement.isContentEditable || blockElement.getAttribute('contenteditable') === 'true') {
-            return blockElement;
-        }
-
-        // 4) Fallback to the block itself
-        return blockElement;
+        return this.cursor.findEditableElementInBlock(blockElement);
     }
 
     /**
@@ -2134,34 +1280,7 @@ export class Editor
      */
     placeCursorAtEnd(element)
     {
-        log('placeCursorAtEnd()', 'Editor.');
-
-        if (!element) {
-            return;
-        }
-
-        try {
-            const selection = window.getSelection();
-            const range = document.createRange();
-            
-            // If element has text content, place cursor at the end
-            if (element.childNodes.length > 0) {
-                const lastChild = element.childNodes[element.childNodes.length - 1];
-                if (lastChild.nodeType === Node.TEXT_NODE) {
-                    range.setStart(lastChild, lastChild.textContent.length);
-                } else {
-                    range.setStart(element, element.childNodes.length);
-                }
-            } else {
-                range.setStart(element, 0);
-            }
-            
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        } catch (error) {
-            // Silently fail for cursor positioning
-        }
+        return this.cursor.placeCursorAtEnd(element);
     }
 
     /**
@@ -2170,22 +1289,7 @@ export class Editor
      */
     placeCursorAtStart(element)
     {
-        log('placeCursorAtStart()', 'Editor.');
-
-        if (!element) {
-            return;
-        }
-
-        try {
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.setStart(element, 0);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        } catch (error) {
-            // Silently fail for cursor positioning
-        }
+        return this.cursor.placeCursorAtStart(element);
     }
 
     /**
@@ -2196,45 +1300,7 @@ export class Editor
      */
     placeCursorAtOffset(element, offset)
     {
-        log('placeCursorAtOffset()', 'Editor.');
-
-        if (!element) {
-            return;
-        }
-
-        try {
-            const selection = window.getSelection();
-            const textLength = (element.textContent || '').length;
-            const targetOffset = Math.min(offset, textLength);
-
-            // Walk through text nodes to find the correct node and local offset
-            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-            let remaining = targetOffset;
-            let node = walker.nextNode();
-
-            while (node) {
-                const len = node.textContent.length;
-                if (remaining <= len) {
-                    const range = document.createRange();
-                    range.setStart(node, remaining);
-                    range.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    return;
-                }
-                remaining -= len;
-                node = walker.nextNode();
-            }
-
-            // Fallback — no text nodes (empty element), place at start
-            const range = document.createRange();
-            range.setStart(element, 0);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        } catch (error) {
-            // Silently fail for cursor positioning
-        }
+        return this.cursor.placeCursorAtOffset(element, offset);
     }
 
     /**
@@ -2246,70 +1312,19 @@ export class Editor
     convertCurrentBlockOrCreate(targetBlockType, options = {})
     {
         log('convertCurrentBlockOrCreate()', 'Editor.');
-        
-        console.log('convertCurrentBlockOrCreate called with:', targetBlockType);
-        
-        const currentBlock = this.currentBlock;
-        log('Current block:', currentBlock);
-
-        if (!currentBlock) {
-            // No current block, create a new one
-            console.log('No current block, calling createNewBlock');
-            return this.createNewBlock(targetBlockType, options);
-        }
-
-        const currentBlockType = currentBlock.getAttribute('data-block-type');
-        console.log('Current block type:', currentBlockType);
-
-        // Toggle: if current block is already the target type, convert back to paragraph
-        if (currentBlockType === targetBlockType) {
-            console.log('Toggling block back to paragraph');
-            // Extract the editable content from the block.
-            // For code blocks, the real content is inside the <code> element.
-            const editableEl = this.findEditableElementInBlock(currentBlock);
-            const content = editableEl ? (editableEl.textContent || '') : '';
-            return this.convertBlockType(currentBlock, BlockType.PARAGRAPH, content);
-        }
-        
-        // If current block is a paragraph with content, convert it
-        if (currentBlockType === BlockType.PARAGRAPH) {
-            // Get current content
-            const textContent = currentBlock.textContent || '';
-            
-            // For conversion, we simulate a trigger that matches the target type
-            const triggerText = this.generateTriggerForBlockType(targetBlockType, textContent);
-            
-            // Use existing conversion logic
-            return this.convertBlockType(currentBlock, targetBlockType, triggerText);
-        }
-        
-        // For non-paragraph blocks of a different type, create a new block after current
-        console.log('Creating new block after current');
-        return this.createNewBlock(targetBlockType, options);
+        return this._blockConverter.convertCurrentOrCreate(targetBlockType, options, this.currentBlock);
     }
 
     /**
      * Generate appropriate trigger text for a given block type
-     * @param {string} blockType - The block type to generate trigger for
-     * @param {string} existingContent - Existing content to preserve
-     * @returns {string} - The trigger text with existing content
+     * @param {string} blockType
+     * @param {string} existingContent
+     * @returns {string}
      */
     generateTriggerForBlockType(blockType, existingContent = '')
     {
         log('generateTriggerForBlockType()', 'Editor.');
-
-        const blockClass = BlockFactory.getBlockClass(blockType);
-        if (!blockClass || typeof blockClass.getMarkdownTriggers !== 'function') {
-            return existingContent;
-        }
-        
-        const triggers = blockClass.getMarkdownTriggers();
-        if (triggers.length === 0) {
-            return existingContent;
-        }
-        
-        // Use the first trigger and append existing content
-        return triggers[0] + existingContent;
+        return this._blockConverter.generateTrigger(blockType, existingContent);
     }
 
     /**
@@ -2320,85 +1335,7 @@ export class Editor
      */
     createNewBlock(blockType, options = {})
     {
-        log('createNewBlock()', 'Editor.');
-
-        try {
-            // Transition state machine to CREATING to prevent empty-editor checks
-            this._stateMachine.startCreating();
-            
-            // Ensure there's a current block context
-            if (!this.currentBlock) {
-                this.ensureDefaultBlock();
-            }
-            
-            // Create the block object
-            const newBlock = BlockFactory.createBlock(blockType);
-            if (!newBlock) {
-                return false;
-            }
-            
-            // Convert block to HTML element
-            const htmlBlock = Parser.html(newBlock);
-            if (!htmlBlock) {
-                return false;
-            }
-            
-            // Link block instance to its DOM element
-            newBlock.element = htmlBlock;
-            this._blockMap.set(htmlBlock, newBlock);
-            
-            // Generate unique block ID
-            const blockId = 'block-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            htmlBlock.setAttribute('data-block-id', blockId);
-            htmlBlock.setAttribute('data-timestamp', Date.now().toString());
-            
-            // Add the block to the DOM
-            const currentBlock = this.currentBlock;
-            if (!currentBlock) {
-                console.log('Appending to instance');
-                this.instance.appendChild(htmlBlock);
-            } else {
-                console.log('Adding after current block');
-                currentBlock.after(htmlBlock);
-            }
-            
-            // Update current block reference
-            this.setCurrentBlock(htmlBlock);
-            
-            // For list blocks, focus on the first list item
-            if (blockType === 'ul' || blockType === 'ol') {
-                const listItem = htmlBlock.querySelector('li');
-                if (listItem) {
-                    listItem.focus();
-                }
-            }
-            
-            // Emit block creation event
-            this.eventEmitter.emit(EVENTS.BLOCK_CREATED, {
-                blockId: blockId,
-                blockType: blockType,
-                options: options,
-                position: Array.from(this.instance.querySelectorAll('.bke-block')).indexOf(htmlBlock),
-                timestamp: Date.now()
-            }, { source: 'editor.create' });
-            
-            console.log('Block creation successful');
-            
-            // Clear the state after a short delay to allow the new block to be processed
-            setTimeout(() => {
-                this._stateMachine.finishCreating();
-            }, 100);
-            
-            return true;
-        } catch (error) {
-            console.error('Error in createNewBlock:', error);
-            logWarning('Error creating new block: ' + error.message, 'Editor.createNewBlock()');
-            
-            // Clear the state even in error case
-            this._stateMachine.finishCreating();
-            
-            return false;
-        }
+        return this._blockManager.createNewBlock(blockType, options);
     }
     
     /**
@@ -2408,9 +1345,9 @@ export class Editor
         log('destroy()', 'Editor.');
 
         // Remove DOM event listeners
-        if (this._boundHandlers && this.instance) {
+        if (this._boundHandlers && this.contentArea) {
             Object.entries(this._boundHandlers).forEach(([event, handler]) => {
-                this.instance.removeEventListener(event, handler);
+                this.contentArea.removeEventListener(event, handler);
             });
             this._boundHandlers = null;
         }

@@ -160,7 +160,8 @@ describe('Editor Instance Methods', () => {
         });
 
         it('should create editor element and set attributes', () => {
-            expect(mockElement.setAttribute).toHaveBeenCalledWith('contenteditable', 'true');
+            // contenteditable is now set on the contentArea div, not the mount element
+            expect(editor.contentArea.setAttribute).toHaveBeenCalledWith('contenteditable', 'true');
         });
 
         it('should handle container as array', () => {
@@ -295,10 +296,10 @@ describe('Editor Instance Methods', () => {
         it('should add keydown listener that calls KeyHandler', () => {
             const mockEvent = { key: 'Enter' };
 
-            expect(mockElement.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+            expect(editor.contentArea.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
             
             // Get the keydown handler and test it
-            const keydownHandler = mockElement.addEventListener.mock.calls
+            const keydownHandler = editor.contentArea.addEventListener.mock.calls
                 .find(call => call[0] === 'keydown')[1];
             
             keydownHandler(mockEvent);
@@ -309,10 +310,10 @@ describe('Editor Instance Methods', () => {
         it('should add keyup listener that calls KeyHandler', () => {
             const mockEvent = { key: 'a' };
 
-            expect(mockElement.addEventListener).toHaveBeenCalledWith('keyup', expect.any(Function));
+            expect(editor.contentArea.addEventListener).toHaveBeenCalledWith('keyup', expect.any(Function));
             
             // Get the keyup handler and test it
-            const keyupHandler = mockElement.addEventListener.mock.calls
+            const keyupHandler = editor.contentArea.addEventListener.mock.calls
                 .find(call => call[0] === 'keyup')[1];
             
             keyupHandler(mockEvent);
@@ -320,34 +321,33 @@ describe('Editor Instance Methods', () => {
             expect(editor.keyHandler.handleKeyPress).toHaveBeenCalledWith(mockEvent);
         });
 
-        it('should add paste listener', () => {
+        it('should add paste listener that delegates to PasteHandler', () => {
             const mockEvent = { 
                 preventDefault: jest.fn(),
                 clipboardData: {
                     getData: jest.fn().mockReturnValue('pasted text')
                 }
             };
-            
-            const pasteSpy = jest.spyOn(editor, 'paste').mockImplementation();
 
-            expect(mockElement.addEventListener).toHaveBeenCalledWith('paste', expect.any(Function));
-            
+            const handleSpy = jest.spyOn(editor._pasteHandler, 'handle').mockImplementation();
+
+            expect(editor.contentArea.addEventListener).toHaveBeenCalledWith('paste', expect.any(Function));
+
             // Get the paste handler and test it
-            const pasteHandler = mockElement.addEventListener.mock.calls
+            const pasteHandler = editor.contentArea.addEventListener.mock.calls
                 .find(call => call[0] === 'paste')[1];
-            
+
             pasteHandler(mockEvent);
 
-            expect(pasteSpy).toHaveBeenCalledWith(mockEvent);
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(handleSpy).toHaveBeenCalledWith(mockEvent);
         });
 
         it('should add click listener for current block selection', () => {
-            expect(mockElement.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+            expect(editor.contentArea.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
         });
 
         it('should add focusin listener', () => {
-            expect(mockElement.addEventListener).toHaveBeenCalledWith('focusin', expect.any(Function));
+            expect(editor.contentArea.addEventListener).toHaveBeenCalledWith('focusin', expect.any(Function));
         });
     });
 
@@ -392,13 +392,13 @@ describe('Editor Instance Methods', () => {
 
         it('should focus editor instance when currentBlock is null', () => {
             editor.currentBlock = null;
-            editor.instance.focus = jest.fn();
-            editor.instance.isConnected = true;
+            editor.contentArea.focus = jest.fn();
+            editor.contentArea.isConnected = true;
             editor.instance.querySelector = jest.fn().mockReturnValue(null);
 
             editor.focus();
 
-            expect(editor.instance.focus).toHaveBeenCalled();
+            expect(editor.contentArea.focus).toHaveBeenCalled();
         });
     });
 
@@ -578,56 +578,50 @@ describe('Editor Instance Methods', () => {
     describe('updateToolbarButtonStates', () => {
         beforeEach(() => {
             editor = new Editor({ id: 'test-editor' });
-            editor.enableAllToolbarButtons = jest.fn();
-            
+
             document.querySelector = jest.fn();
             document.querySelectorAll = jest.fn().mockReturnValue([]);
         });
 
         it('should return early if no current block', () => {
             editor.currentBlock = null;
+            editor.toolbar = { updateButtonStates: jest.fn() };
 
             editor.updateToolbarButtonStates();
 
-            expect(editor.enableAllToolbarButtons).not.toHaveBeenCalled();
+            expect(editor.toolbar.updateButtonStates).not.toHaveBeenCalled();
         });
 
         it('should return early if no block type', () => {
             editor.currentBlock = {
                 getAttribute: jest.fn().mockReturnValue(null)
             };
+            editor.toolbar = { updateButtonStates: jest.fn() };
 
             editor.updateToolbarButtonStates();
 
-            expect(editor.enableAllToolbarButtons).not.toHaveBeenCalled();
+            expect(editor.toolbar.updateButtonStates).not.toHaveBeenCalled();
         });
 
-        it('should update toolbar button states for block type', () => {
-            const mockButton = {
-                disabled: false,
-                classList: { add: jest.fn() }
-            };
-            
+        it('should delegate to toolbar.updateButtonStates with block type', () => {
             editor.currentBlock = {
                 getAttribute: jest.fn().mockReturnValue('p')
             };
-            
-            document.querySelector.mockReturnValue(mockButton);
-            
-            const mockBlockClass = {
-                getDisabledButtons: jest.fn().mockReturnValue(['bke-toolbar-bold'])
-            };
-            
-            const getBlockClassSpy = jest.spyOn(Editor, 'getBlockClass').mockReturnValue(mockBlockClass);
+            editor.toolbar = { updateButtonStates: jest.fn() };
 
             editor.updateToolbarButtonStates();
 
-            expect(editor.enableAllToolbarButtons).toHaveBeenCalled();
-            expect(getBlockClassSpy).toHaveBeenCalledWith('p');
-            expect(mockBlockClass.getDisabledButtons).toHaveBeenCalled();
-            expect(document.querySelector).toHaveBeenCalledWith('.bke-toolbar-bold');
-            expect(mockButton.disabled).toBe(true);
-            expect(mockButton.classList.add).toHaveBeenCalledWith('disabled');
+            expect(editor.toolbar.updateButtonStates).toHaveBeenCalledWith('p');
+        });
+
+        it('should do nothing when toolbar is not present', () => {
+            editor.currentBlock = {
+                getAttribute: jest.fn().mockReturnValue('p')
+            };
+            editor.toolbar = null;
+
+            // Should not throw
+            expect(() => editor.updateToolbarButtonStates()).not.toThrow();
         });
     });
 
@@ -636,31 +630,19 @@ describe('Editor Instance Methods', () => {
             editor = new Editor({ id: 'test-editor' });
         });
 
-        it('should enable all non-view toolbar buttons', () => {
-            const mockButtons = [
-                {
-                    disabled: true,
-                    classList: { 
-                        contains: jest.fn().mockReturnValue(false),
-                        remove: jest.fn()
-                    }
-                },
-                {
-                    disabled: true,
-                    classList: { 
-                        contains: jest.fn().mockReturnValue(true), // view button
-                        remove: jest.fn()
-                    }
-                }
-            ];
-            
-            document.querySelectorAll.mockReturnValue(mockButtons);
+        it('should delegate to toolbar.resetButtonStates', () => {
+            editor.toolbar = { resetButtonStates: jest.fn() };
 
             editor.enableAllToolbarButtons();
 
-            expect(mockButtons[0].disabled).toBe(false);
-            expect(mockButtons[0].classList.remove).toHaveBeenCalledWith('disabled');
-            expect(mockButtons[1].disabled).toBe(true); // view button should remain unchanged
+            expect(editor.toolbar.resetButtonStates).toHaveBeenCalled();
+        });
+
+        it('should do nothing when toolbar is not present', () => {
+            editor.toolbar = null;
+
+            // Should not throw
+            expect(() => editor.enableAllToolbarButtons()).not.toThrow();
         });
     });
 
