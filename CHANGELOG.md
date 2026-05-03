@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.6.0] - 2026-05-03
+
+### Changed
+- Major architectural refactoring: Split monolithic `Editor.js` (2450+ LOC) into focused, single-responsibility modules:
+  - `BlockConverter.js`: Block type conversions and markdown trigger detection
+  - `BlockManager.js`: Block creation, insertion, and lifecycle management
+  - `ContentSerializer.js`: Content serialization to markdown and HTML
+  - `CursorManager.js`: Cursor positioning and selection management
+  - `PasteHandler.js`: Paste event processing and multi-block insertion
+  - `config/defaultToolbarConfig.js`: Toolbar configuration as pure data
+- Editor.js reduced to ~600-700 LOC of orchestration logic while maintaining 100% backward compatibility with public API
+- Improved code maintainability, testability, and extensibility through separation of concerns
+
 ## [v0.5.0] - 2026-05-02
 
 ### Added
