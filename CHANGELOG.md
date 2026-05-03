@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.6.5] - 2026-05-03
+
+### Changed
+- CSS architecture refactored: Separated editor chrome (toolbar, debug UI, structural) from content-area styling. Main `editor.css` now contains only toolbar, debug UI, and structural box-sizing; content typography and colors moved to optional `content-defaults.css`. This aligns with industry best practices (Tiptap, ProseMirror) where editors ship minimal content styles, allowing host pages full control over their typography.
+
 ## [v0.6.4] - 2026-05-03
 
 ### Added
